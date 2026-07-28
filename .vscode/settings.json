@@ -6,8 +6,9 @@
     "intelephense.environment.includePaths": [
         "/ojs-3.5.0-4",
     ],
-    "intelephense.environment.exclude": [
-        "/.old/",
+    "intelephense.files.exclude": [
+    "**/.old/**",
+    "**/node_modules/**"
     ],
     "php.validate.enable": true,
     /* PHP version pour Intelephense */

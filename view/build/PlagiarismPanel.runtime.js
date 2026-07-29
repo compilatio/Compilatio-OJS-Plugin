@@ -9,20 +9,293 @@
     return target;
   };
   const _sfc_main = {
-    name: "CompilatioSettingsPanel"
+    name: "CompilatioSettingsPanel",
+    data() {
+      return {
+        apiKey: "",
+        apiUrl: "",
+        analysisLaunchMode: "manual",
+        automaticIndexingEnabled: false,
+        csrfToken: "",
+        hasError: false,
+        isLoading: true,
+        isSaving: false,
+        message: "",
+        scheduledAnalysisAt: "",
+        launchModes: [
+          {
+            value: "automatic",
+            label: "Automatique",
+            description: "L’analyse démarre automatiquement dès que le document est indexé."
+          },
+          {
+            value: "manual",
+            label: "Manuel",
+            description: "Un utilisateur autorisé déclenche lui-même chaque analyse."
+          },
+          {
+            value: "scheduled",
+            label: "Planifié",
+            description: "Les analyses démarrent à la date et à l’heure configurées."
+          }
+        ]
+      };
+    },
+    computed: {
+      canSave() {
+        if (!this.apiKey && !this.apiKey.trim()) {
+          return false;
+        }
+        return this.analysisLaunchMode !== "scheduled" || Boolean(this.scheduledAnalysisAt);
+      }
+    },
+    mounted() {
+      const root = this.$el.closest("#compilatioSettingsPanelRoot");
+      if (!root) {
+        this.hasError = true;
+        this.isLoading = false;
+        this.message = "Impossible de charger la configuration du plugin.";
+        return;
+      }
+      this.apiUrl = root.dataset.apiUrl || "";
+      this.csrfToken = root.dataset.csrfToken || "";
+      this.loadSettings();
+    },
+    methods: {
+      async loadSettings() {
+        console.log(this.apiUrl);
+        if (!this.apiUrl) {
+          this.hasError = true;
+          this.isLoading = false;
+          this.message = "L’URL de l’API de configuration est absente.";
+          return;
+        }
+        try {
+          const response = await fetch(this.apiUrl, {
+            credentials: "same-origin",
+            headers: {
+              Accept: "application/json"
+            }
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(
+              this.getErrorMessage(
+                result,
+                "Impossible de charger la configuration."
+              )
+            );
+          }
+          this.apiKey = result.apiKey || "";
+          this.automaticIndexingEnabled = result.automaticIndexingEnabled === true;
+          this.analysisLaunchMode = result.analysisLaunchMode || "manual";
+          this.scheduledAnalysisAt = this.toLocalDateTime(result.scheduledAnalysisAt);
+        } catch (error) {
+          this.hasError = true;
+          this.message = error.message || "Impossible de charger la configuration.";
+        } finally {
+          this.isLoading = false;
+        }
+      },
+      async saveSettings() {
+        const apiKey = this.apiKey.trim();
+        if (!this.apiUrl || !this.csrfToken || !this.canSave) {
+          this.hasError = true;
+          this.message = "Les informations de sécurité et la date planifiée sont obligatoires.";
+          return;
+        }
+        this.hasError = false;
+        this.isSaving = true;
+        this.message = "";
+        try {
+          const response = await fetch(this.apiUrl, {
+            method: "PUT",
+            credentials: "same-origin",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              "X-Csrf-Token": this.csrfToken
+            },
+            body: JSON.stringify({
+              ...apiKey ? { apiKey } : {},
+              automaticIndexingEnabled: this.automaticIndexingEnabled,
+              analysisLaunchMode: this.analysisLaunchMode,
+              scheduledAnalysisAt: this.analysisLaunchMode === "scheduled" ? new Date(this.scheduledAnalysisAt).toISOString() : null
+            })
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(
+              this.getErrorMessage(
+                result,
+                "Impossible d’enregistrer la clé API."
+              )
+            );
+          }
+          this.apiKey = result.apiKey || "";
+          this.automaticIndexingEnabled = result.automaticIndexingEnabled === true;
+          this.analysisLaunchMode = result.analysisLaunchMode || "manual";
+          this.scheduledAnalysisAt = this.toLocalDateTime(result.scheduledAnalysisAt);
+          this.message = result.message || "Les paramètres ont été enregistrés.";
+        } catch (error) {
+          this.hasError = true;
+          this.message = error.message || "Impossible d’enregistrer la clé API.";
+        } finally {
+          this.isSaving = false;
+        }
+      },
+      getErrorMessage(result, fallback) {
+        if (typeof (result == null ? void 0 : result.errorMessage) === "string") {
+          return result.errorMessage;
+        }
+        if (typeof (result == null ? void 0 : result.error) === "string") {
+          return result.error;
+        }
+        const firstError = (result == null ? void 0 : result.errors) ? Object.values(result.errors).flat()[0] : null;
+        return typeof firstError === "string" ? firstError : fallback;
+      },
+      toLocalDateTime(value) {
+        if (!value) {
+          return "";
+        }
+        const date = new Date(value);
+        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 6e4);
+        return localDate.toISOString().slice(0, 16);
+      }
+    }
   };
   const _hoisted_1 = { class: "space-y-6 rounded-lg bg-white p-6 text-slate-900" };
+  const _hoisted_2 = { class: "space-y-2" };
+  const _hoisted_3 = ["placeholder", "disabled"];
+  const _hoisted_4 = { class: "text-sm text-slate-600" };
+  const _hoisted_5 = {
+    key: 0,
+    class: "space-y-5"
+  };
+  const _hoisted_6 = { class: "rounded-md border border-slate-200 p-4" };
+  const _hoisted_7 = { class: "flex cursor-pointer items-start gap-3" };
+  const _hoisted_8 = ["disabled"];
+  const _hoisted_9 = { class: "space-y-3" };
+  const _hoisted_10 = ["value", "disabled"];
+  const _hoisted_11 = { class: "block text-sm font-medium" };
+  const _hoisted_12 = { class: "block text-sm text-slate-600" };
+  const _hoisted_13 = {
+    key: 0,
+    class: "space-y-2"
+  };
+  const _hoisted_14 = ["disabled"];
+  const _hoisted_15 = ["disabled"];
   function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
-    return vue.openBlock(), vue.createElementBlock("section", _hoisted_1, [..._cache[0] || (_cache[0] = [
-      vue.createElementVNode("header", { class: "space-y-5" }, [
+    return vue.openBlock(), vue.createElementBlock("section", _hoisted_1, [
+      _cache[10] || (_cache[10] = vue.createElementVNode("header", { class: "space-y-5" }, [
         vue.createElementVNode("img", {
           src: _imports_0,
           alt: "Compilatio Logo",
           class: "h-12 w-auto"
         }),
         vue.createElementVNode("h3", { class: "text-lg font-semibold" }, "Paramètres Compilatio")
-      ], -1)
-    ])]);
+      ], -1)),
+      vue.createElementVNode("form", {
+        class: "space-y-5",
+        onSubmit: _cache[4] || (_cache[4] = vue.withModifiers((...args) => $options.saveSettings && $options.saveSettings(...args), ["prevent"]))
+      }, [
+        vue.createElementVNode("div", _hoisted_2, [
+          _cache[5] || (_cache[5] = vue.createElementVNode("label", {
+            for: "compilatio-api-key",
+            class: "block text-sm font-medium"
+          }, " Clé API Compilatio ", -1)),
+          vue.withDirectives(vue.createElementVNode("input", {
+            id: "compilatio-api-key",
+            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.apiKey = $event),
+            type: "text",
+            name: "apiKey",
+            class: "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20",
+            placeholder: $data.apiKey ? "Clé configurée — saisir une nouvelle valeur pour la remplacer" : "Saisir la clé API",
+            disabled: $data.isLoading || $data.isSaving
+          }, null, 8, _hoisted_3), [
+            [vue.vModelText, $data.apiKey]
+          ]),
+          vue.createElementVNode("p", _hoisted_4, [
+            $data.isLoading ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 0 }, [
+              vue.createTextVNode(" Chargement de la configuration… ")
+            ], 64)) : $data.apiKey ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 1 }, [
+              vue.createTextVNode(" Une clé API est actuellement configurée. ")
+            ], 64)) : (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 2 }, [
+              vue.createTextVNode(" Aucune clé API n’est configurée pour cette revue. ")
+            ], 64))
+          ])
+        ]),
+        $data.apiKey ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_5, [
+          vue.createElementVNode("div", _hoisted_6, [
+            vue.createElementVNode("label", _hoisted_7, [
+              vue.withDirectives(vue.createElementVNode("input", {
+                "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $data.automaticIndexingEnabled = $event),
+                type: "checkbox",
+                class: "mt-1 h-4 w-4 rounded border-slate-300 text-blue-700 focus:ring-blue-600",
+                disabled: $data.isLoading || $data.isSaving
+              }, null, 8, _hoisted_8), [
+                [vue.vModelCheckbox, $data.automaticIndexingEnabled]
+              ]),
+              _cache[6] || (_cache[6] = vue.createElementVNode("span", null, [
+                vue.createElementVNode("strong", { class: "block text-sm font-medium" }, " Activer l’indexation automatique "),
+                vue.createElementVNode("span", { class: "block text-sm text-slate-600" }, " Les documents éligibles pourront être envoyés automatiquement à Compilatio. ")
+              ], -1))
+            ])
+          ]),
+          vue.createElementVNode("fieldset", _hoisted_9, [
+            _cache[7] || (_cache[7] = vue.createElementVNode("legend", { class: "text-sm font-medium" }, " Mode de lancement des analyses ", -1)),
+            (vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList($data.launchModes, (mode) => {
+              return vue.openBlock(), vue.createElementBlock("label", {
+                key: mode.value,
+                class: "flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 p-3"
+              }, [
+                vue.withDirectives(vue.createElementVNode("input", {
+                  "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $data.analysisLaunchMode = $event),
+                  type: "radio",
+                  name: "analysisLaunchMode",
+                  value: mode.value,
+                  class: "mt-1 h-4 w-4 border-slate-300 text-blue-700 focus:ring-blue-600",
+                  disabled: $data.isLoading || $data.isSaving
+                }, null, 8, _hoisted_10), [
+                  [vue.vModelRadio, $data.analysisLaunchMode]
+                ]),
+                vue.createElementVNode("span", null, [
+                  vue.createElementVNode("strong", _hoisted_11, vue.toDisplayString(mode.label), 1),
+                  vue.createElementVNode("span", _hoisted_12, vue.toDisplayString(mode.description), 1)
+                ])
+              ]);
+            }), 128))
+          ]),
+          $data.analysisLaunchMode === "scheduled" ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_13, [
+            _cache[8] || (_cache[8] = vue.createElementVNode("label", {
+              for: "compilatio-scheduled-at",
+              class: "block text-sm font-medium"
+            }, " Date et heure de lancement ", -1)),
+            vue.withDirectives(vue.createElementVNode("input", {
+              id: "compilatio-scheduled-at",
+              "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => $data.scheduledAnalysisAt = $event),
+              type: "datetime-local",
+              class: "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20",
+              disabled: $data.isLoading || $data.isSaving,
+              required: ""
+            }, null, 8, _hoisted_14), [
+              [vue.vModelText, $data.scheduledAnalysisAt]
+            ]),
+            _cache[9] || (_cache[9] = vue.createElementVNode("p", { class: "text-sm text-slate-600" }, " La date est saisie dans le fuseau horaire de votre navigateur. ", -1))
+          ])) : vue.createCommentVNode("", true)
+        ])) : vue.createCommentVNode("", true),
+        $data.message ? (vue.openBlock(), vue.createElementBlock("p", {
+          key: 1,
+          role: "status",
+          class: vue.normalizeClass(["rounded-md px-3 py-2 text-sm", $data.hasError ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"])
+        }, vue.toDisplayString($data.message), 3)) : vue.createCommentVNode("", true),
+        vue.createElementVNode("button", {
+          type: "submit",
+          class: "rounded-md bg-blue-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50",
+          disabled: $data.isLoading || $data.isSaving || !$options.canSave
+        }, vue.toDisplayString($data.isSaving ? "Enregistrement…" : $data.apiKey ? "Enregistrer les paramètres" : "Valider et enregistrer la clé"), 9, _hoisted_15)
+      ], 32)
+    ]);
   }
   const SettingsPanel = /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render]]);
   window.CompilatioSettingsPanel = SettingsPanel;

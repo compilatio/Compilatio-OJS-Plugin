@@ -3,12 +3,14 @@
 namespace APP\plugins\generic\compilatio;
 
 use APP\core\Application;
+use APP\plugins\generic\compilatio\api\CompilatioSettingsController;
 use APP\template\TemplateManager;
 use PKP\core\JSONMessage;
 use PKP\linkAction\LinkAction;
 use PKP\linkAction\request\AjaxModal;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
+use PKP\security\Role;
 use PKP\template\PKPTemplateManager;
 
 class CompilatioPlugin extends GenericPlugin
@@ -21,7 +23,13 @@ class CompilatioPlugin extends GenericPlugin
     {
         $success = parent::register($category, $path, $mainContextId);
 
-        if (!$success || !$this->getEnabled($mainContextId)) {
+        if (!$success) {
+            return $success;
+        }
+
+        Hook::add('APIHandler::endpoints::plugin', [$this, 'registerApiControllers']);
+
+        if (!$this->getEnabled($mainContextId)) {
             return $success;
         }
 
@@ -71,8 +79,51 @@ class CompilatioPlugin extends GenericPlugin
             return parent::manage($args, $request);
         }
 
+        $context = $request->getContext();
+        $user = $request->getUser();
+
+        if (!$context || !$user || !$this->canManageSettings($user, $context->getId())) {
+            return new JSONMessage(false, __('user.authorization.roleBasedAccessDenied'));
+        }
+
         $templateMgr = TemplateManager::getManager($request);
-        return new JSONMessage(true, $templateMgr->fetch($this->getTemplateResource('settings.tpl')));
+        $templateMgr->assign([
+            'compilatioSettingsApiUrl' => $request->getDispatcher()->url(
+                $request,
+                Application::ROUTE_API,
+                $context->getPath(),
+                'plugins/compilatio/settings'
+            ),
+            'compilatioCsrfToken' => $request->getSession()->token(),
+        ]);
+
+        return new JSONMessage(
+            true,
+            $templateMgr->fetch($this->getTemplateResource('settings.tpl'))
+        );
+    }
+
+    private function canManageSettings($user, int $contextId): bool
+    {
+        $roles = array_merge($user->getRoles($contextId), $user->getRoles(null));
+        $roleIds = array_map(static fn ($role) => $role->getRoleId(), $roles);
+
+        return (bool) array_intersect(
+            [Role::ROLE_ID_MANAGER, Role::ROLE_ID_SITE_ADMIN],
+            $roleIds
+        );
+    }
+
+    public function registerApiControllers(string $hookName, $apiRouter): bool
+    {
+        require_once __DIR__ . '/api/CompilatioSettingsRequest.php';
+        require_once __DIR__ . '/api/CompilatioSettingsController.php';
+
+        $apiRouter->registerPluginApiControllers([
+            new CompilatioSettingsController($this),
+        ]);
+
+        return false;
     }
 
     public function addAssets(string $hookName, array $args): bool

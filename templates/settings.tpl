@@ -1,4 +1,8 @@
-<div id="compilatioSettingsPanelRoot"></div>
+<div
+	id="compilatioSettingsPanelRoot"
+	data-api-url="{$compilatioSettingsApiUrl|escape}"
+	data-csrf-token="{$compilatioCsrfToken|escape}"
+></div>
 
 <script>
 	(function () {ldelim}

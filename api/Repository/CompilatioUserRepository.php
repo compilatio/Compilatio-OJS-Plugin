@@ -1,5 +1,6 @@
 <?php
-namespace APP\plugins\generic\compilatio\api\Manager;
+namespace APP\plugins\generic\compilatio\api\Repository;
+
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
 use RuntimeException;
 

@@ -50,7 +50,7 @@ class Bundle {
                 }
 
                 $savedDetections[(string) $process] = [
-                    'enabled' => filter_var($value->enabled ?? false, FILTER_VALIDATE_BOOLEAN),
+                    'enabled' => filter_var($value['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 ];
             }
         }

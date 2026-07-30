@@ -17,6 +17,9 @@ class CompilatioSettingsRequest extends FormRequest
                 'string',
                 Rule::in(['automatic', 'manual', 'scheduled']),
             ],
+            'bundleDetections' => ['sometimes', 'array'],
+            'bundleDetections.*' => ['array'],
+            'bundleDetections.*.enabled' => ['required', 'boolean'],
             'scheduledAnalysisAt' => [
                 'nullable',
                 'required_if:analysisLaunchMode,scheduled',

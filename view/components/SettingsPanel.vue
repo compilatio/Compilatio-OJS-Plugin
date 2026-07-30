@@ -95,6 +95,7 @@ const saveSettings = async () => {
         apiKey: data.apiKey.trim(),
         automaticIndexingEnabled: data.automaticIndexingEnabled,
         analysisLaunchMode: data.analysisLaunchMode,
+        bundleDetections: serializeDetections(data.bundleDetections),
         scheduledAnalysisAt:
           data.analysisLaunchMode === 'scheduled'
             ? new Date(data.scheduledAnalysisAt).toISOString()
@@ -129,11 +130,47 @@ const applySettings = (settings: Record<string, unknown>) => {
     typeof settings.scheduledAnalysisAt === 'string' ? settings.scheduledAnalysisAt : null,
   );
   data.hasFolderRecipeParameters = settings.hasFolderRecipeParameters === true;
-
-  if (Array.isArray(settings.bundleDetections)) {
-    data.bundleDetections = settings.bundleDetections as Detection[];
-  }
+  data.bundleDetections = normalizeDetections(settings.bundleDetections);
 };
+
+const serializeDetections = (detections: Detection[]): Record<string, { enabled: boolean }> =>
+  Object.fromEntries(
+    detections.map((detection) => [
+      detection.process,
+      { enabled: detection.enabled },
+    ]),
+  );
+
+const normalizeDetections = (value: unknown): Detection[] => {
+  if (Array.isArray(value)) {
+    return value.filter(isDetection);
+  }
+
+  if (!isRecord(value)) {
+    return [];
+  }
+
+  return Object.entries(value).flatMap(([process, configuration]) => {
+    if (!isRecord(configuration)) {
+      return [];
+    }
+
+    return [{
+      process,
+      enabled: configuration.enabled === true,
+      configurable: configuration.configurable === true,
+    }];
+  });
+};
+
+const isDetection = (value: unknown): value is Detection =>
+  isRecord(value)
+  && typeof value.process === 'string'
+  && typeof value.enabled === 'boolean'
+  && typeof value.configurable === 'boolean';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
 const updateDetection = (index: number, enabled: boolean) => {
   const detection = data.bundleDetections[index];

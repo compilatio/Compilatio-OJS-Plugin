@@ -3,7 +3,7 @@
 namespace APP\plugins\generic\compilatio\api;
 
 use APP\plugins\generic\compilatio\api\CompilatioSettingsRequest;
-use APP\plugins\generic\compilatio\api\Manager\CompilatioUserRepository;
+use APP\plugins\generic\compilatio\api\Repository\CompilatioUserRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use PKP\plugins\PluginSettingsController;
@@ -82,7 +82,13 @@ class CompilatioSettingsController extends PluginSettingsController
             $settings[] = ['name' => 'hasFolderRecipeParameters', 'value' => $hasFolderRecipeParameters, 'type' => 'bool'];
 
             if ($hasFolderRecipeParameters) {
-                $bundleDetections = $bundle->getFolderDetectionsPayload($this->getReviewSettings());
+                $reviewSettings = $this->getReviewSettings();
+
+                if (isset($settingsFromForm['bundleDetections'])) {
+                    $reviewSettings->bundleDetections = $settingsFromForm['bundleDetections'];
+                }
+
+                $bundleDetections = $bundle->getFolderDetectionsPayload($reviewSettings);
                 $settings[] = ['name' => 'bundleDetections', 'value' => $bundleDetections['stored'], 'type' => 'array'];
             }
         }

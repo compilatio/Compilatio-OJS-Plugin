@@ -27,7 +27,7 @@ class Bundle {
         if (!isset($compilatioUser)) {
             throw new \Exception('No user.');
         }
-        $this->currentBundle = $compilatioUser->current_bundle;
+        $this->currentBundle = $compilatioUser->managed_bundle;
     }
 
     /**

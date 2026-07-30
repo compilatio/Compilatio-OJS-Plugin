@@ -131,8 +131,18 @@ class CompilatioClient
     private function assertSuccessfulResponse(ResponseInterface $response): void
     {
         $statusCode = $response->getStatusCode();
+
         if ($statusCode < 200 || $statusCode >= 300) {
-            throw new RuntimeException(sprintf('Compilatio API returned status %d.', $statusCode), $statusCode);
+            $body = trim((string) $response->getBody());
+
+            throw new RuntimeException(
+                sprintf(
+                    'Compilatio API returned status %d: %s',
+                    $statusCode,
+                    $body !== '' ? $body : $response->getReasonPhrase()
+                ),
+                $statusCode
+            );
         }
     }
 

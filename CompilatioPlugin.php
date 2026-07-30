@@ -4,6 +4,7 @@ namespace APP\plugins\generic\compilatio;
 
 use APP\core\Application;
 use APP\plugins\generic\compilatio\api\CompilatioSettingsController;
+use APP\plugins\generic\compilatio\migration\CompilatioSchemaMigration;
 use APP\template\TemplateManager;
 use PKP\core\JSONMessage;
 use PKP\linkAction\LinkAction;

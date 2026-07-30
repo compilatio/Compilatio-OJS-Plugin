@@ -3,11 +3,14 @@
 namespace APP\plugins\generic\compilatio\api;
 
 use APP\plugins\generic\compilatio\api\CompilatioSettingsRequest;
+use APP\plugins\generic\compilatio\api\Repository\CompilatioConfigRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioUserRepository;
+use APP\plugins\generic\compilatio\api\Services\CompilatioBundleSettingsResolver;
+use APP\plugins\generic\compilatio\api\Services\CompilatioLocaleResolver;
+use APP\plugins\generic\compilatio\api\Services\CompilatioUserSynchronizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use PKP\plugins\PluginSettingsController;
-use APP\plugins\generic\compilatio\api\Class\Bundle;
 
 class CompilatioSettingsController extends PluginSettingsController
 {
@@ -18,6 +21,7 @@ class CompilatioSettingsController extends PluginSettingsController
         'scheduledAnalysisAt' => 'string',
         'hasFolderRecipeParameters' => 'bool',
         'bundleDetections' => 'array',
+        'compilatioUserId' => 'string',
     ];
 
     public function getHandlerPath(): string
@@ -55,11 +59,11 @@ class CompilatioSettingsController extends PluginSettingsController
         $settings = [];
 
         if (!empty($settingsFromForm['apiKey'])) {
-            $compilatioUserRepository = new CompilatioUserRepository();
+            $compilatioUserRepository = new CompilatioUserRepository($settingsFromForm['apiKey']);
 
             try {
-                $currentUser = $compilatioUserRepository
-                    ->getCurrentUser($settingsFromForm['apiKey']);
+                $apiKeyOwnerUser = $compilatioUserRepository
+                    ->getApiKeyOwnerUser();
                 $settings[] = ['name' => 'apiKey', 'value' => $settingsFromForm['apiKey'], 'type' => 'string'];
                 
             } catch (\RuntimeException $exception) {
@@ -77,20 +81,44 @@ class CompilatioSettingsController extends PluginSettingsController
                 ], 503);
             }
 
-            $bundle = new Bundle($currentUser);
-            $hasFolderRecipeParameters = $bundle->isBundleAuthorizedTo('folder-recipe-parameters');
-            $settings[] = ['name' => 'hasFolderRecipeParameters', 'value' => $hasFolderRecipeParameters, 'type' => 'bool'];
+            $requestedDetections = $settingsFromForm['bundleDetections'] ?? null;
 
-            if ($hasFolderRecipeParameters) {
-                $reviewSettings = $this->getReviewSettings();
-
-                if (isset($settingsFromForm['bundleDetections'])) {
-                    $reviewSettings->bundleDetections = $settingsFromForm['bundleDetections'];
-                }
-
-                $bundleDetections = $bundle->getFolderDetectionsPayload($reviewSettings);
-                $settings[] = ['name' => 'bundleDetections', 'value' => $bundleDetections['stored'], 'type' => 'array'];
+            if (!is_array($requestedDetections)) {
+                $requestedDetections = null;
             }
+
+            $bundleSettings = (new CompilatioBundleSettingsResolver())->resolve(
+                $apiKeyOwnerUser,
+                $this->getReviewSettings(),
+                $requestedDetections,
+            );
+
+            $settings[] = [
+                'name' => 'hasFolderRecipeParameters',
+                'value' => $bundleSettings->hasFolderRecipeParameters,
+                'type' => 'bool',
+            ];
+
+            if ($bundleSettings->detections !== null) {
+                $settings[] = [
+                    'name' => 'bundleDetections',
+                    'value' => $bundleSettings->detections,
+                    'type' => 'array',
+                ];
+            }
+
+            $compilatioUserSynchronizer = new CompilatioUserSynchronizer(
+                new CompilatioLocaleResolver(
+                    new CompilatioConfigRepository($settingsFromForm['apiKey'])
+                ),
+                $compilatioUserRepository,
+            );
+
+            $compilatioUserId = $compilatioUserSynchronizer->syncUser(
+                $this->getRequest()->getUser()
+            );
+
+            $settings[] = ['name' => 'compilatioUserId', 'value' => $compilatioUserId, 'type' => 'string'];
         }
 
         $settings[] = ['name' => 'automaticIndexingEnabled', 'value' => $settingsFromForm['automaticIndexingEnabled'], 'type' => 'bool'];

@@ -13,13 +13,13 @@
 				return;
 			{rdelim}
 
-			if (!window.pkp || !window.pkp.pkpCreateVueApp || !window.CompilatioSettingsPanel) {ldelim}
+			if (!window.pkp || !window.pkp.pkpCreateVueApp || !window.mountCompilatioSettingsApp) {ldelim}
 				window.setTimeout(mountCompilatioSettingsPanel, 100);
 				return;
 			{rdelim}
 
+			window.mountCompilatioSettingsApp(target);
 			target.dataset.mounted = 'true';
-			window.pkp.pkpCreateVueApp(window.CompilatioSettingsPanel).mount(target);
 		{rdelim}
 
 		mountCompilatioSettingsPanel();

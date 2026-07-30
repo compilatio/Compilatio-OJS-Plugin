@@ -21,9 +21,9 @@ class CompilatioClient
     }
 
     /**
-     * @return array<mixed, mixed>
+     * @return object
      */
-    public function get(string $endpoint): array
+    public function get(string $endpoint): object
     {
         $response = $this->request('GET', $endpoint);
         $this->assertSuccessfulResponse($response);
@@ -32,9 +32,9 @@ class CompilatioClient
 
     /**
      * @param array<string, array<mixed> | string> $payload
-     * @return array<mixed, mixed>
+     * @return object
      */
-    public function post(string $endpoint, array $payload): array
+    public function post(string $endpoint, array $payload): object
     {
         $options = [
             RequestOptions::JSON => $payload,
@@ -48,9 +48,9 @@ class CompilatioClient
 
     /**
      * @param array<array<string, string|resource>> $payload
-     * @return array<mixed, mixed>
+     * @return object
      */
-    public function postFile(string $endpoint, array $payload): array
+    public function postFile(string $endpoint, array $payload): object
     {
         $options = [
             RequestOptions::MULTIPART => $payload
@@ -136,18 +136,15 @@ class CompilatioClient
         }
     }
 
-    /**
-     * @return array<mixed, mixed>
-     */
-    private function checkJsonBody(ResponseInterface $response): array
+    private function checkJsonBody(ResponseInterface $response): object
     {
         try {
-            $decodedResponse = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+            $decodedResponse = json_decode((string) $response->getBody(), false, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
             throw new RuntimeException('Compilatio API returned an invalid JSON payload.', 0, $exception);
         }
 
-        if (!is_array($decodedResponse)) {
+        if (!is_object($decodedResponse)) {
             throw new RuntimeException('Compilatio API returned an invalid JSON payload.');
         }
 

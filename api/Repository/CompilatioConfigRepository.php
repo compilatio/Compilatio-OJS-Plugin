@@ -3,6 +3,7 @@ namespace APP\plugins\generic\compilatio\api\Repository;
 
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
 use APP\plugins\generic\compilatio\api\Client\CompilatioResponse;
+use GuzzleHttp\Client;
 use RuntimeException;
 
 class CompilatioConfigRepository
@@ -13,7 +14,7 @@ class CompilatioConfigRepository
     
     public function get(): object
     {
-        $client = new CompilatioClient($this->apiKey, new \GuzzleHttp\Client());
+        $client = new CompilatioClient($this->apiKey, new Client());
         try {
             $configurationlmsresponse = $client->get('public/configuration-lms');
             $configurationresponse = $client->get('public/configuration');

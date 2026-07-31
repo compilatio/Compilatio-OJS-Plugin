@@ -2,12 +2,14 @@
 import { computed, onMounted, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import type { AnalysisLaunchMode, Detection } from '../types/settings';
+import type { AnalysisLaunchMode, Detection, Thresholds } from '../types/settings';
 import AnalysisLaunchSettings from './organisms/AnalysisLaunchSettings.vue';
 import ApiKeySettings from './organisms/ApiKeySettings.vue';
 import DetectionSettings from './organisms/DetectionSettings.vue';
+import ThresholdSettings from './organisms/ThresholdSettings.vue';
 
 const { t } = useI18n();
+const defaultThresholds: Thresholds = { warning: 10, critical: 20 };
 
 const data = reactive({
   apiKey: '',
@@ -22,6 +24,7 @@ const data = reactive({
   isSaving: false,
   message: '',
   scheduledAnalysisAt: '',
+  thresholds: { ...defaultThresholds },
 });
 
 const canSave = computed(() => {
@@ -29,7 +32,15 @@ const canSave = computed(() => {
     return false;
   }
 
-  return data.analysisLaunchMode !== 'scheduled' || Boolean(data.scheduledAnalysisAt);
+  const scheduledDateIsValid = data.analysisLaunchMode !== 'scheduled'
+    || Boolean(data.scheduledAnalysisAt);
+  const thresholdsAreValid = Number.isInteger(data.thresholds.warning)
+    && Number.isInteger(data.thresholds.critical)
+    && data.thresholds.warning >= 0
+    && data.thresholds.critical <= 100
+    && data.thresholds.warning <= data.thresholds.critical;
+
+  return scheduledDateIsValid && thresholdsAreValid;
 });
 
 onMounted(() => {
@@ -96,6 +107,7 @@ const saveSettings = async () => {
         automaticIndexingEnabled: data.automaticIndexingEnabled,
         analysisLaunchMode: data.analysisLaunchMode,
         bundleDetections: serializeDetections(data.bundleDetections),
+        thresholds: data.thresholds,
         scheduledAnalysisAt:
           data.analysisLaunchMode === 'scheduled'
             ? new Date(data.scheduledAnalysisAt).toISOString()
@@ -131,6 +143,22 @@ const applySettings = (settings: Record<string, unknown>) => {
   );
   data.hasFolderRecipeParameters = settings.hasFolderRecipeParameters === true;
   data.bundleDetections = normalizeDetections(settings.bundleDetections);
+  data.thresholds = normalizeThresholds(settings.thresholds);
+};
+
+const normalizeThresholds = (value: unknown): Thresholds => {
+  if (!isRecord(value)) {
+    return { ...defaultThresholds };
+  }
+
+  return {
+    warning: typeof value.warning === 'number'
+      ? value.warning
+      : defaultThresholds.warning,
+    critical: typeof value.critical === 'number'
+      ? value.critical
+      : defaultThresholds.critical,
+  };
 };
 
 const serializeDetections = (detections: Detection[]): Record<string, { enabled: boolean }> =>
@@ -236,6 +264,13 @@ const toLocalDateTime = (value: string | null): string => {
       <div class="px-6 sm:px-8">
         <ApiKeySettings
           v-model="data.apiKey"
+          :disabled="data.isSaving"
+        />
+
+        <ThresholdSettings
+          v-if="data.apiKey"
+          v-model:warning="data.thresholds.warning"
+          v-model:critical="data.thresholds.critical"
           :disabled="data.isSaving"
         />
 

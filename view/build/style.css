@@ -166,8 +166,16 @@
     margin-top: calc(var(--spacing) * 2) !important;
   }
 
+  .mt-3 {
+    margin-top: calc(var(--spacing) * 3) !important;
+  }
+
   .mt-5 {
     margin-top: calc(var(--spacing) * 5) !important;
+  }
+
+  .mb-1 {
+    margin-bottom: var(--spacing) !important;
   }
 
   .mb-5 {
@@ -649,6 +657,10 @@
   @media (min-width: 40rem) {
     .sm\:mx-8 {
       margin-inline: calc(var(--spacing) * 8) !important;
+    }
+
+    .sm\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
 
     .sm\:px-8 {

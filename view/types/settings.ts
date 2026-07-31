@@ -5,3 +5,8 @@ export interface Detection {
   enabled: boolean;
   configurable: boolean;
 }
+
+export interface Thresholds {
+  warning: number;
+  critical: number;
+}

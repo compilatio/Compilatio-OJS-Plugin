@@ -17,15 +17,16 @@ class CompilatioClient
     public function __construct(
         private readonly string $token,
         private readonly ClientInterface $httpClient,
+        private readonly ?string $userId = null,
     ) {
     }
 
     /**
      * @return object
      */
-    public function get(string $endpoint): object
+    public function get(string $endpoint, bool $addUserId = false): object
     {
-        $response = $this->request('GET', $endpoint);
+        $response = $this->request('GET', $endpoint, $addUserId);
         $this->assertSuccessfulResponse($response);
         return $this->checkJsonBody($response);
     }
@@ -34,13 +35,13 @@ class CompilatioClient
      * @param array<string, array<mixed> | string> $payload
      * @return object
      */
-    public function post(string $endpoint, array $payload): object
+    public function post(string $endpoint, array $payload, bool $addUserId = false): object
     {
         $options = [
             RequestOptions::JSON => $payload,
         ];
 
-        $response = $this->request('POST', $endpoint, $options);
+        $response = $this->request('POST', $endpoint, $addUserId, $options);
         
         $this->assertSuccessfulResponse($response);
         return $this->checkJsonBody($response);
@@ -50,20 +51,20 @@ class CompilatioClient
      * @param array<array<string, string|resource>> $payload
      * @return object
      */
-    public function postFile(string $endpoint, array $payload): object
+    public function postFile(string $endpoint, array $payload, bool $addUserId = false): object
     {
         $options = [
             RequestOptions::MULTIPART => $payload
         ];
 
-        $response = $this->request('POST', $endpoint, $options);
+        $response = $this->request('POST', $endpoint, $addUserId, $options);
         $this->assertSuccessfulResponse($response);
         return $this->checkJsonBody($response);
     }
 
-    public function delete(string $endpoint): void
+    public function delete(string $endpoint, bool $addUserId = false): void
     {
-        $response = $this->request('DELETE', $endpoint);
+        $response = $this->request('DELETE', $endpoint, $addUserId);
 
         if (404 === $response->getStatusCode()) {
             return;
@@ -74,22 +75,22 @@ class CompilatioClient
     /**
      * @param array<string, array<string> | mixed> $payload
      */
-    public function patch(string $endpoint, array $payload): void
+    public function patch(string $endpoint, array $payload, bool $addUserId = false): void
     {
         $options = [
             RequestOptions::JSON => $payload,
         ];
 
-        $response = $this->request('PATCH', $endpoint, $options);
+        $response = $this->request('PATCH', $endpoint, $addUserId, $options);
         $this->assertSuccessfulResponse($response);
     }
 
     /**
      * @param array<string, mixed> $options
      */
-    private function request(string $method, string $endpoint, array $options = []): ResponseInterface
+    private function request(string $method, string $endpoint, bool $addUserId, array $options = []): ResponseInterface
     {
-        $options = $this->addAuthorizationHeader($options);
+        $options = $this->addAuthorizationHeader($options, $addUserId);
 
         return $this->sendRequest($method, $endpoint, $options);
     }
@@ -120,11 +121,14 @@ class CompilatioClient
      * @param array<string, mixed> $options
      * @return array<string, mixed>
      */
-    private function addAuthorizationHeader(array $options): array
+    private function addAuthorizationHeader(array $options, bool $addUserId): array
     {
         $options[RequestOptions::HEADERS] ??= [];
         $options[RequestOptions::HEADERS]['X-Auth-Token'] = $this->token;
 
+        if ($addUserId && $this->userId !== null) {
+            $options[RequestOptions::HEADERS]['X-LMS-USER-ID'] = $this->userId;
+        }
         return $options;
     }
 

@@ -4244,8 +4244,8 @@
   registerMessageResolver(resolveValue);
   registerLocaleFallbacker(fallbackWithLocaleChain);
   const _imports_0 = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20id='Calque_1'%20data-name='Calque%201'%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201509.47%20214'%3e%3cdefs%3e%3cstyle%3e%20.cls-1%20{%20fill:%20%23ef83b3;%20}%20.cls-2%20{%20fill:%20%23e62d38;%20}%20%3c/style%3e%3c/defs%3e%3cg%3e%3cpath%20class='cls-2'%20d='M98.65,114.47c-6.1-6.15-14.77-9.72-24.81-9.72-20.09,0-34.65,14.67-34.65,34.89s14.57,34.89,34.65,34.89c10.04,0,18.71-3.57,24.81-9.91l27.57,27.36c-13.39,13.48-31.9,22.01-52.38,22.01C33.08,214,0,180.69,0,139.65s33.08-74.35,73.84-74.35c20.28,0,38.59,8.13,51.98,21.61l-27.17,27.56Z'/%3e%3cpath%20class='cls-2'%20d='M221.98,65.31c40.76,0,73.84,33.51,73.84,74.55s-33.08,74.15-73.84,74.15-73.65-33.11-73.65-74.15,32.88-74.55,73.65-74.55ZM221.98,104.16c-19.3,0-35.05,15.86-35.05,35.49s15.75,35.49,35.05,35.49,35.25-16.06,35.25-35.49-15.75-35.49-35.25-35.49Z'/%3e%3cpath%20class='cls-2'%20d='M406.67,120.42l60.06-55.12h17.53v148.7h-38.99v-76.33l-38.59,35.49-38.79-35.29v76.13h-38.99V65.31h17.53l60.25,55.12Z'/%3e%3cpath%20class='cls-2'%20d='M530.28,65.31h62.22c29.93,0,54.35,24.58,54.35,54.72s-24.22,54.52-53.56,54.52h-24.22v39.45h-38.79V65.31ZM568.82,140.84h19.22c11.82,0,21.27-9.32,21.27-21.21s-9.45-21.41-21.27-21.41h-19.22v42.63Z'/%3e%3cpath%20class='cls-2'%20d='M680.42,65.31h38.79v148.7h-38.79V65.31Z'/%3e%3cpath%20class='cls-2'%20d='M873.77,214l68.92-148.7h17.53l69.51,148.7h-38.79l-9.06-19.43h-60.45l-8.86,19.43h-38.79ZM936.58,161.66h30.13l-14.96-32.71-15.16,32.71Z'/%3e%3cpath%20class='cls-2'%20d='M1036.24,65.31h116.37v38.66h-39.19v110.03h-38.79v-110.03h-38.4v-38.66Z'/%3e%3cpath%20class='cls-2'%20d='M1191.29,65.31h38.79v148.7h-38.79V65.31Z'/%3e%3cpath%20class='cls-2'%20d='M1346.39,65.31c40.76,0,73.84,33.51,73.84,74.55s-33.08,74.15-73.84,74.15-73.64-33.11-73.64-74.15,32.88-74.55,73.64-74.55ZM1346.39,104.16c-19.3,0-35.05,15.86-35.05,35.49s15.75,35.49,35.05,35.49,35.25-16.06,35.25-35.49-15.75-35.49-35.25-35.49Z'/%3e%3cpolygon%20class='cls-2'%20points='804.5%20174.75%20804.5%2065.31%20765.71%2065.31%20765.71%20214%20836.88%20214%20855.57%20174.75%20804.5%20174.75'/%3e%3c/g%3e%3cg%3e%3cpolygon%20class='cls-2'%20points='1509.47%2065.25%201509.46%2065.26%201509.47%2065.26%201509.47%2065.25'/%3e%3cpolygon%20class='cls-2'%20points='1444.21%200%201444.21%2065.26%201509.46%2065.26%201509.47%2065.25%201509.47%200%201444.21%200'/%3e%3c/g%3e%3cpolygon%20class='cls-1'%20points='1471.55%2065.26%201509.46%2065.26%201471.55%20103.16%201471.55%2065.26'/%3e%3c/svg%3e";
-  const _hoisted_1$9 = ["aria-checked", "disabled"];
-  const _sfc_main$9 = /* @__PURE__ */ vue.defineComponent({
+  const _hoisted_1$a = ["aria-checked", "disabled"];
+  const _sfc_main$a = /* @__PURE__ */ vue.defineComponent({
     __name: "AppSwitch",
     props: {
       modelValue: { type: Boolean, required: true },
@@ -4271,12 +4271,12 @@
             "aria-hidden": "true",
             class: vue.normalizeClass(["pointer-events-none absolute left-0 inline-block h-5 w-5 transform rounded-full border border-gray-300 bg-white shadow transition-transform duration-200 ease-in-out", __props.modelValue ? "translate-x-5" : "translate-x-0"])
           }, null, 2)
-        ], 10, _hoisted_1$9);
+        ], 10, _hoisted_1$a);
       };
     }
   });
-  const _hoisted_1$8 = ["autocomplete", "disabled", "name", "placeholder", "required", "type", "value"];
-  const _sfc_main$8 = /* @__PURE__ */ vue.defineComponent({
+  const _hoisted_1$9 = ["autocomplete", "disabled", "name", "placeholder", "required", "type", "value"];
+  const _sfc_main$9 = /* @__PURE__ */ vue.defineComponent({
     __name: "AppTextInput",
     props: {
       autocomplete: { type: String, default: void 0 },
@@ -4304,12 +4304,12 @@
           type: __props.type,
           value: __props.modelValue,
           onInput: handleInput
-        }, null, 40, _hoisted_1$8);
+        }, null, 40, _hoisted_1$9);
       };
     }
   });
-  const _hoisted_1$7 = ["checked", "disabled", "name", "value"];
-  const _sfc_main$7 = /* @__PURE__ */ vue.defineComponent({
+  const _hoisted_1$8 = ["checked", "disabled", "name", "value"];
+  const _sfc_main$8 = /* @__PURE__ */ vue.defineComponent({
     __name: "AppRadio",
     props: {
       checked: { type: Boolean, required: true },
@@ -4328,14 +4328,14 @@
           name: __props.name,
           value: __props.value,
           onChange: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("select", __props.value))
-        }, null, 40, _hoisted_1$7);
+        }, null, 40, _hoisted_1$8);
       };
     }
   });
-  const _hoisted_1$6 = { class: "flex cursor-pointer items-start gap-3 border-t border-slate-200 px-4 py-3 transition first:border-t-0 hover:bg-slate-50" };
-  const _hoisted_2$6 = { class: "block text-sm font-medium text-slate-900" };
-  const _hoisted_3$5 = { class: "mt-0.5 block text-sm leading-5 text-slate-500" };
-  const _sfc_main$6 = /* @__PURE__ */ vue.defineComponent({
+  const _hoisted_1$7 = { class: "flex cursor-pointer items-start gap-3 border-t border-slate-200 px-4 py-3 transition first:border-t-0 hover:bg-slate-50" };
+  const _hoisted_2$7 = { class: "block text-sm font-medium text-slate-900" };
+  const _hoisted_3$6 = { class: "mt-0.5 block text-sm leading-5 text-slate-500" };
+  const _sfc_main$7 = /* @__PURE__ */ vue.defineComponent({
     __name: "LaunchModeOption",
     props: {
       description: { type: String, required: true },
@@ -4351,8 +4351,8 @@
         emit("update:modelValue", value);
       };
       return (_ctx, _cache) => {
-        return vue.openBlock(), vue.createElementBlock("label", _hoisted_1$6, [
-          vue.createVNode(_sfc_main$7, {
+        return vue.openBlock(), vue.createElementBlock("label", _hoisted_1$7, [
+          vue.createVNode(_sfc_main$8, {
             name: "analysisLaunchMode",
             checked: __props.modelValue === __props.value,
             disabled: __props.disabled,
@@ -4360,8 +4360,8 @@
             onSelect: selectMode
           }, null, 8, ["checked", "disabled", "value"]),
           vue.createElementVNode("span", null, [
-            vue.createElementVNode("span", _hoisted_2$6, vue.toDisplayString(__props.label), 1),
-            vue.createElementVNode("span", _hoisted_3$5, vue.toDisplayString(__props.description), 1)
+            vue.createElementVNode("span", _hoisted_2$7, vue.toDisplayString(__props.label), 1),
+            vue.createElementVNode("span", _hoisted_3$6, vue.toDisplayString(__props.description), 1)
           ])
         ]);
       };
@@ -7804,24 +7804,24 @@
     iconName: "circle-question",
     icon: [512, 512, [62108, "question-circle"], "f059", "M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM169.8 165.3c7.9-22.3 29.1-37.3 52.8-37.3l58.3 0c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L280 264.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24l0-13.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1l-58.3 0c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"]
   };
-  const _hoisted_1$5 = { class: "grid gap-4 border-b border-slate-200 py-6 md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] md:gap-8" };
-  const _hoisted_2$5 = { class: "min-w-0" };
-  const _hoisted_3$4 = { class: "flex items-start gap-2" };
-  const _hoisted_4$2 = ["aria-expanded"];
-  const _hoisted_5$2 = {
+  const _hoisted_1$6 = { class: "grid gap-4 border-b border-slate-200 py-6 md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] md:gap-8" };
+  const _hoisted_2$6 = { class: "min-w-0" };
+  const _hoisted_3$5 = { class: "flex items-start gap-2" };
+  const _hoisted_4$3 = ["aria-expanded"];
+  const _hoisted_5$3 = {
     key: 0,
     class: "mt-2 text-xs leading-5 text-slate-500"
   };
-  const _hoisted_6$2 = { class: "min-w-0 self-center" };
-  const _sfc_main$5 = /* @__PURE__ */ vue.defineComponent({
+  const _hoisted_6$3 = { class: "min-w-0 self-center" };
+  const _sfc_main$6 = /* @__PURE__ */ vue.defineComponent({
     __name: "SettingsField",
     setup(__props) {
       const slots = vue.useSlots();
       const displayHelp = vue.ref(false);
       return (_ctx, _cache) => {
-        return vue.openBlock(), vue.createElementBlock("div", _hoisted_1$5, [
-          vue.createElementVNode("div", _hoisted_2$5, [
-            vue.createElementVNode("div", _hoisted_3$4, [
+        return vue.openBlock(), vue.createElementBlock("div", _hoisted_1$6, [
+          vue.createElementVNode("div", _hoisted_2$6, [
+            vue.createElementVNode("div", _hoisted_3$5, [
               vue.renderSlot(_ctx.$slots, "label"),
               vue.unref(slots).help ? (vue.openBlock(), vue.createElementBlock("button", {
                 key: 0,
@@ -7831,35 +7831,35 @@
                 onClick: _cache[0] || (_cache[0] = ($event) => displayHelp.value = !displayHelp.value)
               }, [
                 vue.createVNode(vue.unref(FontAwesomeIcon), { icon: vue.unref(faCircleQuestion) }, null, 8, ["icon"])
-              ], 8, _hoisted_4$2)) : vue.createCommentVNode("", true)
+              ], 8, _hoisted_4$3)) : vue.createCommentVNode("", true)
             ]),
-            displayHelp.value ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_5$2, [
+            displayHelp.value ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_5$3, [
               vue.renderSlot(_ctx.$slots, "help")
             ])) : vue.createCommentVNode("", true)
           ]),
-          vue.createElementVNode("div", _hoisted_6$2, [
+          vue.createElementVNode("div", _hoisted_6$3, [
             vue.renderSlot(_ctx.$slots, "default")
           ])
         ]);
       };
     }
   });
-  const _hoisted_1$4 = { class: "text-sm font-medium text-slate-900" };
-  const _hoisted_2$4 = { class: "mt-1 text-sm leading-5 text-slate-500" };
-  const _hoisted_3$3 = { class: "flex items-center gap-3" };
-  const _hoisted_4$1 = {
+  const _hoisted_1$5 = { class: "text-sm font-medium text-slate-900" };
+  const _hoisted_2$5 = { class: "mt-1 text-sm leading-5 text-slate-500" };
+  const _hoisted_3$4 = { class: "flex items-center gap-3" };
+  const _hoisted_4$2 = {
     for: "automatic-indexing",
     class: "cursor-pointer text-sm text-slate-700"
   };
-  const _hoisted_5$1 = { class: "text-sm font-medium text-slate-900" };
-  const _hoisted_6$1 = { class: "mt-1 text-sm leading-5 text-slate-500" };
-  const _hoisted_7$1 = { class: "overflow-hidden rounded-md border border-slate-200" };
-  const _hoisted_8$1 = {
+  const _hoisted_5$2 = { class: "text-sm font-medium text-slate-900" };
+  const _hoisted_6$2 = { class: "mt-1 text-sm leading-5 text-slate-500" };
+  const _hoisted_7$2 = { class: "overflow-hidden rounded-md border border-slate-200" };
+  const _hoisted_8$2 = {
     for: "compilatio-scheduled-at",
     class: "block text-sm font-medium text-slate-900"
   };
-  const _hoisted_9$1 = { class: "mt-1 text-sm leading-5 text-slate-500" };
-  const _sfc_main$4 = /* @__PURE__ */ vue.defineComponent({
+  const _hoisted_9$2 = { class: "mt-1 text-sm leading-5 text-slate-500" };
+  const _sfc_main$5 = /* @__PURE__ */ vue.defineComponent({
     __name: "AnalysisLaunchSettings",
     props: {
       automaticIndexingEnabled: { type: Boolean, required: true },
@@ -7889,37 +7889,37 @@
       ];
       return (_ctx, _cache) => {
         return vue.openBlock(), vue.createElementBlock(vue.Fragment, null, [
-          vue.createVNode(_sfc_main$5, null, {
+          vue.createVNode(_sfc_main$6, null, {
             label: vue.withCtx(() => [
               vue.createElementVNode("div", null, [
-                vue.createElementVNode("p", _hoisted_1$4, vue.toDisplayString(vue.unref(t2)("settings_automatic_indexing")), 1),
-                vue.createElementVNode("p", _hoisted_2$4, vue.toDisplayString(vue.unref(t2)("settings_automatic_indexing_description")), 1)
+                vue.createElementVNode("p", _hoisted_1$5, vue.toDisplayString(vue.unref(t2)("settings_automatic_indexing")), 1),
+                vue.createElementVNode("p", _hoisted_2$5, vue.toDisplayString(vue.unref(t2)("settings_automatic_indexing_description")), 1)
               ])
             ]),
             default: vue.withCtx(() => [
-              vue.createElementVNode("div", _hoisted_3$3, [
-                vue.createVNode(_sfc_main$9, {
+              vue.createElementVNode("div", _hoisted_3$4, [
+                vue.createVNode(_sfc_main$a, {
                   id: "automatic-indexing",
                   disabled: __props.disabled,
                   "model-value": __props.automaticIndexingEnabled,
                   "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => _ctx.$emit("update:automaticIndexingEnabled", $event))
                 }, null, 8, ["disabled", "model-value"]),
-                vue.createElementVNode("label", _hoisted_4$1, vue.toDisplayString(__props.automaticIndexingEnabled ? vue.unref(t2)("common_enabled") : vue.unref(t2)("common_disabled")), 1)
+                vue.createElementVNode("label", _hoisted_4$2, vue.toDisplayString(__props.automaticIndexingEnabled ? vue.unref(t2)("common_enabled") : vue.unref(t2)("common_disabled")), 1)
               ])
             ]),
             _: 1
           }),
-          vue.createVNode(_sfc_main$5, null, {
+          vue.createVNode(_sfc_main$6, null, {
             label: vue.withCtx(() => [
               vue.createElementVNode("div", null, [
-                vue.createElementVNode("p", _hoisted_5$1, vue.toDisplayString(vue.unref(t2)("settings_launch_mode")), 1),
-                vue.createElementVNode("p", _hoisted_6$1, vue.toDisplayString(vue.unref(t2)("settings_launch_mode_description")), 1)
+                vue.createElementVNode("p", _hoisted_5$2, vue.toDisplayString(vue.unref(t2)("settings_launch_mode")), 1),
+                vue.createElementVNode("p", _hoisted_6$2, vue.toDisplayString(vue.unref(t2)("settings_launch_mode_description")), 1)
               ])
             ]),
             default: vue.withCtx(() => [
-              vue.createElementVNode("div", _hoisted_7$1, [
+              vue.createElementVNode("div", _hoisted_7$2, [
                 (vue.openBlock(), vue.createElementBlock(vue.Fragment, null, vue.renderList(launchModes, (mode) => {
-                  return vue.createVNode(_sfc_main$6, {
+                  return vue.createVNode(_sfc_main$7, {
                     key: mode.value,
                     description: vue.unref(t2)(mode.descriptionKey),
                     disabled: __props.disabled,
@@ -7933,15 +7933,15 @@
             ]),
             _: 1
           }),
-          __props.launchMode === "scheduled" ? (vue.openBlock(), vue.createBlock(_sfc_main$5, { key: 0 }, {
+          __props.launchMode === "scheduled" ? (vue.openBlock(), vue.createBlock(_sfc_main$6, { key: 0 }, {
             label: vue.withCtx(() => [
               vue.createElementVNode("div", null, [
-                vue.createElementVNode("label", _hoisted_8$1, vue.toDisplayString(vue.unref(t2)("settings_scheduled_at")), 1),
-                vue.createElementVNode("p", _hoisted_9$1, vue.toDisplayString(vue.unref(t2)("settings_scheduled_at_description")), 1)
+                vue.createElementVNode("label", _hoisted_8$2, vue.toDisplayString(vue.unref(t2)("settings_scheduled_at")), 1),
+                vue.createElementVNode("p", _hoisted_9$2, vue.toDisplayString(vue.unref(t2)("settings_scheduled_at_description")), 1)
               ])
             ]),
             default: vue.withCtx(() => [
-              vue.createVNode(_sfc_main$8, {
+              vue.createVNode(_sfc_main$9, {
                 id: "compilatio-scheduled-at",
                 disabled: __props.disabled,
                 "model-value": __props.scheduledAt,
@@ -7956,12 +7956,12 @@
       };
     }
   });
-  const _hoisted_1$3 = {
+  const _hoisted_1$4 = {
     for: "compilatio-api-key",
     class: "block text-sm font-medium text-slate-900"
   };
-  const _hoisted_2$3 = { class: "mt-1 text-sm leading-5 text-slate-500" };
-  const _sfc_main$3 = /* @__PURE__ */ vue.defineComponent({
+  const _hoisted_2$4 = { class: "mt-1 text-sm leading-5 text-slate-500" };
+  const _sfc_main$4 = /* @__PURE__ */ vue.defineComponent({
     __name: "ApiKeySettings",
     props: {
       disabled: { type: Boolean, default: false },
@@ -7971,15 +7971,15 @@
     setup(__props) {
       const { t: t2 } = useI18n();
       return (_ctx, _cache) => {
-        return vue.openBlock(), vue.createBlock(_sfc_main$5, null, {
+        return vue.openBlock(), vue.createBlock(_sfc_main$6, null, {
           label: vue.withCtx(() => [
             vue.createElementVNode("div", null, [
-              vue.createElementVNode("label", _hoisted_1$3, vue.toDisplayString(vue.unref(t2)("settings_api_key")), 1),
-              vue.createElementVNode("p", _hoisted_2$3, vue.toDisplayString(vue.unref(t2)("settings_api_key_description")), 1)
+              vue.createElementVNode("label", _hoisted_1$4, vue.toDisplayString(vue.unref(t2)("settings_api_key")), 1),
+              vue.createElementVNode("p", _hoisted_2$4, vue.toDisplayString(vue.unref(t2)("settings_api_key_description")), 1)
             ])
           ]),
           default: vue.withCtx(() => [
-            vue.createVNode(_sfc_main$8, {
+            vue.createVNode(_sfc_main$9, {
               id: "compilatio-api-key",
               autocomplete: "new-password",
               disabled: __props.disabled,
@@ -7995,13 +7995,13 @@
       };
     }
   });
-  const _hoisted_1$2 = { class: "flex min-h-12 items-center justify-between gap-4 border-t border-slate-200 py-3 first:border-t-0" };
-  const _hoisted_2$2 = ["for"];
-  const _hoisted_3$2 = {
+  const _hoisted_1$3 = { class: "flex min-h-12 items-center justify-between gap-4 border-t border-slate-200 py-3 first:border-t-0" };
+  const _hoisted_2$3 = ["for"];
+  const _hoisted_3$3 = {
     key: 0,
     class: "mt-0.5 block text-xs italic text-slate-500"
   };
-  const _sfc_main$2 = /* @__PURE__ */ vue.defineComponent({
+  const _sfc_main$3 = /* @__PURE__ */ vue.defineComponent({
     __name: "DetectionOption",
     props: {
       detection: { type: Object, required: true },
@@ -8012,15 +8012,15 @@
       const emit = __emit;
       const { t: t2 } = useI18n();
       return (_ctx, _cache) => {
-        return vue.openBlock(), vue.createElementBlock("div", _hoisted_1$2, [
+        return vue.openBlock(), vue.createElementBlock("div", _hoisted_1$3, [
           vue.createElementVNode("label", {
             for: `detection_${__props.detection.process}`,
             class: vue.normalizeClass(["text-sm text-slate-800", __props.detection.configurable ? "cursor-pointer" : ""])
           }, [
             vue.createTextVNode(vue.toDisplayString(vue.unref(t2)(`detection_${__props.detection.process}`)) + " ", 1),
-            !__props.detection.configurable ? (vue.openBlock(), vue.createElementBlock("span", _hoisted_3$2, vue.toDisplayString(__props.detection.enabled ? vue.unref(t2)("detection_always_enabled") : vue.unref(t2)("detection_disabled_by_admin")), 1)) : vue.createCommentVNode("", true)
-          ], 10, _hoisted_2$2),
-          vue.createVNode(_sfc_main$9, {
+            !__props.detection.configurable ? (vue.openBlock(), vue.createElementBlock("span", _hoisted_3$3, vue.toDisplayString(__props.detection.enabled ? vue.unref(t2)("detection_always_enabled") : vue.unref(t2)("detection_disabled_by_admin")), 1)) : vue.createCommentVNode("", true)
+          ], 10, _hoisted_2$3),
+          vue.createVNode(_sfc_main$a, {
             id: `detection_${__props.detection.process}`,
             "model-value": __props.detection.enabled,
             disabled: __props.disabled || !__props.detection.configurable,
@@ -8030,10 +8030,10 @@
       };
     }
   });
-  const _hoisted_1$1 = { class: "text-sm font-medium text-slate-900" };
-  const _hoisted_2$1 = { class: "mt-1 text-sm leading-5 text-slate-500" };
-  const _hoisted_3$1 = { class: "overflow-hidden rounded-md border border-slate-200 px-4" };
-  const _sfc_main$1 = /* @__PURE__ */ vue.defineComponent({
+  const _hoisted_1$2 = { class: "text-sm font-medium text-slate-900" };
+  const _hoisted_2$2 = { class: "mt-1 text-sm leading-5 text-slate-500" };
+  const _hoisted_3$2 = { class: "overflow-hidden rounded-md border border-slate-200 px-4" };
+  const _sfc_main$2 = /* @__PURE__ */ vue.defineComponent({
     __name: "DetectionSettings",
     props: {
       detections: { type: Array, required: true },
@@ -8048,17 +8048,17 @@
         () => props.detections.map((detection, index) => ({ detection, index })).filter(({ detection }) => detection.process !== "rich_extraction")
       );
       return (_ctx, _cache) => {
-        return visibleDetections.value.length ? (vue.openBlock(), vue.createBlock(_sfc_main$5, { key: 0 }, {
+        return visibleDetections.value.length ? (vue.openBlock(), vue.createBlock(_sfc_main$6, { key: 0 }, {
           label: vue.withCtx(() => [
             vue.createElementVNode("div", null, [
-              vue.createElementVNode("p", _hoisted_1$1, vue.toDisplayString(vue.unref(t2)("settings_detections")), 1),
-              vue.createElementVNode("p", _hoisted_2$1, vue.toDisplayString(vue.unref(t2)("settings_detections_description")), 1)
+              vue.createElementVNode("p", _hoisted_1$2, vue.toDisplayString(vue.unref(t2)("settings_detections")), 1),
+              vue.createElementVNode("p", _hoisted_2$2, vue.toDisplayString(vue.unref(t2)("settings_detections_description")), 1)
             ])
           ]),
           default: vue.withCtx(() => [
-            vue.createElementVNode("div", _hoisted_3$1, [
+            vue.createElementVNode("div", _hoisted_3$2, [
               (vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(visibleDetections.value, (item) => {
-                return vue.openBlock(), vue.createBlock(_sfc_main$2, {
+                return vue.openBlock(), vue.createBlock(_sfc_main$3, {
                   key: item.detection.process,
                   detection: item.detection,
                   disabled: __props.disabled,
@@ -8069,6 +8069,84 @@
           ]),
           _: 1
         })) : vue.createCommentVNode("", true);
+      };
+    }
+  });
+  const _hoisted_1$1 = { class: "text-sm font-medium text-slate-900" };
+  const _hoisted_2$1 = { class: "mt-1 text-sm leading-5 text-slate-500" };
+  const _hoisted_3$1 = { class: "grid gap-4 sm:grid-cols-2" };
+  const _hoisted_4$1 = { class: "block text-sm text-slate-700" };
+  const _hoisted_5$1 = { class: "mb-1 block font-medium" };
+  const _hoisted_6$1 = ["disabled", "value"];
+  const _hoisted_7$1 = { class: "block text-sm text-slate-700" };
+  const _hoisted_8$1 = { class: "mb-1 block font-medium" };
+  const _hoisted_9$1 = ["disabled", "min", "value"];
+  const _hoisted_10$1 = {
+    key: 0,
+    class: "mt-3 text-sm font-medium text-red-700",
+    role: "alert"
+  };
+  const _sfc_main$1 = /* @__PURE__ */ vue.defineComponent({
+    __name: "ThresholdSettings",
+    props: {
+      critical: { type: Number, required: true },
+      disabled: { type: Boolean, default: false },
+      warning: { type: Number, required: true }
+    },
+    emits: ["update:critical", "update:warning"],
+    setup(__props, { emit: __emit }) {
+      const props = __props;
+      const emit = __emit;
+      const { t: t2 } = useI18n();
+      const warningExceedsCritical = vue.computed(() => props.warning > props.critical);
+      const updateNumber = (field, event) => {
+        const value = Number(event.target.value);
+        const normalizedValue = Number.isFinite(value) ? value : 0;
+        if (field === "warning") {
+          emit("update:warning", normalizedValue);
+          return;
+        }
+        emit("update:critical", normalizedValue);
+      };
+      return (_ctx, _cache) => {
+        return vue.openBlock(), vue.createBlock(_sfc_main$6, null, {
+          label: vue.withCtx(() => [
+            vue.createElementVNode("div", null, [
+              vue.createElementVNode("p", _hoisted_1$1, vue.toDisplayString(vue.unref(t2)("settings_thresholds")), 1),
+              vue.createElementVNode("p", _hoisted_2$1, vue.toDisplayString(vue.unref(t2)("settings_thresholds_description")), 1)
+            ])
+          ]),
+          default: vue.withCtx(() => [
+            vue.createElementVNode("div", _hoisted_3$1, [
+              vue.createElementVNode("label", _hoisted_4$1, [
+                vue.createElementVNode("span", _hoisted_5$1, vue.toDisplayString(vue.unref(t2)("settings_threshold_warning")), 1),
+                vue.createElementVNode("input", {
+                  class: "block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
+                  disabled: __props.disabled,
+                  max: "100",
+                  min: "0",
+                  value: __props.warning,
+                  type: "number",
+                  onInput: _cache[0] || (_cache[0] = ($event) => updateNumber("warning", $event))
+                }, null, 40, _hoisted_6$1)
+              ]),
+              vue.createElementVNode("label", _hoisted_7$1, [
+                vue.createElementVNode("span", _hoisted_8$1, vue.toDisplayString(vue.unref(t2)("settings_threshold_critical")), 1),
+                vue.createElementVNode("input", {
+                  class: "block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
+                  disabled: __props.disabled,
+                  max: "100",
+                  min: __props.warning,
+                  value: __props.critical,
+                  type: "number",
+                  onInput: _cache[1] || (_cache[1] = ($event) => updateNumber("critical", $event))
+                }, null, 40, _hoisted_9$1)
+              ])
+            ]),
+            warningExceedsCritical.value ? (vue.openBlock(), vue.createElementBlock("p", _hoisted_10$1, vue.toDisplayString(vue.unref(t2)("settings_error_threshold_order")), 1)) : vue.createCommentVNode("", true)
+          ]),
+          _: 1
+        });
       };
     }
   });
@@ -8089,6 +8167,7 @@
     __name: "SettingsPanel",
     setup(__props) {
       const { t: t2 } = useI18n();
+      const defaultThresholds = { warning: 10, critical: 20 };
       const data = vue.reactive({
         apiKey: "",
         apiUrl: "",
@@ -8101,13 +8180,16 @@
         isLoading: true,
         isSaving: false,
         message: "",
-        scheduledAnalysisAt: ""
+        scheduledAnalysisAt: "",
+        thresholds: { ...defaultThresholds }
       });
       const canSave = vue.computed(() => {
         if (!data.apiKey.trim()) {
           return false;
         }
-        return data.analysisLaunchMode !== "scheduled" || Boolean(data.scheduledAnalysisAt);
+        const scheduledDateIsValid = data.analysisLaunchMode !== "scheduled" || Boolean(data.scheduledAnalysisAt);
+        const thresholdsAreValid = Number.isInteger(data.thresholds.warning) && Number.isInteger(data.thresholds.critical) && data.thresholds.warning >= 0 && data.thresholds.critical <= 100 && data.thresholds.warning <= data.thresholds.critical;
+        return scheduledDateIsValid && thresholdsAreValid;
       });
       vue.onMounted(() => {
         const root = document.querySelector("#compilatioSettingsPanelRoot");
@@ -8164,6 +8246,7 @@
               automaticIndexingEnabled: data.automaticIndexingEnabled,
               analysisLaunchMode: data.analysisLaunchMode,
               bundleDetections: serializeDetections(data.bundleDetections),
+              thresholds: data.thresholds,
               scheduledAnalysisAt: data.analysisLaunchMode === "scheduled" ? new Date(data.scheduledAnalysisAt).toISOString() : null
             })
           });
@@ -8190,6 +8273,16 @@
         );
         data.hasFolderRecipeParameters = settings.hasFolderRecipeParameters === true;
         data.bundleDetections = normalizeDetections(settings.bundleDetections);
+        data.thresholds = normalizeThresholds(settings.thresholds);
+      };
+      const normalizeThresholds = (value) => {
+        if (!isRecord(value)) {
+          return { ...defaultThresholds };
+        }
+        return {
+          warning: typeof value.warning === "number" ? value.warning : defaultThresholds.warning,
+          critical: typeof value.critical === "number" ? value.critical : defaultThresholds.critical
+        };
       };
       const serializeDetections = (detections) => Object.fromEntries(
         detections.map((detection) => [
@@ -8260,30 +8353,38 @@
             ])
           ]),
           data.isLoading ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_7, [
-            _cache[4] || (_cache[4] = vue.createElementVNode("span", { class: "h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" }, null, -1)),
+            _cache[6] || (_cache[6] = vue.createElementVNode("span", { class: "h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" }, null, -1)),
             vue.createTextVNode(" " + vue.toDisplayString(vue.unref(t2)("settings_loading")), 1)
           ])) : (vue.openBlock(), vue.createElementBlock("form", {
             key: 1,
             onSubmit: vue.withModifiers(saveSettings, ["prevent"])
           }, [
             vue.createElementVNode("div", _hoisted_8, [
-              vue.createVNode(_sfc_main$3, {
+              vue.createVNode(_sfc_main$4, {
                 modelValue: data.apiKey,
                 "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => data.apiKey = $event),
                 disabled: data.isSaving
               }, null, 8, ["modelValue", "disabled"]),
-              data.apiKey ? (vue.openBlock(), vue.createBlock(_sfc_main$4, {
+              data.apiKey ? (vue.openBlock(), vue.createBlock(_sfc_main$1, {
                 key: 0,
+                warning: data.thresholds.warning,
+                "onUpdate:warning": _cache[1] || (_cache[1] = ($event) => data.thresholds.warning = $event),
+                critical: data.thresholds.critical,
+                "onUpdate:critical": _cache[2] || (_cache[2] = ($event) => data.thresholds.critical = $event),
+                disabled: data.isSaving
+              }, null, 8, ["warning", "critical", "disabled"])) : vue.createCommentVNode("", true),
+              data.apiKey ? (vue.openBlock(), vue.createBlock(_sfc_main$5, {
+                key: 1,
                 "automatic-indexing-enabled": data.automaticIndexingEnabled,
-                "onUpdate:automaticIndexingEnabled": _cache[1] || (_cache[1] = ($event) => data.automaticIndexingEnabled = $event),
+                "onUpdate:automaticIndexingEnabled": _cache[3] || (_cache[3] = ($event) => data.automaticIndexingEnabled = $event),
                 "launch-mode": data.analysisLaunchMode,
-                "onUpdate:launchMode": _cache[2] || (_cache[2] = ($event) => data.analysisLaunchMode = $event),
+                "onUpdate:launchMode": _cache[4] || (_cache[4] = ($event) => data.analysisLaunchMode = $event),
                 "scheduled-at": data.scheduledAnalysisAt,
-                "onUpdate:scheduledAt": _cache[3] || (_cache[3] = ($event) => data.scheduledAnalysisAt = $event),
+                "onUpdate:scheduledAt": _cache[5] || (_cache[5] = ($event) => data.scheduledAnalysisAt = $event),
                 disabled: data.isSaving
               }, null, 8, ["automatic-indexing-enabled", "launch-mode", "scheduled-at", "disabled"])) : vue.createCommentVNode("", true),
-              data.apiKey && data.hasFolderRecipeParameters ? (vue.openBlock(), vue.createBlock(_sfc_main$1, {
-                key: 1,
+              data.apiKey && data.hasFolderRecipeParameters ? (vue.openBlock(), vue.createBlock(_sfc_main$2, {
+                key: 2,
                 detections: data.bundleDetections,
                 disabled: data.isSaving,
                 onChange: updateDetection
@@ -8329,6 +8430,7 @@
     settings_error_missing_api_url: "The settings API URL is missing.",
     settings_error_required_fields: "The API key and, in scheduled mode, the launch date are required.",
     settings_error_saving: "Unable to save the settings.",
+    settings_error_threshold_order: "The warning threshold must not be greater than the critical threshold.",
     settings_launch_mode: "Analysis launch",
     settings_launch_mode_automatic: "Automatic",
     settings_launch_mode_automatic_description: "The analysis starts as soon as the document is indexed.",
@@ -8344,7 +8446,11 @@
     settings_saving: "Saving…",
     settings_scheduled_at: "Launch date and time",
     settings_scheduled_at_description: "The date uses your browser’s time zone.",
-    settings_title: "Compilatio settings"
+    settings_title: "Compilatio settings",
+    settings_thresholds: "Similarity thresholds",
+    settings_thresholds_description: "Set the warning and critical similarity levels, from 0 to 100.",
+    settings_threshold_warning: "Warning threshold (%)",
+    settings_threshold_critical: "Critical threshold (%)"
   };
   const fr = {
     common_disabled: "Désactivé",
@@ -8369,6 +8475,7 @@
     settings_error_missing_api_url: "L’URL de l’API de configuration est absente.",
     settings_error_required_fields: "La clé API et, en mode planifié, la date de lancement sont obligatoires.",
     settings_error_saving: "Impossible d’enregistrer les paramètres.",
+    settings_error_threshold_order: "Le seuil d’avertissement ne doit pas être supérieur au seuil critique.",
     settings_launch_mode: "Lancement des analyses",
     settings_launch_mode_automatic: "Automatique",
     settings_launch_mode_automatic_description: "L’analyse démarre dès que le document est indexé.",
@@ -8384,7 +8491,11 @@
     settings_saving: "Enregistrement…",
     settings_scheduled_at: "Date et heure de lancement",
     settings_scheduled_at_description: "La date utilise le fuseau horaire de votre navigateur.",
-    settings_title: "Paramètres Compilatio"
+    settings_title: "Paramètres Compilatio",
+    settings_thresholds: "Seuils de similarité",
+    settings_thresholds_description: "Définissez les niveaux de similarité d’avertissement et critique, de 0 à 100.",
+    settings_threshold_warning: "Seuil d’avertissement (%)",
+    settings_threshold_critical: "Seuil critique (%)"
   };
   window.mountCompilatioSettingsApp = (target) => {
     const documentLocale = document.documentElement.lang || "fr";

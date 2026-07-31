@@ -21,6 +21,7 @@ export default {
   settings_error_missing_api_url: 'The settings API URL is missing.',
   settings_error_required_fields: 'The API key and, in scheduled mode, the launch date are required.',
   settings_error_saving: 'Unable to save the settings.',
+  settings_error_threshold_order: 'The warning threshold must not be greater than the critical threshold.',
   settings_launch_mode: 'Analysis launch',
   settings_launch_mode_automatic: 'Automatic',
   settings_launch_mode_automatic_description: 'The analysis starts as soon as the document is indexed.',
@@ -37,4 +38,8 @@ export default {
   settings_scheduled_at: 'Launch date and time',
   settings_scheduled_at_description: 'The date uses your browser’s time zone.',
   settings_title: 'Compilatio settings',
+  settings_thresholds: 'Similarity thresholds',
+  settings_thresholds_description: 'Set the warning and critical similarity levels, from 0 to 100.',
+  settings_threshold_warning: 'Warning threshold (%)',
+  settings_threshold_critical: 'Critical threshold (%)',
 };

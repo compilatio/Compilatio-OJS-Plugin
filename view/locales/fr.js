@@ -21,6 +21,7 @@ export default {
   settings_error_missing_api_url: 'L’URL de l’API de configuration est absente.',
   settings_error_required_fields: 'La clé API et, en mode planifié, la date de lancement sont obligatoires.',
   settings_error_saving: 'Impossible d’enregistrer les paramètres.',
+  settings_error_threshold_order: 'Le seuil d’avertissement ne doit pas être supérieur au seuil critique.',
   settings_launch_mode: 'Lancement des analyses',
   settings_launch_mode_automatic: 'Automatique',
   settings_launch_mode_automatic_description: 'L’analyse démarre dès que le document est indexé.',
@@ -37,4 +38,8 @@ export default {
   settings_scheduled_at: 'Date et heure de lancement',
   settings_scheduled_at_description: 'La date utilise le fuseau horaire de votre navigateur.',
   settings_title: 'Paramètres Compilatio',
+  settings_thresholds: 'Seuils de similarité',
+  settings_thresholds_description: 'Définissez les niveaux de similarité d’avertissement et critique, de 0 à 100.',
+  settings_threshold_warning: 'Seuil d’avertissement (%)',
+  settings_threshold_critical: 'Seuil critique (%)',
 };

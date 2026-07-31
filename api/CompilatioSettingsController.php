@@ -4,6 +4,7 @@ namespace APP\plugins\generic\compilatio\api;
 
 use APP\plugins\generic\compilatio\api\CompilatioSettingsRequest;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioConfigRepository;
+use APP\plugins\generic\compilatio\api\Repository\CompilatioFolderRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioUserRepository;
 use APP\plugins\generic\compilatio\api\Services\CompilatioBundleSettingsResolver;
 use APP\plugins\generic\compilatio\api\Services\CompilatioLocaleResolver;
@@ -14,6 +15,9 @@ use PKP\plugins\PluginSettingsController;
 
 class CompilatioSettingsController extends PluginSettingsController
 {
+    private const DEFAULT_WARNING_THRESHOLD = 10;
+    private const DEFAULT_CRITICAL_THRESHOLD = 20;
+
     private const SETTINGS = [
         'apiKey' => 'string',
         'automaticIndexingEnabled' => 'bool',
@@ -21,6 +25,7 @@ class CompilatioSettingsController extends PluginSettingsController
         'scheduledAnalysisAt' => 'string',
         'hasFolderRecipeParameters' => 'bool',
         'bundleDetections' => 'array',
+        'thresholds' => 'array',
     ];
 
     public function getHandlerPath(): string
@@ -47,6 +52,7 @@ class CompilatioSettingsController extends PluginSettingsController
                 ?: null,
             'compilatioUserId' => $this->plugin->getSetting($contextId, 'compilatioUserId') ?: null,
             'primaryOjsUserId' => $this->plugin->getSetting($contextId, 'primaryOjsUserId') ?: null,
+            'thresholds' => $this->getThresholds($contextId),
         ];
 
         $compilatioUserRepository = new CompilatioUserRepository($this->plugin->getSetting($contextId, 'apiKey'));
@@ -73,6 +79,16 @@ class CompilatioSettingsController extends PluginSettingsController
         $contextId = $this->getContextId();
         $settingsFromForm = $illuminateRequest->validated();
         $settings = [];
+        $thresholdsFromForm = $settingsFromForm['thresholds'] ?? null;
+
+        if (!is_array($thresholdsFromForm)) {
+            throw new \RuntimeException('The thresholds settings are invalid.');
+        }
+
+        $thresholds = [
+            'warning' => (int) ($thresholdsFromForm['warning'] ?? 0),
+            'critical' => (int) ($thresholdsFromForm['critical'] ?? 0),
+        ];
 
         if (!empty($settingsFromForm['apiKey'])) {
             $compilatioUserRepository = new CompilatioUserRepository($settingsFromForm['apiKey']);
@@ -159,11 +175,46 @@ class CompilatioSettingsController extends PluginSettingsController
                 $this->plugin->updateSetting($contextId, 'compilatioUserId', $compilatioUserId, 'string');
                 $this->plugin->updateSetting($contextId, 'primaryOjsUserId', $currentUserId, 'int');
             }
+
+            $compilatioFolderRepository = new CompilatioFolderRepository($settingsFromForm['apiKey'], $this->plugin->getSetting($contextId, 'compilatioUserId'));
+            $compilatioFolder = $compilatioFolderRepository->get();
+            $reviewName = $this->getRequest()->getContext()->getLocalizedName();
+            $hasOJSFolder = false;
+            foreach ($compilatioFolder as $folder) {
+
+                if ($folder->origin !== 'OJS' || $folder->name !== $reviewName) {
+                    continue;
+                }
+
+                $hasOJSFolder = true;
+                $this->plugin->updateSetting($contextId, 'compilatioFolderId', $folder->id, 'string');
+                $compilatioFolderRepository->update(
+                    (string) $folder->id,
+                    $reviewName,
+                    $thresholds['warning'],
+                    $thresholds['critical'],
+                    $settingsFromForm['defaultIndexing'] ?? false,
+                    $settingsFromForm['autoAnalysis'] ?? false,
+                    $settingsFromForm['scheduledAnalysisEnabled'] ?? false
+                );
+            }
+
+            if (!$hasOJSFolder) {
+                $folder = $compilatioFolderRepository->create($reviewName,
+                    $thresholds['warning'],
+                    $thresholds['critical'],
+                    $settingsFromForm['defaultIndexing'] ?? false,
+                    $settingsFromForm['autoAnalysis'] ?? false,
+                    $settingsFromForm['scheduledAnalysisEnabled'] ?? false
+                );
+                $this->plugin->updateSetting($contextId, 'compilatioFolderId', $folder->id, 'string');
+            }
         }
 
         $settings[] = ['name' => 'automaticIndexingEnabled', 'value' => $settingsFromForm['automaticIndexingEnabled'], 'type' => 'bool'];
         $settings[] = ['name' => 'analysisLaunchMode', 'value' => $settingsFromForm['analysisLaunchMode'], 'type' => 'string'];
         $settings[] = ['name' => 'scheduledAnalysisAt', 'value' => $settingsFromForm['analysisLaunchMode'] === 'scheduled' ? $settingsFromForm['scheduledAnalysisAt'] : '', 'type' => 'string'];
+        $settings[] = ['name' => 'thresholds', 'value' => $thresholds, 'type' => 'array'];
 
         foreach ($settings as $setting) {
             $this->plugin->updateSetting(
@@ -202,5 +253,23 @@ class CompilatioSettingsController extends PluginSettingsController
         }
 
         return (object) $settings;
+    }
+
+    /**
+     * @return array{warning: int, critical: int}
+     */
+    private function getThresholds(int $contextId): array
+    {
+        $thresholds = $this->plugin->getSetting($contextId, 'thresholds');
+        $thresholds = is_array($thresholds) ? $thresholds : (array) $thresholds;
+
+        return [
+                'warning' => isset($thresholds['warning'])
+                ? (int) $thresholds['warning']
+                : self::DEFAULT_WARNING_THRESHOLD,
+            'critical' => isset($thresholds['critical'])
+                ? (int) $thresholds['critical']
+                : self::DEFAULT_CRITICAL_THRESHOLD,
+        ];
     }
 }

@@ -21,7 +21,6 @@ class CompilatioSettingsController extends PluginSettingsController
         'scheduledAnalysisAt' => 'string',
         'hasFolderRecipeParameters' => 'bool',
         'bundleDetections' => 'array',
-        'compilatioUserId' => 'string',
     ];
 
     public function getHandlerPath(): string
@@ -32,7 +31,10 @@ class CompilatioSettingsController extends PluginSettingsController
     public function get(Request $illuminateRequest): JsonResponse
     {
         $contextId = $this->getContextId();
-        $hasFolderRecipeParameters = $this->plugin->getSetting($contextId, 'hasFolderRecipeParameters') ?: null;
+        if (!($this->plugin->getSetting($contextId, 'apiKey'))) {
+            return response()->json([]);
+        }
+
         $response = [
             'apiKey' => $this->plugin->getSetting($contextId, 'apiKey'),
             'automaticIndexingEnabled' => (bool) $this->plugin->getSetting(
@@ -43,12 +45,26 @@ class CompilatioSettingsController extends PluginSettingsController
                 ?: 'manual',
             'scheduledAnalysisAt' => $this->plugin->getSetting($contextId, 'scheduledAnalysisAt')
                 ?: null,
-            'hasFolderRecipeParameters' => $hasFolderRecipeParameters,
+            'compilatioUserId' => $this->plugin->getSetting($contextId, 'compilatioUserId') ?: null,
+            'primaryOjsUserId' => $this->plugin->getSetting($contextId, 'primaryOjsUserId') ?: null,
         ];
 
-        if ($hasFolderRecipeParameters) {
-            $response['bundleDetections'] = $this->plugin->getSetting($contextId, 'bundleDetections') ?: null;
+        $compilatioUserRepository = new CompilatioUserRepository($this->plugin->getSetting($contextId, 'apiKey'));
+
+        $apiKeyOwnerUser = $compilatioUserRepository->getApiKeyOwnerUser();
+
+        $bundleSettings = (new CompilatioBundleSettingsResolver())->resolve(
+            $apiKeyOwnerUser,
+            $this->getReviewSettings()
+        );
+
+        $response['hasFolderRecipeParameters'] = $bundleSettings->hasFolderRecipeParameters;
+        
+        if ($bundleSettings->hasFolderRecipeParameters) {
+            $response['bundleDetections'] = $bundleSettings->detections ?? null;
+            $this->plugin->updateSetting($contextId, 'bundleDetections', $bundleSettings->detections ?? null, 'array');
         }
+
         return response()->json($response);
     }
 
@@ -71,13 +87,13 @@ class CompilatioSettingsController extends PluginSettingsController
                     return response()->json([
                         'error' => 'invalidApiKey',
                         'errorMessage' =>
-                            'La clé API fournie est invalide.',
+                            'The provided API key is invalid.',
                     ], 400);
                 }
                 return response()->json([
                     'error' => 'compilatioUnavailable',
                     'errorMessage' =>
-                        'Impossible de contacter Compilatio.',
+                        'Unable to contact Compilatio.',
                 ], 503);
             }
 
@@ -99,26 +115,50 @@ class CompilatioSettingsController extends PluginSettingsController
                 'type' => 'bool',
             ];
 
-            if ($bundleSettings->detections !== null) {
-                $settings[] = [
-                    'name' => 'bundleDetections',
-                    'value' => $bundleSettings->detections,
-                    'type' => 'array',
-                ];
+            $settings[] = [
+                'name' => 'bundleDetections',
+                'value' => $bundleSettings->detections ?? null,
+                'type' => 'array',
+            ];
+
+            $actualCompilatioUserId = $this->plugin->getSetting(
+                $contextId,
+                'compilatioUserId'
+            );
+
+            if ($actualCompilatioUserId === null || $actualCompilatioUserId === '') {
+                $currentUser = $this->getRequest()->getUser();
+
+                if ($currentUser === null) {
+                    return response()->json([
+                        'error' => 'unauthenticated',
+                        'errorMessage' => 'The OJS user is not authenticated.',
+                    ], 401);
+                }
+
+                $currentUserId = $currentUser->getId();
+
+                if ($currentUserId === null) {
+                    return response()->json([
+                        'error' => 'invalidOjsUser',
+                        'errorMessage' => 'Unable to retrieve the OJS user ID.',
+                    ], 500);
+                }
+
+                $compilatioUserSynchronizer = new CompilatioUserSynchronizer(
+                    new CompilatioLocaleResolver(
+                        new CompilatioConfigRepository($settingsFromForm['apiKey'])
+                    ),
+                    $compilatioUserRepository,
+                );
+
+                $compilatioUserId = $compilatioUserSynchronizer->syncUser(
+                    $currentUser
+                );
+
+                $this->plugin->updateSetting($contextId, 'compilatioUserId', $compilatioUserId, 'string');
+                $this->plugin->updateSetting($contextId, 'primaryOjsUserId', $currentUserId, 'int');
             }
-
-            $compilatioUserSynchronizer = new CompilatioUserSynchronizer(
-                new CompilatioLocaleResolver(
-                    new CompilatioConfigRepository($settingsFromForm['apiKey'])
-                ),
-                $compilatioUserRepository,
-            );
-
-            $compilatioUserId = $compilatioUserSynchronizer->syncUser(
-                $this->getRequest()->getUser()
-            );
-
-            $settings[] = ['name' => 'compilatioUserId', 'value' => $compilatioUserId, 'type' => 'string'];
         }
 
         $settings[] = ['name' => 'automaticIndexingEnabled', 'value' => $settingsFromForm['automaticIndexingEnabled'], 'type' => 'bool'];
@@ -139,6 +179,8 @@ class CompilatioSettingsController extends PluginSettingsController
             $return[$setting['name']] = $setting['value'];
         }
 
+        $return['compilatioUserId'] = $this->plugin->getSetting($contextId, 'compilatioUserId') ?: null;
+        $return['primaryOjsUserId'] = $this->plugin->getSetting($contextId, 'primaryOjsUserId') ?: null;
         return response()->json($return);
     }
 

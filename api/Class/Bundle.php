@@ -14,9 +14,9 @@ class Bundle {
     ];
 
     /**
-     * @var object $currentBundle User managed bundle.
+     * @var object $managedBundle User managed bundle.
      */
-    public object $currentBundle;
+    public object $managedBundle;
 
     /**
      * Class constructor
@@ -27,7 +27,7 @@ class Bundle {
         if (!isset($compilatioUser)) {
             throw new \Exception('No user.');
         }
-        $this->currentBundle = $compilatioUser->managed_bundle;
+        $this->managedBundle = $compilatioUser->managed_bundle;
     }
 
     /**
@@ -80,7 +80,7 @@ class Bundle {
                 isset($savedDetections[$detection->process])
                 && $configurable
             ) {
-                $detection->enabled = $savedDetections[$detection->process]['enabled'];
+                $detection->enabled = $savedDetections[$detection->process]['enabled'] = true;
             }
 
             $detectionsAccess->detections[$key] = $detection;
@@ -144,7 +144,7 @@ class Bundle {
      * @return bool True if recipe is an Anasim recipe, false otherwise.
      */
     public function isAnasimRecipe(): bool {
-        return $this->currentBundle->name === 'magister-premium' ? true : false;
+        return $this->managedBundle->name === 'magister-premium' ? true : false;
     }
 
     /**
@@ -155,7 +155,7 @@ class Bundle {
      */
     private function getAccess(string $searchedAccess) {
 
-        foreach ($this->currentBundle->accesses as $access) {
+        foreach ($this->managedBundle->accesses as $access) {
             if (isset($access->{$searchedAccess})) {
                 return $access;
             }

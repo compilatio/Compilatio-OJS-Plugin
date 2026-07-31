@@ -4,7 +4,6 @@ namespace APP\plugins\generic\compilatio\api\Services;
 use PKP\user\User;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioUserRepository;
 use RuntimeException;
-use InvalidArgumentException;
 
 final class CompilatioUserSynchronizer
 {
@@ -13,12 +12,8 @@ final class CompilatioUserSynchronizer
         private CompilatioUserRepository $remoteUsers,
     ) {}
 
-    public function syncUser(?User $currentOJSUser): string
+    public function syncUser(User $currentOJSUser): string
     {
-        if ($currentOJSUser === null) {
-            throw new InvalidArgumentException('OJS user cannot be null.');
-        }
-
         $locale = $this->localeResolver->resolve();
 
         $compilatioUser = $this->remoteUsers->setUser(

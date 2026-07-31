@@ -3,12 +3,15 @@
 namespace APP\plugins\generic\compilatio\api;
 
 use APP\plugins\generic\compilatio\api\CompilatioSettingsRequest;
+use APP\plugins\generic\compilatio\api\DTO\CompilatioFolderConfiguration;
+use APP\plugins\generic\compilatio\api\Factory\CompilatioFolderRepositoryFactory;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioConfigRepository;
-use APP\plugins\generic\compilatio\api\Repository\CompilatioFolderRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioUserRepository;
-use APP\plugins\generic\compilatio\api\Services\CompilatioBundleSettingsResolver;
-use APP\plugins\generic\compilatio\api\Services\CompilatioLocaleResolver;
-use APP\plugins\generic\compilatio\api\Services\CompilatioUserSynchronizer;
+use APP\plugins\generic\compilatio\api\Services\Resolver\CompilatioBundleSettingsResolver;
+use APP\plugins\generic\compilatio\api\Services\Resolver\CompilatioLocaleResolver;
+use APP\plugins\generic\compilatio\api\Services\Initializer\CompilatioPrimaryUserInitializer;
+use APP\plugins\generic\compilatio\api\Services\Synchronizer\CompilatioFolderSynchronizer;
+use APP\plugins\generic\compilatio\api\Services\Synchronizer\CompilatioUserSynchronizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use PKP\plugins\PluginSettingsController;
@@ -152,63 +155,58 @@ class CompilatioSettingsController extends PluginSettingsController
                     ], 401);
                 }
 
-                $currentUserId = $currentUser->getId();
-
-                if ($currentUserId === null) {
-                    return response()->json([
-                        'error' => 'invalidOjsUser',
-                        'errorMessage' => 'Unable to retrieve the OJS user ID.',
-                    ], 500);
-                }
-
-                $compilatioUserSynchronizer = new CompilatioUserSynchronizer(
-                    new CompilatioLocaleResolver(
-                        new CompilatioConfigRepository($settingsFromForm['apiKey'])
-                    ),
-                    $compilatioUserRepository,
+                $primaryUserInitializer = new CompilatioPrimaryUserInitializer(
+                    $this->plugin,
+                    new CompilatioUserSynchronizer(
+                        new CompilatioLocaleResolver(
+                            new CompilatioConfigRepository(
+                                $settingsFromForm['apiKey']
+                            )
+                        ),
+                        $compilatioUserRepository,
+                    )
                 );
 
-                $compilatioUserId = $compilatioUserSynchronizer->syncUser(
-                    $currentUser
-                );
-
-                $this->plugin->updateSetting($contextId, 'compilatioUserId', $compilatioUserId, 'string');
-                $this->plugin->updateSetting($contextId, 'primaryOjsUserId', $currentUserId, 'int');
-            }
-
-            $compilatioFolderRepository = new CompilatioFolderRepository($settingsFromForm['apiKey'], $this->plugin->getSetting($contextId, 'compilatioUserId'));
-            $compilatioFolder = $compilatioFolderRepository->get();
-            $reviewName = $this->getRequest()->getContext()->getLocalizedName();
-            $hasOJSFolder = false;
-            foreach ($compilatioFolder as $folder) {
-
-                if ($folder->origin !== 'OJS' || $folder->name !== $reviewName) {
-                    continue;
-                }
-
-                $hasOJSFolder = true;
-                $this->plugin->updateSetting($contextId, 'compilatioFolderId', $folder->id, 'string');
-                $compilatioFolderRepository->update(
-                    (string) $folder->id,
-                    $reviewName,
-                    $thresholds['warning'],
-                    $thresholds['critical'],
-                    $settingsFromForm['defaultIndexing'] ?? false,
-                    $settingsFromForm['autoAnalysis'] ?? false,
-                    $settingsFromForm['scheduledAnalysisEnabled'] ?? false
+                $primaryUserInitializer->initializeIfMissing(
+                    $contextId,
+                    $currentUser,
                 );
             }
 
-            if (!$hasOJSFolder) {
-                $folder = $compilatioFolderRepository->create($reviewName,
-                    $thresholds['warning'],
-                    $thresholds['critical'],
-                    $settingsFromForm['defaultIndexing'] ?? false,
-                    $settingsFromForm['autoAnalysis'] ?? false,
-                    $settingsFromForm['scheduledAnalysisEnabled'] ?? false
-                );
-                $this->plugin->updateSetting($contextId, 'compilatioFolderId', $folder->id, 'string');
-            }
+            $folderConfiguration = new CompilatioFolderConfiguration(
+                warningThreshold: $thresholds['warning'],
+                criticalThreshold: $thresholds['critical'],
+                defaultIndexing:
+                    (bool) ($settingsFromForm['defaultIndexing'] ?? false),
+                autoAnalysis:
+                    (bool) ($settingsFromForm['autoAnalysis'] ?? false),
+                scheduledAnalysisEnabled:
+                    (bool) ($settingsFromForm['scheduledAnalysisEnabled'] ?? false),
+            );
+
+            $folderRepository = (new CompilatioFolderRepositoryFactory())->create(
+                $settingsFromForm['apiKey'],
+                $this->plugin->getSetting(
+                    $contextId,
+                    'compilatioUserId'
+                ),
+            );
+
+            $folderSynchronizer = new CompilatioFolderSynchronizer(
+                $folderRepository
+            );
+
+            $folderId = $folderSynchronizer->synchronize(
+                $this->getRequest()->getContext()->getLocalizedName(),
+                $folderConfiguration,
+            );
+
+            $this->plugin->updateSetting(
+                $contextId,
+                'compilatioFolderId',
+                $folderId,
+                'string'
+            );
         }
 
         $settings[] = ['name' => 'automaticIndexingEnabled', 'value' => $settingsFromForm['automaticIndexingEnabled'], 'type' => 'bool'];

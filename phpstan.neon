@@ -1,0 +1,21 @@
+parameters:
+    level: max
+
+    paths:
+        - api
+        - CompilatioPlugin.php
+
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+
+    scanDirectories:
+        - ../../../classes
+        - ../../../lib/pkp/classes
+
+    tmpDir: /tmp/phpstan-compilatio
+
+    excludePaths:
+        analyse:
+            - view
+            - node_modules
+            - vendor

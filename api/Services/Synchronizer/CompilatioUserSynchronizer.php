@@ -1,8 +1,9 @@
 <?php
-namespace APP\plugins\generic\compilatio\api\Services;
+namespace APP\plugins\generic\compilatio\api\Services\Synchronizer;
 
-use PKP\user\User;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioUserRepository;
+use APP\plugins\generic\compilatio\api\Services\Resolver\CompilatioLocaleResolver;
+use PKP\user\User;
 use RuntimeException;
 
 final class CompilatioUserSynchronizer

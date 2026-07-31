@@ -1,6 +1,6 @@
 <?php
 
-namespace APP\plugins\generic\compilatio\api\Services;
+namespace APP\plugins\generic\compilatio\api\Services\Resolver;
 
 use APP\plugins\generic\compilatio\api\Class\Bundle;
 use APP\plugins\generic\compilatio\api\DTO\CompilatioBundleSettings;

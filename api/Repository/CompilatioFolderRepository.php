@@ -3,64 +3,84 @@ namespace APP\plugins\generic\compilatio\api\Repository;
 
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
 use APP\plugins\generic\compilatio\api\Client\CompilatioResponse;
-use GuzzleHttp\Client;
+use APP\plugins\generic\compilatio\api\DTO\CompilatioFolderConfiguration;
 
 class CompilatioFolderRepository
 {
     public function __construct(
-        private readonly string $apiKey,
-        private readonly ?string $userId = null
-    ) {}
+        private readonly CompilatioClient $client,
+    ) {
+    }
 
     /**
      * @return array<object>
      */
     public function get(): array
     {
-        $compilatioClient = new CompilatioClient($this->apiKey, new Client(), $this->userId);
-        $response = $compilatioClient->get('private/folders', true);
+        $response = $this->client->get('private/folders', true);
         return CompilatioResponse::arrayAt($response, 'data', 'folders');
     }
 
-    public function create(string $name, int $warningThreshold, int $criticalThreshold, bool $defaultIndexing, bool $autoAnalysis, bool $scheduledAnalysisEnabled): object
-    {
-        $compilatioClient = new CompilatioClient($this->apiKey, new Client(), $this->userId);
-        $response = $compilatioClient->post('private/folders',
-        [
+    public function create(
+        string $name,
+        CompilatioFolderConfiguration $configuration,
+    ): object {
+        $response = $this->client->post('private/folders', [
             'name' => $name,
             'origin' => 'OJS',
             'thresholds' => [
-                'warning' => $warningThreshold,
-                'critical' => $criticalThreshold,
+                'warning' => $configuration->warningThreshold,
+                'critical' => $configuration->criticalThreshold,
             ],
-            'default_indexing' => $defaultIndexing,
-            'auto_analysis' => $autoAnalysis,
-            'scheduled_analysis_enabled' => $scheduledAnalysisEnabled,
+            'default_indexing' => $configuration->defaultIndexing,
+            'auto_analysis' => $configuration->autoAnalysis,
+            'scheduled_analysis_enabled' =>
+                $configuration->scheduledAnalysisEnabled,
         ], true);
 
-        return CompilatioResponse::objectAt($response, 'data', 'folder');
+        return CompilatioResponse::objectAt(
+            $response,
+            'data',
+            'folder'
+        );
     }
 
     public function update(
         string $folderId,
         string $name,
-        int $warningThreshold,
-        int $criticalThreshold,
-        bool $defaultIndexing,
-        bool $autoAnalysis,
-        bool $scheduledAnalysisEnabled,
+        CompilatioFolderConfiguration $configuration,
     ): void {
-        $compilatioClient = new CompilatioClient($this->apiKey, new Client(), $this->userId);
-        $compilatioClient->patch('private/folders/' . $folderId, [
-            'name' => $name,
-            'origin' => 'OJS',
-            'thresholds' => [
-                'warning' => $warningThreshold,
-                'critical' => $criticalThreshold,
+        $this->client->patch(
+            'private/folders/' . $folderId,
+            [
+                'name' => $name,
+                'thresholds' => [
+                    'warning' => $configuration->warningThreshold,
+                    'critical' => $configuration->criticalThreshold,
+                ],
+                'default_indexing' => $configuration->defaultIndexing,
+                'auto_analysis' => $configuration->autoAnalysis,
+                'scheduled_analysis_enabled' =>
+                    $configuration->scheduledAnalysisEnabled,
             ],
-            'default_indexing' => $defaultIndexing,
-            'auto_analysis' => $autoAnalysis,
-            'scheduled_analysis_enabled' => $scheduledAnalysisEnabled,
-        ], true);
+            true
+        );
+    }
+
+    /**
+     * @return object|null
+     */
+    public function findFolderByName(string $name): ?object
+    {
+        foreach ($this->get() as $folder) {
+            if (
+                ($folder->origin ?? null) === 'OJS'
+                && ($folder->name ?? null) === $name
+            ) {
+                return $folder;
+            }
+        }
+
+        return null;
     }
 }

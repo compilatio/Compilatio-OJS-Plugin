@@ -3,3 +3,4 @@ ojs-3.5.0-4/
 node_modules/
 dist/
 .old/
+vendor/

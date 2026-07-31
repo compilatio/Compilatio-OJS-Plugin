@@ -1,6 +1,6 @@
 <?php
 
-namespace APP\plugins\generic\compilatio\api\Services;
+namespace APP\plugins\generic\compilatio\api\Services\Resolver;
 
 use APP\plugins\generic\compilatio\api\Repository\CompilatioConfigRepository;
 use PKP\facades\Locale;

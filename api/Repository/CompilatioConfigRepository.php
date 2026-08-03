@@ -19,10 +19,19 @@ class CompilatioConfigRepository
             $configurationlmsresponse = $client->get('public/configuration-lms');
             $configurationresponse = $client->get('public/configuration');
 
-            CompilatioResponse::objectAt($configurationlmsresponse, 'data');
-            CompilatioResponse::objectAt($configurationresponse, 'data');
+            $lmsConfiguration = CompilatioResponse::objectAt(
+                $configurationlmsresponse,
+                'data'
+            );
+            $configuration = CompilatioResponse::objectAt(
+                $configurationresponse,
+                'data'
+            );
 
-            return (object) array_merge((array) $configurationlmsresponse->data, (array) $configurationresponse->data);
+            return (object) array_merge(
+                get_object_vars($lmsConfiguration),
+                get_object_vars($configuration)
+            );
         } catch (RuntimeException $exception) {
             throw $exception;
         }

@@ -1,6 +1,10 @@
 <?php
 namespace APP\plugins\generic\compilatio\api\Class;
 
+use APP\plugins\generic\compilatio\api\DTO\CompilatioManagedBundle;
+use APP\plugins\generic\compilatio\api\DTO\CompilatioDetection;
+use APP\plugins\generic\compilatio\api\DTO\CompilatioUser;
+
 class Bundle {
     /**
      * Contain differents detections types.
@@ -13,34 +17,24 @@ class Bundle {
         "rewording",
     ];
 
-    /**
-     * @var object $managedBundle User managed bundle.
-     */
-    public object $managedBundle;
+    public CompilatioManagedBundle $managedBundle;
 
     /**
      * Class constructor
      *
-     * @param object $compilatioUser User from compilatio to retrieve managed bundle information.
+     * @param CompilatioUser $compilatioUser User from Compilatio.
      */
-    public function __construct(object $compilatioUser) {
-        if (!isset($compilatioUser)) {
-            throw new \Exception('No user.');
-        }
-        $this->managedBundle = $compilatioUser->managed_bundle;
+    public function __construct(CompilatioUser $compilatioUser) {
+        $this->managedBundle = $compilatioUser->managedBundle;
     }
 
     /**
      * Retrieve bundle detections.
      *
-     * @return array Return allowed detections for the bundle.
+     * @return list<CompilatioDetection> Return allowed detections for the bundle.
      */
     public function getBundleDetections(object $reviewSettings): array {
-        $detectionsAccess = $this->getAccess('detections');
-
-        if (!$detectionsAccess || !isset($detectionsAccess->detections) || !is_array($detectionsAccess->detections)) {
-            return [];
-        }
+        $detections = $this->getDetections();
 
         $savedDetections = [];
         if (isset($reviewSettings->bundleDetections) && (is_array($reviewSettings->bundleDetections) || is_object($reviewSettings->bundleDetections))) {
@@ -49,65 +43,56 @@ class Bundle {
                     continue;
                 }
 
+                $savedValue = (array) $value;
                 $savedDetections[(string) $process] = [
-                    'enabled' => filter_var($value['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    'enabled' => filter_var($savedValue['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 ];
             }
         }
 
-        foreach ($detectionsAccess->detections as $key => $detection) {
-            if (!is_object($detection) || !isset($detection->process) || !isset($detection->enabled)) {
+        foreach ($detections as $key => $detection) {
+            if (!in_array($detection->process, self::DETECTIONSTYPE, true)) {
+                unset($detections[$key]);
                 continue;
             }
-
-            if (!in_array($detection->process, self::DETECTIONSTYPE)) {
-                unset($detectionsAccess->detections[$key]);
-                continue;
-            }
-
-            $enabled = filter_var($detection->enabled, FILTER_VALIDATE_BOOLEAN);
-            $configurable = filter_var($detection->configurable ?? false, FILTER_VALIDATE_BOOLEAN);
 
             // If API says this detection is not enabled and not configurable, force disabled.
-            if (!$enabled && !$configurable) {
+            if (!$detection->enabled && !$detection->configurable) {
                 $detection->enabled = false;
-                $detectionsAccess->detections[$key] = $detection;
                 continue;
             }
 
             // Re-apply saved value only for configurable detections.
             if (
                 isset($savedDetections[$detection->process])
-                && $configurable
+                && $detection->configurable
             ) {
-                $detection->enabled = $savedDetections[$detection->process]['enabled'] = true;
+                $detection->enabled = $savedDetections[$detection->process]['enabled'];
             }
-
-            $detectionsAccess->detections[$key] = $detection;
         }
 
-        return $detectionsAccess->detections;
+        return array_values($detections);
     }
 
     /**
      * Build detections payloads for local storage and folder API updates.
      *
-     * @return array Return detections for Compilatio API and normalized storage.
+     * @return array{
+     *     api: list<array{process: string, enabled: bool, configurable: bool}>,
+     *     stored: array<string, array{enabled: bool, configurable: bool}>
+     * } Return detections for Compilatio API and normalized storage.
      */
     public function getFolderDetectionsPayload(object $reviewSettings): array {
         $normalizedDetections = [];
         $recipeDetections = [];
 
         foreach ($this->getBundleDetections($reviewSettings) as $detection) {
-            if (!is_object($detection) ||
-                !isset($detection->process) ||
-                !in_array($detection->process, self::DETECTIONSTYPE)
-            ) {
+            if (!in_array($detection->process, self::DETECTIONSTYPE, true)) {
                 continue;
             }
 
-            $enabled = filter_var($detection->enabled ?? false, FILTER_VALIDATE_BOOLEAN);
-            $configurable = filter_var($detection->configurable ?? true, FILTER_VALIDATE_BOOLEAN);
+            $enabled = $detection->enabled;
+            $configurable = $detection->configurable;
 
             $normalizedDetections[$detection->process] = [
                 'enabled' => $enabled,
@@ -135,7 +120,7 @@ class Bundle {
      * @return bool Return true if the bundle has this feature, false otherwise.
      */
     public function isBundleAuthorizedTo(string $feature): bool {
-        return in_array($feature, $this->getAuthorizedFeatures());
+        return in_array($feature, $this->getAuthorizedFeatures(), true);
     }
 
     /**
@@ -144,37 +129,34 @@ class Bundle {
      * @return bool True if recipe is an Anasim recipe, false otherwise.
      */
     public function isAnasimRecipe(): bool {
-        return $this->managedBundle->name === 'magister-premium' ? true : false;
+        return $this->managedBundle->name === 'magister-premium';
     }
 
     /**
-     * Retrieve the searched access in the managed bundle.
-     *
-     * @param string $searchedAccess Searched access
-     * @return object|false Return the access if exist, false otherwise.
+     * @return list<CompilatioDetection>
      */
-    private function getAccess(string $searchedAccess) {
-
+    private function getDetections(): array {
         foreach ($this->managedBundle->accesses as $access) {
-            if (isset($access->{$searchedAccess})) {
-                return $access;
+            if ($access->detections !== null) {
+                return $access->detections;
             }
         }
-        return false;
+
+        return [];
     }
 
     /**
      * Retrieve bundle authorized features.
      *
-     * @return array Return authorized features for the bundle.
+     * @return list<string> Return authorized features for the bundle.
      */
     private function getAuthorizedFeatures(): array {
-        $authorizedFeaturesAccess = $this->getAccess('authorized_features');
-
-        if (!$authorizedFeaturesAccess) {
-            return [];
+        foreach ($this->managedBundle->accesses as $access) {
+            if ($access->authorizedFeatures !== null) {
+                return $access->authorizedFeatures;
+            }
         }
 
-        return $authorizedFeaturesAccess->authorized_features;
+        return [];
     }
 }

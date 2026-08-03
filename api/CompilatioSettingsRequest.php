@@ -7,6 +7,9 @@ use Illuminate\Validation\Rule;
 
 class CompilatioSettingsRequest extends FormRequest
 {
+    /**
+     * @return array<string, list<string|object>>
+     */
     public function rules(): array
     {
         return [
@@ -49,8 +52,14 @@ class CompilatioSettingsRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if ($this->has('apiKey')) {
+            $apiKey = $this->input('apiKey');
+
+            if (!is_string($apiKey)) {
+                return;
+            }
+
             $this->merge([
-                'apiKey' => trim((string) $this->input('apiKey')),
+                'apiKey' => trim($apiKey),
             ]);
         }
     }

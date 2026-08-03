@@ -16,10 +16,18 @@ final class CompilatioUserSynchronizer
     public function syncUser(User $currentOJSUser): string
     {
         $locale = $this->localeResolver->resolve();
+        $firstName = $currentOJSUser->getGivenName($locale);
+        $lastName = $currentOJSUser->getFamilyName($locale);
+
+        if (!is_string($firstName) || !is_string($lastName)) {
+            throw new RuntimeException(
+                'Unable to retrieve the localized OJS user name.'
+            );
+        }
 
         $compilatioUser = $this->remoteUsers->setUser(
-            $currentOJSUser->getGivenName($locale),
-            $currentOJSUser->getFamilyName($locale),
+            $firstName,
+            $lastName,
             $currentOJSUser->getEmail(),
             $locale
         );

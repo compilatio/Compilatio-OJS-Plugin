@@ -18,10 +18,10 @@ final class CompilatioResponse
 
             if (!is_object($nextValue)) {
                 $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? [];
-                $file = isset($caller['file']) && is_string($caller['file'])
+                $file = isset($caller['file'])
                     ? self::relativeFile($caller['file'])
                     : 'unknown file';
-                $line = isset($caller['line']) && is_int($caller['line'])
+                $line = isset($caller['line'])
                     ? $caller['line']
                     : 0;
 
@@ -77,10 +77,10 @@ final class CompilatioResponse
     private static function throwInvalidResponse(array $path, string $expectedType): never
     {
         $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1] ?? [];
-        $file = isset($caller['file']) && is_string($caller['file'])
+        $file = isset($caller['file'])
             ? self::relativeFile($caller['file'])
             : 'unknown file';
-        $line = isset($caller['line']) && is_int($caller['line'])
+        $line = isset($caller['line'])
             ? $caller['line']
             : 0;
 

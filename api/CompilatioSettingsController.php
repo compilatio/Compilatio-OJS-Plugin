@@ -39,12 +39,14 @@ class CompilatioSettingsController extends PluginSettingsController
     public function get(Request $illuminateRequest): JsonResponse
     {
         $contextId = $this->getContextId();
-        if (!($this->plugin->getSetting($contextId, 'apiKey'))) {
+        $apiKey = $this->plugin->getSetting($contextId, 'apiKey');
+
+        if (!is_string($apiKey) || $apiKey === '') {
             return response()->json([]);
         }
 
         $response = [
-            'apiKey' => $this->plugin->getSetting($contextId, 'apiKey'),
+            'apiKey' => $apiKey,
             'automaticIndexingEnabled' => (bool) $this->plugin->getSetting(
                 $contextId,
                 'automaticIndexingEnabled'
@@ -58,7 +60,7 @@ class CompilatioSettingsController extends PluginSettingsController
             'thresholds' => $this->getThresholds($contextId),
         ];
 
-        $compilatioUserRepository = new CompilatioUserRepository($this->plugin->getSetting($contextId, 'apiKey'));
+        $compilatioUserRepository = new CompilatioUserRepository($apiKey);
 
         $apiKeyOwnerUser = $compilatioUserRepository->getApiKeyOwnerUser();
 
@@ -81,6 +83,11 @@ class CompilatioSettingsController extends PluginSettingsController
     {
         $contextId = $this->getContextId();
         $settingsFromForm = $illuminateRequest->validated();
+
+        if (!is_array($settingsFromForm)) {
+            throw new \RuntimeException('The validated settings are invalid.');
+        }
+
         $settings = [];
         $thresholdsFromForm = $settingsFromForm['thresholds'] ?? null;
 
@@ -89,17 +96,29 @@ class CompilatioSettingsController extends PluginSettingsController
         }
 
         $thresholds = [
-            'warning' => (int) ($thresholdsFromForm['warning'] ?? 0),
-            'critical' => (int) ($thresholdsFromForm['critical'] ?? 0),
+            'warning' => $this->normalizeThreshold(
+                $thresholdsFromForm['warning'] ?? null,
+                'warning'
+            ),
+            'critical' => $this->normalizeThreshold(
+                $thresholdsFromForm['critical'] ?? null,
+                'critical'
+            ),
         ];
 
-        if (!empty($settingsFromForm['apiKey'])) {
-            $compilatioUserRepository = new CompilatioUserRepository($settingsFromForm['apiKey']);
+        $apiKey = $settingsFromForm['apiKey'] ?? null;
+
+        if ($apiKey !== null && !is_string($apiKey)) {
+            throw new \RuntimeException('The API key setting is invalid.');
+        }
+
+        if ($apiKey !== null && $apiKey !== '') {
+            $compilatioUserRepository = new CompilatioUserRepository($apiKey);
 
             try {
                 $apiKeyOwnerUser = $compilatioUserRepository
                     ->getApiKeyOwnerUser();
-                $settings[] = ['name' => 'apiKey', 'value' => $settingsFromForm['apiKey'], 'type' => 'string'];
+                $settings[] = ['name' => 'apiKey', 'value' => $apiKey, 'type' => 'string'];
                 
             } catch (\RuntimeException $exception) {
                 if ($exception->getCode() === 401) {
@@ -116,11 +135,9 @@ class CompilatioSettingsController extends PluginSettingsController
                 ], 503);
             }
 
-            $requestedDetections = $settingsFromForm['bundleDetections'] ?? null;
-
-            if (!is_array($requestedDetections)) {
-                $requestedDetections = null;
-            }
+            $requestedDetections = $this->normalizeRequestedDetections(
+                $settingsFromForm['bundleDetections'] ?? null
+            );
 
             $bundleSettings = (new CompilatioBundleSettingsResolver())->resolve(
                 $apiKeyOwnerUser,
@@ -160,7 +177,7 @@ class CompilatioSettingsController extends PluginSettingsController
                     new CompilatioUserSynchronizer(
                         new CompilatioLocaleResolver(
                             new CompilatioConfigRepository(
-                                $settingsFromForm['apiKey']
+                                $apiKey
                             )
                         ),
                         $compilatioUserRepository,
@@ -184,20 +201,34 @@ class CompilatioSettingsController extends PluginSettingsController
                     (bool) ($settingsFromForm['scheduledAnalysisEnabled'] ?? false),
             );
 
+            $compilatioUserId = $this->plugin->getSetting(
+                $contextId,
+                'compilatioUserId'
+            );
+
+            if (!is_string($compilatioUserId) || $compilatioUserId === '') {
+                throw new \RuntimeException(
+                    'Unable to retrieve the Compilatio user ID.'
+                );
+            }
+
             $folderRepository = (new CompilatioFolderRepositoryFactory())->create(
-                $settingsFromForm['apiKey'],
-                $this->plugin->getSetting(
-                    $contextId,
-                    'compilatioUserId'
-                ),
+                $apiKey,
+                $compilatioUserId,
             );
 
             $folderSynchronizer = new CompilatioFolderSynchronizer(
                 $folderRepository
             );
 
+            $context = $this->getRequest()->getContext();
+
+            if ($context === null) {
+                throw new \RuntimeException('The OJS context is unavailable.');
+            }
+
             $folderId = $folderSynchronizer->synchronize(
-                $this->getRequest()->getContext()->getLocalizedName(),
+                $context->getLocalizedName(),
                 $folderConfiguration,
             );
 
@@ -235,7 +266,57 @@ class CompilatioSettingsController extends PluginSettingsController
 
     private function getContextId(): int
     {
-        return $this->getRequest()->getContext()->getId();
+        $context = $this->getRequest()->getContext();
+
+        if ($context === null) {
+            throw new \RuntimeException('The OJS context is unavailable.');
+        }
+
+        $contextId = $context->getId();
+
+        if ($contextId === null) {
+            throw new \RuntimeException('Unable to retrieve the OJS context ID.');
+        }
+
+        return $contextId;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function normalizeRequestedDetections(mixed $value): ?array
+    {
+        if (!is_array($value)) {
+            return null;
+        }
+
+        $detections = [];
+
+        foreach ($value as $process => $configuration) {
+            if (!is_string($process)) {
+                continue;
+            }
+
+            $detections[$process] = $configuration;
+        }
+
+        return $detections;
+    }
+
+    private function normalizeThreshold(mixed $value, string $name): int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && ctype_digit($value)) {
+            return (int) $value;
+        }
+
+        throw new \RuntimeException(sprintf(
+            'The %s threshold setting is invalid.',
+            $name
+        ));
     }
 
     private function getReviewSettings(): object
@@ -262,12 +343,27 @@ class CompilatioSettingsController extends PluginSettingsController
         $thresholds = is_array($thresholds) ? $thresholds : (array) $thresholds;
 
         return [
-                'warning' => isset($thresholds['warning'])
-                ? (int) $thresholds['warning']
-                : self::DEFAULT_WARNING_THRESHOLD,
-            'critical' => isset($thresholds['critical'])
-                ? (int) $thresholds['critical']
-                : self::DEFAULT_CRITICAL_THRESHOLD,
+            'warning' => $this->normalizeStoredThreshold(
+                $thresholds['warning'] ?? null,
+                self::DEFAULT_WARNING_THRESHOLD
+            ),
+            'critical' => $this->normalizeStoredThreshold(
+                $thresholds['critical'] ?? null,
+                self::DEFAULT_CRITICAL_THRESHOLD
+            ),
         ];
+    }
+
+    private function normalizeStoredThreshold(mixed $value, int $default): int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && ctype_digit($value)) {
+            return (int) $value;
+        }
+
+        return $default;
     }
 }

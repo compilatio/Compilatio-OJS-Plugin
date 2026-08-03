@@ -4,6 +4,7 @@ namespace APP\plugins\generic\compilatio\api\Repository;
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
 use APP\plugins\generic\compilatio\api\Client\CompilatioResponse;
 use APP\plugins\generic\compilatio\api\DTO\CompilatioFolderConfiguration;
+use RuntimeException;
 
 class CompilatioFolderRepository
 {
@@ -18,7 +19,24 @@ class CompilatioFolderRepository
     public function get(): array
     {
         $response = $this->client->get('private/folders', true);
-        return CompilatioResponse::arrayAt($response, 'data', 'folders');
+        $rawFolders = CompilatioResponse::arrayAt(
+            $response,
+            'data',
+            'folders'
+        );
+        $folders = [];
+
+        foreach ($rawFolders as $folder) {
+            if (!is_object($folder)) {
+                throw new RuntimeException(
+                    'Compilatio API returned an invalid folder.'
+                );
+            }
+
+            $folders[] = $folder;
+        }
+
+        return $folders;
     }
 
     public function create(

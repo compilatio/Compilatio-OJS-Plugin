@@ -4,7 +4,7 @@ namespace APP\plugins\generic\compilatio\api\Services\Resolver;
 
 use APP\plugins\generic\compilatio\api\Class\Bundle;
 use APP\plugins\generic\compilatio\api\DTO\CompilatioBundleSettings;
-use RuntimeException;
+use APP\plugins\generic\compilatio\api\DTO\CompilatioUser;
 
 final class CompilatioBundleSettingsResolver
 {
@@ -12,7 +12,7 @@ final class CompilatioBundleSettingsResolver
      * @param array<string, mixed>|null $requestedDetections
      */
     public function resolve(
-        object $compilatioUser,
+        CompilatioUser $compilatioUser,
         object $reviewSettings,
         ?array $requestedDetections = null,
     ): CompilatioBundleSettings {
@@ -34,14 +34,7 @@ final class CompilatioBundleSettingsResolver
         $effectiveReviewSettings = (object) $effectiveSettings;
 
         $payload = $bundle->getFolderDetectionsPayload($effectiveReviewSettings);
-        $storedDetections = $payload['stored'] ?? null;
 
-        if (!is_array($storedDetections)) {
-            throw new RuntimeException(
-                'Unable to resolve Compilatio bundle detections.'
-            );
-        }
-
-        return new CompilatioBundleSettings(true, $storedDetections);
+        return new CompilatioBundleSettings(true, $payload['stored']);
     }
 }

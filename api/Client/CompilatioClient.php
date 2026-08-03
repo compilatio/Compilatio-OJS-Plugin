@@ -32,7 +32,7 @@ class CompilatioClient
     }
 
     /**
-     * @param array<string, array<mixed> | string> $payload
+     * @param array<string, mixed> $payload
      * @return object
      */
     public function post(string $endpoint, array $payload, bool $addUserId = false): object
@@ -73,7 +73,7 @@ class CompilatioClient
     }
 
     /**
-     * @param array<string, array<string> | mixed> $payload
+     * @param array<string, mixed> $payload
      */
     public function patch(string $endpoint, array $payload, bool $addUserId = false): void
     {
@@ -123,12 +123,20 @@ class CompilatioClient
      */
     private function addAuthorizationHeader(array $options, bool $addUserId): array
     {
-        $options[RequestOptions::HEADERS] ??= [];
-        $options[RequestOptions::HEADERS]['X-Auth-Token'] = $this->token;
+        $headers = $options[RequestOptions::HEADERS] ?? [];
+
+        if (!is_array($headers)) {
+            $headers = [];
+        }
+
+        $headers['X-Auth-Token'] = $this->token;
 
         if ($addUserId && $this->userId !== null) {
-            $options[RequestOptions::HEADERS]['X-LMS-USER-ID'] = $this->userId;
+            $headers['X-LMS-USER-ID'] = $this->userId;
         }
+
+        $options[RequestOptions::HEADERS] = $headers;
+
         return $options;
     }
 

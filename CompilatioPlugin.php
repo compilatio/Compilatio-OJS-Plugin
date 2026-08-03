@@ -4,8 +4,8 @@ namespace APP\plugins\generic\compilatio;
 
 use APP\core\Application;
 use APP\plugins\generic\compilatio\api\CompilatioSettingsController;
-use APP\plugins\generic\compilatio\migration\CompilatioSchemaMigration;
 use APP\template\TemplateManager;
+use PKP\core\APIRouter;
 use PKP\core\JSONMessage;
 use PKP\linkAction\LinkAction;
 use PKP\linkAction\request\AjaxModal;
@@ -13,6 +13,7 @@ use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 use PKP\security\Role;
 use PKP\template\PKPTemplateManager;
+use PKP\user\User;
 
 class CompilatioPlugin extends GenericPlugin
 {
@@ -22,21 +23,14 @@ class CompilatioPlugin extends GenericPlugin
 
     public function register($category, $path, $mainContextId = null)
     {
-        $success = parent::register($category, $path, $mainContextId);
-
-        if (!$success) {
-            return $success;
+        if (!parent::register($category, $path, $mainContextId)) {
+            return false;
         }
 
         Hook::add('APIHandler::endpoints::plugin', [$this, 'registerApiControllers']);
-
-        if (!$this->getEnabled($mainContextId)) {
-            return $success;
-        }
-
         Hook::add('TemplateManager::display', [$this, 'addAssets']);
 
-        return $success;
+        return true;
     }
 
     public function getDisplayName(): string
@@ -49,15 +43,26 @@ class CompilatioPlugin extends GenericPlugin
         return self::PLUGIN_DESCRIPTION;
     }
 
+    /**
+     * @param array<string, mixed> $verb
+     * @return array<int, LinkAction>
+     */
     public function getActions($request, $verb): array
     {
         $router = $request->getRouter();
+        /** @var array<int, LinkAction> $actions */
         $actions = parent::getActions($request, $verb);
+
+        if (!isset($router)) {
+            return $actions;
+        }
+
 
         if (!$this->getEnabled()) {
             return $actions;
         }
 
+        $title = __('manager.plugins.settings');
         array_unshift($actions, new LinkAction(
             'settings',
             new AjaxModal(
@@ -68,12 +73,13 @@ class CompilatioPlugin extends GenericPlugin
                 ]),
                 $this->getDisplayName()
             ),
-            __('manager.plugins.settings')
+            is_string($title) ? $title : 'Settings',
         ));
 
         return $actions;
     }
     
+    /** @param array<string, mixed> $args */
     public function manage($args, $request): JSONMessage
     {
         if ($request->getUserVar('verb') !== 'settings') {
@@ -83,8 +89,11 @@ class CompilatioPlugin extends GenericPlugin
         $context = $request->getContext();
         $user = $request->getUser();
 
-        if (!$context || !$user || !$this->canManageSettings($user, $context->getId())) {
-            return new JSONMessage(false, __('user.authorization.roleBasedAccessDenied'));
+        $contextId = $context ? $context->getId() : null;
+
+        if (!$context || !$user || !is_int($contextId) || !$this->canManageSettings($user, $contextId)) {
+            $title = __('user.authorization.roleBasedAccessDenied');
+            return new JSONMessage(false, is_string($title) ? $title : 'Access denied');
         }
 
         $templateMgr = TemplateManager::getManager($request);
@@ -104,8 +113,9 @@ class CompilatioPlugin extends GenericPlugin
         );
     }
 
-    private function canManageSettings($user, int $contextId): bool
+    private function canManageSettings(User $user, int $contextId): bool
     {
+        /** @var Role[] $roles */
         $roles = array_merge($user->getRoles($contextId), $user->getRoles(null));
         $roleIds = array_map(static fn ($role) => $role->getRoleId(), $roles);
 
@@ -115,7 +125,7 @@ class CompilatioPlugin extends GenericPlugin
         );
     }
 
-    public function registerApiControllers(string $hookName, $apiRouter): bool
+    public function registerApiControllers(string $hookName, APIRouter $apiRouter): bool
     {
         require_once __DIR__ . '/api/CompilatioSettingsRequest.php';
         require_once __DIR__ . '/api/CompilatioSettingsController.php';
@@ -127,12 +137,20 @@ class CompilatioPlugin extends GenericPlugin
         return false;
     }
 
+    /** @param array<string, mixed> $args */
     public function addAssets(string $hookName, array $args): bool
     {
+        $request = Application::get()->getRequest();
+        $context = $request->getContext();
+        $contextId = $context?->getId();
+
+        if (!is_int($contextId) || !$this->getEnabled($contextId)) {
+            return false;
+        }
+
         /** @var PKPTemplateManager $templateMgr */
         $templateMgr = &$args[0];
 
-        $request = Application::get()->getRequest();
         $baseUrl = $request->getBaseUrl();
         $pluginPath = $this->getPluginPath();
 

@@ -10,6 +10,38 @@ import ThresholdSettings from './organisms/ThresholdSettings.vue';
 
 const { t } = useI18n();
 const defaultThresholds: Thresholds = { warning: 10, critical: 20 };
+const unavailableSubscriptionDetections: Detection[] = [
+  {
+    process: 'similarity',
+    enabled: true,
+    configurable: false,
+    availableInSubscription: true,
+  },
+  {
+    process: 'unrecognized_text_language',
+    enabled: false,
+    configurable: false,
+    availableInSubscription: false,
+  },
+  {
+    process: 'ai_detection',
+    enabled: false,
+    configurable: false,
+    availableInSubscription: false,
+  },
+  {
+    process: 'spellchecker',
+    enabled: false,
+    configurable: false,
+    availableInSubscription: false,
+  },
+  {
+    process: 'rewording',
+    enabled: false,
+    configurable: false,
+    availableInSubscription: false,
+  },
+];
 
 const data = reactive({
   apiKey: '',
@@ -142,7 +174,10 @@ const applySettings = (settings: Record<string, unknown>) => {
     typeof settings.scheduledAnalysisAt === 'string' ? settings.scheduledAnalysisAt : null,
   );
   data.hasFolderRecipeParameters = settings.hasFolderRecipeParameters === true;
-  data.bundleDetections = normalizeDetections(settings.bundleDetections);
+  data.bundleDetections = normalizeDetections(
+    settings.bundleDetections,
+    data.hasFolderRecipeParameters,
+  );
   data.thresholds = normalizeThresholds(settings.thresholds);
 };
 
@@ -169,9 +204,19 @@ const serializeDetections = (detections: Detection[]): Record<string, { enabled:
     ]),
   );
 
-const normalizeDetections = (value: unknown): Detection[] => {
+const normalizeDetections = (
+  value: unknown,
+  canConfigureDetections: boolean,
+): Detection[] => {
+  if (!canConfigureDetections) {
+    return unavailableSubscriptionDetections.map((detection) => ({ ...detection }));
+  }
+
   if (Array.isArray(value)) {
-    return value.filter(isDetection);
+    return value.filter(isApiDetection).map((detection) => ({
+      ...detection,
+      availableInSubscription: true,
+    }));
   }
 
   if (!isRecord(value)) {
@@ -187,11 +232,14 @@ const normalizeDetections = (value: unknown): Detection[] => {
       process,
       enabled: configuration.enabled === true,
       configurable: configuration.configurable === true,
+      availableInSubscription: true,
     }];
   });
 };
 
-const isDetection = (value: unknown): value is Detection =>
+const isApiDetection = (
+  value: unknown,
+): value is Omit<Detection, 'availableInSubscription'> =>
   isRecord(value)
   && typeof value.process === 'string'
   && typeof value.enabled === 'boolean'
@@ -283,7 +331,7 @@ const toLocalDateTime = (value: string | null): string => {
         />
 
         <DetectionSettings
-          v-if="data.apiKey && data.hasFolderRecipeParameters"
+          v-if="data.apiKey"
           :detections="data.bundleDetections"
           :disabled="data.isSaving"
           @change="updateDetection"

@@ -4,6 +4,7 @@ export interface Detection {
   process: string;
   enabled: boolean;
   configurable: boolean;
+  availableInSubscription: boolean;
 }
 
 export interface Thresholds {

@@ -8,6 +8,7 @@ export default {
   detection_rewording: 'Détection de reformulations',
   detection_always_enabled: 'Toujours activée',
   detection_disabled_by_admin: 'Désactivée par l’administrateur',
+  detection_not_in_subscription: 'Non compris dans votre abonnement',
   settings_api_key: 'Clé API Compilatio',
   settings_api_key_description: 'Authentifie cette revue auprès des services Compilatio.',
   settings_api_key_placeholder: 'Saisir la clé API',

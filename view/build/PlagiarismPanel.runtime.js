@@ -7807,7 +7807,7 @@
   const _hoisted_1$6 = { class: "grid gap-4 border-b border-slate-200 py-6 md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] md:gap-8" };
   const _hoisted_2$6 = { class: "min-w-0" };
   const _hoisted_3$5 = { class: "flex items-start gap-2" };
-  const _hoisted_4$3 = ["aria-expanded"];
+  const _hoisted_4$4 = ["aria-expanded"];
   const _hoisted_5$3 = {
     key: 0,
     class: "mt-2 text-xs leading-5 text-slate-500"
@@ -7831,7 +7831,7 @@
                 onClick: _cache[0] || (_cache[0] = ($event) => displayHelp.value = !displayHelp.value)
               }, [
                 vue.createVNode(vue.unref(FontAwesomeIcon), { icon: vue.unref(faCircleQuestion) }, null, 8, ["icon"])
-              ], 8, _hoisted_4$3)) : vue.createCommentVNode("", true)
+              ], 8, _hoisted_4$4)) : vue.createCommentVNode("", true)
             ]),
             displayHelp.value ? (vue.openBlock(), vue.createElementBlock("div", _hoisted_5$3, [
               vue.renderSlot(_ctx.$slots, "help")
@@ -7847,7 +7847,7 @@
   const _hoisted_1$5 = { class: "text-sm font-medium text-slate-900" };
   const _hoisted_2$5 = { class: "mt-1 text-sm leading-5 text-slate-500" };
   const _hoisted_3$4 = { class: "flex items-center gap-3" };
-  const _hoisted_4$2 = {
+  const _hoisted_4$3 = {
     for: "automatic-indexing",
     class: "cursor-pointer text-sm text-slate-700"
   };
@@ -7904,7 +7904,7 @@
                   "model-value": __props.automaticIndexingEnabled,
                   "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => _ctx.$emit("update:automaticIndexingEnabled", $event))
                 }, null, 8, ["disabled", "model-value"]),
-                vue.createElementVNode("label", _hoisted_4$2, vue.toDisplayString(__props.automaticIndexingEnabled ? vue.unref(t2)("common_enabled") : vue.unref(t2)("common_disabled")), 1)
+                vue.createElementVNode("label", _hoisted_4$3, vue.toDisplayString(__props.automaticIndexingEnabled ? vue.unref(t2)("common_enabled") : vue.unref(t2)("common_disabled")), 1)
               ])
             ]),
             _: 1
@@ -8001,6 +8001,10 @@
     key: 0,
     class: "mt-0.5 block text-xs italic text-slate-500"
   };
+  const _hoisted_4$2 = {
+    key: 1,
+    class: "mt-0.5 block text-xs italic text-slate-500"
+  };
   const _sfc_main$3 = /* @__PURE__ */ vue.defineComponent({
     __name: "DetectionOption",
     props: {
@@ -8015,15 +8019,15 @@
         return vue.openBlock(), vue.createElementBlock("div", _hoisted_1$3, [
           vue.createElementVNode("label", {
             for: `detection_${__props.detection.process}`,
-            class: vue.normalizeClass(["text-sm text-slate-800", __props.detection.configurable ? "cursor-pointer" : ""])
+            class: vue.normalizeClass(["text-sm text-slate-800", __props.detection.configurable && __props.detection.availableInSubscription ? "cursor-pointer" : ""])
           }, [
             vue.createTextVNode(vue.toDisplayString(vue.unref(t2)(`detection_${__props.detection.process}`)) + " ", 1),
-            !__props.detection.configurable ? (vue.openBlock(), vue.createElementBlock("span", _hoisted_3$3, vue.toDisplayString(__props.detection.enabled ? vue.unref(t2)("detection_always_enabled") : vue.unref(t2)("detection_disabled_by_admin")), 1)) : vue.createCommentVNode("", true)
+            !__props.detection.availableInSubscription ? (vue.openBlock(), vue.createElementBlock("span", _hoisted_3$3, vue.toDisplayString(vue.unref(t2)("detection_not_in_subscription")), 1)) : !__props.detection.configurable ? (vue.openBlock(), vue.createElementBlock("span", _hoisted_4$2, vue.toDisplayString(__props.detection.enabled ? vue.unref(t2)("detection_always_enabled") : vue.unref(t2)("detection_disabled_by_admin")), 1)) : vue.createCommentVNode("", true)
           ], 10, _hoisted_2$3),
           vue.createVNode(_sfc_main$a, {
             id: `detection_${__props.detection.process}`,
             "model-value": __props.detection.enabled,
-            disabled: __props.disabled || !__props.detection.configurable,
+            disabled: __props.disabled || !__props.detection.configurable || !__props.detection.availableInSubscription,
             "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => emit("change", $event))
           }, null, 8, ["id", "model-value", "disabled"])
         ]);
@@ -8168,6 +8172,38 @@
     setup(__props) {
       const { t: t2 } = useI18n();
       const defaultThresholds = { warning: 10, critical: 20 };
+      const unavailableSubscriptionDetections = [
+        {
+          process: "similarity",
+          enabled: true,
+          configurable: false,
+          availableInSubscription: true
+        },
+        {
+          process: "unrecognized_text_language",
+          enabled: false,
+          configurable: false,
+          availableInSubscription: false
+        },
+        {
+          process: "ai_detection",
+          enabled: false,
+          configurable: false,
+          availableInSubscription: false
+        },
+        {
+          process: "spellchecker",
+          enabled: false,
+          configurable: false,
+          availableInSubscription: false
+        },
+        {
+          process: "rewording",
+          enabled: false,
+          configurable: false,
+          availableInSubscription: false
+        }
+      ];
       const data = vue.reactive({
         apiKey: "",
         apiUrl: "",
@@ -8272,7 +8308,10 @@
           typeof settings.scheduledAnalysisAt === "string" ? settings.scheduledAnalysisAt : null
         );
         data.hasFolderRecipeParameters = settings.hasFolderRecipeParameters === true;
-        data.bundleDetections = normalizeDetections(settings.bundleDetections);
+        data.bundleDetections = normalizeDetections(
+          settings.bundleDetections,
+          data.hasFolderRecipeParameters
+        );
         data.thresholds = normalizeThresholds(settings.thresholds);
       };
       const normalizeThresholds = (value) => {
@@ -8290,9 +8329,15 @@
           { enabled: detection.enabled }
         ])
       );
-      const normalizeDetections = (value) => {
+      const normalizeDetections = (value, canConfigureDetections) => {
+        if (!canConfigureDetections) {
+          return unavailableSubscriptionDetections.map((detection) => ({ ...detection }));
+        }
         if (Array.isArray(value)) {
-          return value.filter(isDetection);
+          return value.filter(isApiDetection).map((detection) => ({
+            ...detection,
+            availableInSubscription: true
+          }));
         }
         if (!isRecord(value)) {
           return [];
@@ -8304,11 +8349,12 @@
           return [{
             process,
             enabled: configuration.enabled === true,
-            configurable: configuration.configurable === true
+            configurable: configuration.configurable === true,
+            availableInSubscription: true
           }];
         });
       };
-      const isDetection = (value) => isRecord(value) && typeof value.process === "string" && typeof value.enabled === "boolean" && typeof value.configurable === "boolean";
+      const isApiDetection = (value) => isRecord(value) && typeof value.process === "string" && typeof value.enabled === "boolean" && typeof value.configurable === "boolean";
       const isRecord = (value) => typeof value === "object" && value !== null;
       const updateDetection = (index, enabled) => {
         const detection = data.bundleDetections[index];
@@ -8383,7 +8429,7 @@
                 "onUpdate:scheduledAt": _cache[5] || (_cache[5] = ($event) => data.scheduledAnalysisAt = $event),
                 disabled: data.isSaving
               }, null, 8, ["automatic-indexing-enabled", "launch-mode", "scheduled-at", "disabled"])) : vue.createCommentVNode("", true),
-              data.apiKey && data.hasFolderRecipeParameters ? (vue.openBlock(), vue.createBlock(_sfc_main$2, {
+              data.apiKey ? (vue.openBlock(), vue.createBlock(_sfc_main$2, {
                 key: 2,
                 detections: data.bundleDetections,
                 disabled: data.isSaving,
@@ -8417,6 +8463,7 @@
     detection_rewording: "Rewording detection",
     detection_always_enabled: "Always enabled",
     detection_disabled_by_admin: "Disabled by the administrator",
+    detection_not_in_subscription: "Not included in your subscription",
     settings_api_key: "Compilatio API key",
     settings_api_key_description: "Authenticates this journal with Compilatio services.",
     settings_api_key_placeholder: "Enter the API key",
@@ -8462,6 +8509,7 @@
     detection_rewording: "Détection de reformulations",
     detection_always_enabled: "Toujours activée",
     detection_disabled_by_admin: "Désactivée par l’administrateur",
+    detection_not_in_subscription: "Non compris dans votre abonnement",
     settings_api_key: "Clé API Compilatio",
     settings_api_key_description: "Authentifie cette revue auprès des services Compilatio.",
     settings_api_key_placeholder: "Saisir la clé API",

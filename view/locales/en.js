@@ -8,6 +8,7 @@ export default {
   detection_rewording: 'Rewording detection',
   detection_always_enabled: 'Always enabled',
   detection_disabled_by_admin: 'Disabled by the administrator',
+  detection_not_in_subscription: 'Not included in your subscription',
   settings_api_key: 'Compilatio API key',
   settings_api_key_description: 'Authenticates this journal with Compilatio services.',
   settings_api_key_placeholder: 'Enter the API key',

@@ -18,6 +18,7 @@ final readonly class Document
     public const STATUS_ERROR_SENDING_FAILED = 'error_sending_failed';
     public const STATUS_ERROR_EXTRACTION_FAILED = 'error_extraction_failed';
     public const STATUS_ERROR_ANALYSIS_FAILED = 'error_analysis_failed';
+    public const STATUS_ERROR_DELETE = 'error_delete';
 
     /** @param list<DocumentAuthor> $authors */
     public function __construct(

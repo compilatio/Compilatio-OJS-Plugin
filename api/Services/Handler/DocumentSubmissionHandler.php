@@ -6,10 +6,10 @@ use APP\facades\Repo;
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
 use APP\plugins\generic\compilatio\api\DTO\Document;
 use APP\plugins\generic\compilatio\api\DTO\DocumentAuthor;
+use APP\plugins\generic\compilatio\api\Exception\CompilatioDocumentUploadException;
 use APP\plugins\generic\compilatio\api\Logger\CompilatioDebugLogger;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentStore;
-use APP\plugins\generic\compilatio\api\Services\Resolver\CompilatioDocumentStatusResolver;
 use APP\submission\Submission;
 use GuzzleHttp\Client;
 use PKP\author\Author;
@@ -41,7 +41,6 @@ final class DocumentSubmissionHandler
         }
 
         $store = new CompilatioDocumentStore();
-        $statusResolver = new CompilatioDocumentStatusResolver();
         if ($store->existsForSubmissionFile($submissionFile->getId())) {
             CompilatioDebugLogger::log('Document already sent', $submissionFile->getId());
             return;
@@ -51,7 +50,7 @@ final class DocumentSubmissionHandler
             $document = $this->buildDocument($submission, $submissionFile, $contextId);
             $store->insetDocument($document);
 
-            $remoteDocuments = new CompilatioDocumentRepository(
+            $compilatioDocumentRepository = new CompilatioDocumentRepository(
                 new CompilatioClient(
                     $this->requireStringSetting($contextId, 'apiKey'),
                     new Client(),
@@ -59,32 +58,40 @@ final class DocumentSubmissionHandler
                 )
             );
 
-            $response = $remoteDocuments->create($document);
-            $remoteStatus = $response->document->status ?? null;
+            $result = $compilatioDocumentRepository->create($document);
+            $response = $result->response;
+            $remoteDocument = $response->document->data->document;
 
-            $status = is_int($remoteStatus) || is_string($remoteStatus)
-                ? $statusResolver->resolve($remoteStatus)
-                : $statusResolver->fromHttpStatus($response->statusCode);
-
-            $store->markUploaded($document->submissionFileId, $response, $status);
+            $store->markUploaded($document->submissionFileId, $response, $result->status);
 
             CompilatioDebugLogger::log('Document sent', [
                 'submissionFileId' => $document->submissionFileId,
-                'externalId' => $response->document->id ?? null,
+                'externalId' => $remoteDocument->id,
                 'httpStatus' => $response->statusCode,
-                'status' => $status,
+                'status' => $result->status,
             ]);
-        } catch (Throwable $exception) {
-            $status = $statusResolver->fromHttpStatus((int) $exception->getCode());
+        } catch (CompilatioDocumentUploadException $exception) {
             $store->markError(
                 $submissionFile->getId(),
-                $status,
+                $exception->status,
+                $exception->getMessage(),
+            );
+            CompilatioDebugLogger::log('Document upload error', [
+                'submissionFileId' => $submissionFile->getId(),
+                'httpStatus' => $exception->httpStatus,
+                'status' => $exception->status,
+                'error' => $exception->getMessage(),
+            ]);
+        } catch (Throwable $exception) {
+            $store->markError(
+                $submissionFile->getId(),
+                Document::STATUS_ERROR_SENDING_FAILED,
                 $exception->getMessage(),
             );
             CompilatioDebugLogger::log('Document upload error', [
                 'submissionFileId' => $submissionFile->getId(),
                 'httpStatus' => $exception->getCode(),
-                'status' => $status,
+                'status' => Document::STATUS_ERROR_SENDING_FAILED,
                 'error' => $exception->getMessage(),
             ]);
         }

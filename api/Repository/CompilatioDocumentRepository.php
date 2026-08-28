@@ -6,7 +6,11 @@ use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
 use APP\plugins\generic\compilatio\api\DTO\Document;
 use APP\plugins\generic\compilatio\api\DTO\DocumentAuthor;
 use APP\plugins\generic\compilatio\api\DTO\DocumentUploadResponse;
+use APP\plugins\generic\compilatio\api\DTO\DocumentUploadResult;
+use APP\plugins\generic\compilatio\api\Exception\CompilatioDocumentUploadException;
+use APP\plugins\generic\compilatio\api\Services\Resolver\CompilatioDocumentStatusResolver;
 use RuntimeException;
+use Throwable;
 
 final class CompilatioDocumentRepository
 {
@@ -14,8 +18,9 @@ final class CompilatioDocumentRepository
     {
     }
 
-    public function create(Document $document): DocumentUploadResponse
+    public function create(Document $document): DocumentUploadResult
     {
+        $statusResolver = new CompilatioDocumentStatusResolver();
         $stream = app()->get('file')->fs->readStream($document->path);
         if (!is_resource($stream)) {
             throw new RuntimeException('Unable to open the OJS document.');
@@ -37,15 +42,33 @@ final class CompilatioDocumentRepository
                 $this->addPerson($multipart, "authors[{$index}]", $author);
             }
 
-            $response = $this->client->postFileWithStatus(
-                'private/documents',
-                $multipart,
-                true,
-            );
+            try {
+                $response = $this->client->postFileWithStatus(
+                    'private/documents',
+                    $multipart,
+                    true,
+                );
+            } catch (Throwable $exception) {
+                throw new CompilatioDocumentUploadException(
+                    $exception->getMessage(),
+                    $statusResolver->fromException($exception),
+                    (int) $exception->getCode(),
+                    $exception,
+                );
+            }
 
-            return new DocumentUploadResponse(
-                $response['statusCode'],
-                $response['body'],
+            $responseBody = $response['body'];
+            $remoteStatus = $responseBody->data->document->status ?? null;
+            $status = is_int($remoteStatus) || is_string($remoteStatus)
+                ? $statusResolver->resolve($remoteStatus)
+                : $statusResolver->fromHttpStatus($response['statusCode']);
+
+            return new DocumentUploadResult(
+                new DocumentUploadResponse(
+                    $response['statusCode'],
+                    $responseBody,
+                ),
+                $status,
             );
         } finally {
             if (is_resource($stream)) fclose($stream);
@@ -61,6 +84,18 @@ final class CompilatioDocumentRepository
         $this->client->patch(
             'private/documents/' . rawurlencode($documentId),
             ['indexed' => $indexed],
+            true,
+        );
+    }
+
+    public function delete(string $documentId): void
+    {
+        if ($documentId === '') {
+            throw new RuntimeException('The Compilatio document ID is missing.');
+        }
+
+        $this->client->delete(
+            'private/document/' . rawurlencode($documentId),
             true,
         );
     }

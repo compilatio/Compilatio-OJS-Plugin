@@ -27,6 +27,13 @@ final class CompilatioDocumentStore
             ->first();
     }
 
+    public function deleteForSubmissionFile(int $submissionFileId): void
+    {
+        DB::table(self::TABLE)
+            ->where('submission_file_id', $submissionFileId)
+            ->delete();
+    }
+
     public function insetDocument(Document $document): void
     {
         $now = date('Y-m-d H:i:s');
@@ -56,10 +63,17 @@ final class CompilatioDocumentStore
         string $status,
     ): void
     {
-        $document = $response->document;
-        $externalId = $document->id ?? null;
+        $document = $response->document->data->document ?? null;
+        $externalId = is_object($document) ? ($document->id ?? null) : null;
         if (!is_string($externalId) || $externalId === '') {
-            throw new RuntimeException('Compilatio returned a document without an ID.');
+            $responseKeys = implode(', ', array_keys(get_object_vars($response->document)));
+            throw new RuntimeException(
+                sprintf(
+                    'Compilatio returned a document without an ID (response fields: %s).',
+                    $responseKeys !== '' ? $responseKeys : 'none'
+                ),
+                $response->statusCode,
+            );
         }
 
         $now = date('Y-m-d H:i:s');

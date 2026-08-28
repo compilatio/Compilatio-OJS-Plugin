@@ -3,6 +3,7 @@
 namespace APP\plugins\generic\compilatio\api\Services\Resolver;
 
 use APP\plugins\generic\compilatio\api\DTO\Document;
+use Throwable;
 
 final class CompilatioDocumentStatusResolver
 {
@@ -39,5 +40,16 @@ final class CompilatioDocumentStatusResolver
         }
 
         return $this->resolve($statusCode);
+    }
+
+    public function fromException(Throwable $exception): string
+    {
+        $httpStatus = (int) $exception->getCode();
+
+        if ($httpStatus >= 200 && $httpStatus < 300) {
+            return Document::STATUS_ERROR_SENDING_FAILED;
+        }
+
+        return $this->fromHttpStatus($httpStatus);
     }
 }

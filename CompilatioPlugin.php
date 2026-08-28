@@ -6,6 +6,7 @@ use APP\core\Application;
 use APP\facades\Repo;
 use APP\plugins\generic\compilatio\api\CompilatioSettingsController;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentSubmissionHandler;
+use APP\plugins\generic\compilatio\api\Services\Handler\DocumentDeletionHandler;
 use APP\plugins\generic\compilatio\api\Logger\CompilatioDebugLogger;
 use APP\plugins\generic\compilatio\migration\CompilatioSchemaMigration;
 use APP\template\TemplateManager;
@@ -36,6 +37,7 @@ class CompilatioPlugin extends GenericPlugin
 
         Hook::add('APIHandler::endpoints::plugin', [$this, 'registerApiControllers']);
         Hook::add('TemplateManager::display', [$this, 'addAssets']);
+        Hook::add('SubmissionFile::delete::before', [$this, 'handleFileDeletion']);
         Event::listen(SubmissionSubmitted::class, [$this, 'handleSubmissionSubmitted']);
 
         return true;
@@ -209,6 +211,17 @@ class CompilatioPlugin extends GenericPlugin
                 $contextId,
             );
         }
+    }
+
+    /** @param array{0: SubmissionFile} $args */
+    public function handleFileDeletion(string $hookName, array $args): bool
+    {
+        /** @var SubmissionFile $submissionFile */
+        $submissionFile = $args[0];
+
+        (new DocumentDeletionHandler($this))->handle($submissionFile);
+
+        return false;
     }
 
     public function getInstallMigration(): CompilatioSchemaMigration

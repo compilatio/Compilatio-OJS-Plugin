@@ -194,11 +194,11 @@ class CompilatioSettingsController extends PluginSettingsController
                 warningThreshold: $thresholds['warning'],
                 criticalThreshold: $thresholds['critical'],
                 defaultIndexing:
-                    (bool) ($settingsFromForm['defaultIndexing'] ?? false),
+                    (bool) $settingsFromForm['automaticIndexingEnabled'],
                 autoAnalysis:
-                    (bool) ($settingsFromForm['autoAnalysis'] ?? false),
+                    $settingsFromForm['analysisLaunchMode'] === 'automatic',
                 scheduledAnalysisEnabled:
-                    (bool) ($settingsFromForm['scheduledAnalysisEnabled'] ?? false),
+                    $settingsFromForm['analysisLaunchMode'] === 'scheduled',
             );
 
             $compilatioUserId = $this->plugin->getSetting(

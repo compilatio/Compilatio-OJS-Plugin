@@ -48,10 +48,19 @@ class CompilatioClient
     }
 
     /**
-     * @param array<array<string, string|resource>> $payload
+     * @param array<int, array<string, mixed>> $payload
      * @return object
      */
     public function postFile(string $endpoint, array $payload, bool $addUserId = false): object
+    {
+        return $this->postFileWithStatus($endpoint, $payload, $addUserId)['body'];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $payload
+     * @return array{statusCode: int, body: object}
+     */
+    public function postFileWithStatus(string $endpoint, array $payload, bool $addUserId = false): array
     {
         $options = [
             RequestOptions::MULTIPART => $payload
@@ -59,7 +68,10 @@ class CompilatioClient
 
         $response = $this->request('POST', $endpoint, $addUserId, $options);
         $this->assertSuccessfulResponse($response);
-        return $this->checkJsonBody($response);
+        return [
+            'statusCode' => $response->getStatusCode(),
+            'body' => $this->checkJsonBody($response),
+        ];
     }
 
     public function delete(string $endpoint, bool $addUserId = false): void

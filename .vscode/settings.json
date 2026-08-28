@@ -12,7 +12,7 @@
     ],
     "php.validate.enable": true,
     /* PHP version pour Intelephense */
-    "intelephense.environment.phpVersion": "8.1",
+    "intelephense.environment.phpVersion": "8.5",
     /* PHP lint basique */
     "php.validate.executablePath": "/usr/bin/php",
     "phpsab.fixerArguments": [],

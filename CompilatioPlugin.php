@@ -3,15 +3,22 @@
 namespace APP\plugins\generic\compilatio;
 
 use APP\core\Application;
+use APP\facades\Repo;
 use APP\plugins\generic\compilatio\api\CompilatioSettingsController;
+use APP\plugins\generic\compilatio\api\Services\Handler\DocumentSubmissionHandler;
+use APP\plugins\generic\compilatio\api\Logger\CompilatioDebugLogger;
+use APP\plugins\generic\compilatio\migration\CompilatioSchemaMigration;
 use APP\template\TemplateManager;
+use Illuminate\Support\Facades\Event;
 use PKP\core\APIRouter;
 use PKP\core\JSONMessage;
 use PKP\linkAction\LinkAction;
 use PKP\linkAction\request\AjaxModal;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
+use PKP\observers\events\SubmissionSubmitted;
 use PKP\security\Role;
+use PKP\submissionFile\SubmissionFile;
 use PKP\template\PKPTemplateManager;
 use PKP\user\User;
 
@@ -29,6 +36,7 @@ class CompilatioPlugin extends GenericPlugin
 
         Hook::add('APIHandler::endpoints::plugin', [$this, 'registerApiControllers']);
         Hook::add('TemplateManager::display', [$this, 'addAssets']);
+        Event::listen(SubmissionSubmitted::class, [$this, 'handleSubmissionSubmitted']);
 
         return true;
     }
@@ -113,18 +121,6 @@ class CompilatioPlugin extends GenericPlugin
         );
     }
 
-    private function canManageSettings(User $user, int $contextId): bool
-    {
-        /** @var Role[] $roles */
-        $roles = array_merge($user->getRoles($contextId), $user->getRoles(null));
-        $roleIds = array_map(static fn ($role) => $role->getRoleId(), $roles);
-
-        return (bool) array_intersect(
-            [Role::ROLE_ID_MANAGER, Role::ROLE_ID_SITE_ADMIN],
-            $roleIds
-        );
-    }
-
     public function registerApiControllers(string $hookName, APIRouter $apiRouter): bool
     {
         require_once __DIR__ . '/api/CompilatioSettingsRequest.php';
@@ -179,5 +175,56 @@ class CompilatioPlugin extends GenericPlugin
         );
 
         return false;
+    }
+
+    public function handleSubmissionSubmitted(SubmissionSubmitted $event): void
+    {
+        $contextId = $event->context->getId();
+        if (!$this->getEnabled($contextId)) {
+            return;
+        }
+
+        $submission = $event->submission;
+        $submissionFiles = Repo::submissionFile()
+            ->getCollector()
+            ->filterBySubmissionIds([$submission->getId()])
+            ->filterByFileStages([SubmissionFile::SUBMISSION_FILE_SUBMISSION])
+            ->getMany();
+
+        $documentSubmissionHandler = new DocumentSubmissionHandler($this);
+        foreach ($submissionFiles as $submissionFile) {
+            CompilatioDebugLogger::log('SubmissionSubmitted', [
+                'contextId' => $contextId,
+                'submissionId' => $submission->getId(),
+                'submissionFileId' => $submissionFile->getId(),
+                'fileId' => $submissionFile->getData('fileId'),
+                'fileStage' => $submissionFile->getData('fileStage'),
+                'genreId' => $submissionFile->getData('genreId'),
+                'uploaderUserId' => $submissionFile->getData('uploaderUserId'),
+            ]);
+
+            $documentSubmissionHandler->handle(
+                $submission,
+                $submissionFile,
+                $contextId,
+            );
+        }
+    }
+
+    public function getInstallMigration(): CompilatioSchemaMigration
+    {
+        return new CompilatioSchemaMigration();
+    }
+
+    private function canManageSettings(User $user, int $contextId): bool
+    {
+        /** @var Role[] $roles */
+        $roles = array_merge($user->getRoles($contextId), $user->getRoles(null));
+        $roleIds = array_map(static fn ($role) => $role->getRoleId(), $roles);
+
+        return (bool) array_intersect(
+            [Role::ROLE_ID_MANAGER, Role::ROLE_ID_SITE_ADMIN],
+            $roleIds
+        );
     }
 }

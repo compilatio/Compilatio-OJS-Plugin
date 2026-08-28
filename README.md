@@ -108,7 +108,7 @@ To report a security vulnerability, please also contact **support@compilatio.net
 
 ## Information
 
-- Plugin version: **1.0.0.3**
+- Plugin version: **1.0.0.6**
 - Platform: **Open Journal Systems 3.5**
 - Publisher: **Compilatio**
 - License: **GNU GPL v3 or later**

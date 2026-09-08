@@ -4,7 +4,9 @@ namespace APP\plugins\generic\compilatio;
 
 use APP\core\Application;
 use APP\facades\Repo;
+use APP\plugins\generic\compilatio\api\Cron\FetchAnalysisStatus;
 use APP\plugins\generic\compilatio\api\CompilatioSettingsController;
+use APP\plugins\generic\compilatio\api\CompilatioDocumentController;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentSubmissionHandler;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentDeletionHandler;
 use APP\plugins\generic\compilatio\api\Logger\CompilatioDebugLogger;
@@ -17,13 +19,15 @@ use PKP\linkAction\LinkAction;
 use PKP\linkAction\request\AjaxModal;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
+use PKP\plugins\interfaces\HasTaskScheduler;
 use PKP\observers\events\SubmissionSubmitted;
+use PKP\scheduledTask\PKPScheduler;
 use PKP\security\Role;
 use PKP\submissionFile\SubmissionFile;
 use PKP\template\PKPTemplateManager;
 use PKP\user\User;
 
-class CompilatioPlugin extends GenericPlugin
+class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
 {
 
     private const PLUGIN_NAME = 'Compilatio';
@@ -51,6 +55,15 @@ class CompilatioPlugin extends GenericPlugin
     public function getDescription(): string
     {
         return self::PLUGIN_DESCRIPTION;
+    }
+
+    public function registerSchedules(PKPScheduler $scheduler): void
+    {
+        $scheduler
+            ->addSchedule(new FetchAnalysisStatus($this))
+            ->everyFiveMinutes()
+            ->name(FetchAnalysisStatus::class)
+            ->withoutOverlapping();
     }
 
     /**
@@ -127,9 +140,11 @@ class CompilatioPlugin extends GenericPlugin
     {
         require_once __DIR__ . '/api/CompilatioSettingsRequest.php';
         require_once __DIR__ . '/api/CompilatioSettingsController.php';
+        require_once __DIR__ . '/api/CompilatioDocumentController.php';
 
         $apiRouter->registerPluginApiControllers([
             new CompilatioSettingsController($this),
+            new CompilatioDocumentController($this),
         ]);
 
         return false;
@@ -154,6 +169,26 @@ class CompilatioPlugin extends GenericPlugin
 
         $jsFile = __DIR__ . '/view/build/PlagiarismPanel.runtime.js';
         $cssFile = __DIR__ . '/view/build/style.css';
+        $documentStatusJsFile = __DIR__ . '/view/compilatioDocumentStatus.js';
+        $documentsApiJsFile = __DIR__ . '/view/compilatioDocumentsApi.js';
+        $documentsTableJsFile = __DIR__ . '/view/compilatioDocumentsTable.js';
+        $documentActionsJsFile = __DIR__ . '/view/compilatioDocumentActions.js';
+        $documentsJsFile = __DIR__ . '/view/compilatioDocuments.js';
+        $documentsCssFile = __DIR__ . '/view/compilatioDocuments.css';
+        $documentsApiUrl = $request->getDispatcher()->url(
+            $request,
+            Application::ROUTE_API,
+            $context->getPath(),
+            'plugins/compilatio/documents',
+        );
+
+        $templateMgr->addJavaScript(
+            'compilatioDocumentsConfig',
+            'window.pkpCompilatioDocuments = '
+                . json_encode(['apiUrl' => $documentsApiUrl], JSON_UNESCAPED_SLASHES)
+                . ';',
+            ['contexts' => ['backend'], 'inline' => true]
+        );
 
         $templateMgr->addJavaScript(
             'compilatioSettingsPanel',
@@ -166,6 +201,44 @@ class CompilatioPlugin extends GenericPlugin
             ]
         );
 
+        $templateMgr->addJavaScript(
+            'compilatioDocumentStatus',
+            $baseUrl . '/' . $pluginPath
+                . '/view/compilatioDocumentStatus.js?v=' . filemtime($documentStatusJsFile),
+            ['contexts' => ['backend']]
+        );
+
+        $templateMgr->addJavaScript(
+            'compilatioDocumentsApi',
+            $baseUrl . '/' . $pluginPath
+                . '/view/compilatioDocumentsApi.js?v=' . filemtime($documentsApiJsFile),
+            ['contexts' => ['backend']]
+        );
+
+        $templateMgr->addJavaScript(
+            'compilatioDocumentsTable',
+            $baseUrl . '/' . $pluginPath
+                . '/view/compilatioDocumentsTable.js?v=' . filemtime($documentsTableJsFile),
+            ['contexts' => ['backend']]
+        );
+
+        $templateMgr->addJavaScript(
+            'compilatioDocumentActions',
+            $baseUrl . '/' . $pluginPath
+                . '/view/compilatioDocumentActions.js?v=' . filemtime($documentActionsJsFile),
+            ['contexts' => ['backend']]
+        );
+
+        $templateMgr->addJavaScript(
+            'compilatioDocuments',
+            $baseUrl . '/' . $pluginPath
+                . '/view/compilatioDocuments.js?v=' . filemtime($documentsJsFile),
+            [
+                'contexts' => ['backend'],
+                'priority' => PKPTemplateManager::STYLE_SEQUENCE_LATE,
+            ]
+        );
+
         $templateMgr->addStyleSheet(
             'compilatioTailwind',
             $baseUrl . '/' . $pluginPath
@@ -174,6 +247,13 @@ class CompilatioPlugin extends GenericPlugin
             [
                 'contexts' => ['backend'],
             ]
+        );
+
+        $templateMgr->addStyleSheet(
+            'compilatioDocuments',
+            $baseUrl . '/' . $pluginPath
+                . '/view/compilatioDocuments.css?v=' . filemtime($documentsCssFile),
+            ['contexts' => ['backend']]
         );
 
         return false;

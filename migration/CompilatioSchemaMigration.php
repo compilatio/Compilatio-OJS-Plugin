@@ -29,7 +29,6 @@ final class CompilatioSchemaMigration extends Migration
             $table->string('external_id', 255)->nullable();
             $table->string('status', 64)->nullable();
             $table->text('error_message')->nullable();
-            $table->string('analysis_id', 255)->nullable();
             $table->longText('light_reports')->nullable();
             $table->boolean('indexed')->default(false);
             $table->timestamp('submitted_at')->nullable();

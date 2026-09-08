@@ -20,6 +20,9 @@ final readonly class Document
     public const STATUS_ERROR_ANALYSIS_FAILED = 'error_analysis_failed';
     public const STATUS_ERROR_DELETE = 'error_delete';
 
+    public const STATUS_ANALYSING_IN_PROGRESS = [self::STATUS_QUEUE, self::STATUS_ANALYSING];
+
+
     /** @param list<DocumentAuthor> $authors */
     public function __construct(
         public int $contextId,

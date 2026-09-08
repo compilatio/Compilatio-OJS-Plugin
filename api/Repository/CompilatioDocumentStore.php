@@ -27,6 +27,16 @@ final class CompilatioDocumentStore
             ->first();
     }
 
+    /** @return array<int, object> */
+    public function getForSubmission(int $submissionId, int $contextId): array
+    {
+        return DB::table(self::TABLE)
+            ->where('submission_id', $submissionId)
+            ->where('context_id', $contextId)
+            ->get()
+            ->all();
+    }
+
     public function deleteForSubmissionFile(int $submissionFileId): void
     {
         DB::table(self::TABLE)
@@ -82,7 +92,6 @@ final class CompilatioDocumentStore
             ->where('submission_file_id', $submissionFileId)
             ->update([
                 'external_id' => $externalId,
-                'analysis_id' => $this->stringOrNull($document->analysis_id ?? null),
                 'status' => $status,
                 'error_message' => null,
                 'light_reports' => $this->encodeLightReports(
@@ -126,6 +135,20 @@ final class CompilatioDocumentStore
             ->where('submission_file_id', $submissionFileId)
             ->update([
                 'status' => $status,
+                'last_synced_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+    }
+
+    public function markAnalysisLaunched(
+        int $submissionFileId,
+        string $status,
+    ): void {
+        DB::table(self::TABLE)
+            ->where('submission_file_id', $submissionFileId)
+            ->update([
+                'status' => $status,
+                'error_message' => null,
                 'last_synced_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);

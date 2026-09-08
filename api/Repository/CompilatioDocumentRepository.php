@@ -14,8 +14,24 @@ use Throwable;
 
 final class CompilatioDocumentRepository
 {
+    private const REPORT_REDIRECT_URL = 'https://app.compilatio.net/api/private/reports/redirect/';
+
     public function __construct(private readonly CompilatioClient $client)
     {
+    }
+
+    public function getById(string $documentId): object
+    {
+        if ('' === $documentId) {
+            throw new RuntimeException('The Compilatio document ID is missing.');
+        }
+
+        $document = $this->client->get(
+            'private/documents/' . rawurlencode($documentId),
+            true,
+        );
+
+        return $document;
     }
 
     public function create(Document $document): DocumentUploadResult
@@ -88,9 +104,44 @@ final class CompilatioDocumentRepository
         );
     }
 
+    public function launchAnalysis(string $documentId): object
+    {
+        if ('' === $documentId) {
+            throw new RuntimeException('The Compilatio document ID is missing.');
+        }
+
+        $analysis = $this->client->post(
+            'private/analyses',
+            ['doc_id' => $documentId],
+            true,
+        );
+
+        return $analysis;
+    }
+
+    public function getReportUrl(string $documentId): string
+    {
+        if ('' === $documentId) {
+            throw new RuntimeException('The Compilatio document ID is missing.');
+        }
+
+        $response = $this->client->post(
+            'private/documents/' . rawurlencode($documentId) . '/report-jwt',
+            [],
+            true,
+        );
+        $jwt = $response->data->jwt ?? null;
+
+        if (!is_string($jwt) || '' === $jwt) {
+            throw new RuntimeException('Compilatio returned a report without a JWT.');
+        }
+
+        return self::REPORT_REDIRECT_URL . rawurlencode($jwt);
+    }
+
     public function delete(string $documentId): void
     {
-        if ($documentId === '') {
+        if ('' === $documentId) {
             throw new RuntimeException('The Compilatio document ID is missing.');
         }
 

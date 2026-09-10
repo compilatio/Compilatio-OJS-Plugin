@@ -1,10 +1,7 @@
 (function () {
-  function getConfig() {
-    return window.pkpCompilatioDocuments;
-  }
 
   function addActionUrls(documentData) {
-    var documentUrl = getConfig().apiUrl + '/' + documentData.submissionFileId;
+    var documentUrl = window.pkpCompilatioDocuments.apiUrl + '/' + documentData.submissionFileId;
 
     documentData.retryUrl = documentUrl + '/retry';
     documentData.analyseUrl = documentUrl + '/analyse';
@@ -16,9 +13,9 @@
   async function getErrorMessage(response) {
     try {
       var body = await response.json();
-      return body.errorMessage || 'Erreur Compilatio (' + response.status + ')';
+      return body.errorMessage || window.pkpCompilatioDocuments.messages.apiError + ' (' + response.status + ')';
     } catch (error) {
-      return 'Erreur Compilatio (' + response.status + ')';
+      return window.pkpCompilatioDocuments.messages.apiError + ' (' + response.status + ')';
     }
   }
 
@@ -33,7 +30,7 @@
   }
 
   function getSubmissionDocuments(submissionId) {
-    var config = getConfig();
+    var config = window.pkpCompilatioDocuments;
 
     return request(
       config.apiUrl + '/submission/' + encodeURIComponent(submissionId),

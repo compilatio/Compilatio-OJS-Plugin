@@ -34,11 +34,11 @@
 
   function handleReportResult(reportWindow, result) {
     if (!result.url) {
-      throw new Error('Compilatio n’a pas retourné de lien vers le rapport.');
+      throw new Error(window.pkpCompilatioDocuments.messages.reportMissing);
     }
 
     if (!reportWindow) {
-      throw new Error('Le navigateur a bloqué l’ouverture du rapport.');
+      throw new Error(window.pkpCompilatioDocuments.messages.reportBlocked);
     }
 
     reportWindow.location.href = result.url;
@@ -48,7 +48,7 @@
     container.dataset.status = result.status;
     var label = document.createElement('span');
     label.className = 'compilatio-document-label';
-    label.textContent = 'Analyse en cours';
+    label.textContent = window.pkpCompilatioDocuments.messages.analysing;
     button.replaceWith(label);
   }
 

@@ -251,21 +251,24 @@ final class CompilatioDocumentController extends PKPBaseController
 
     private function getStatusLabel(mixed $status): string
     {
-        return match ($status) {
-            'sent' => 'Prêt à analyser',
-            'queue' => 'Analyse en attente',
-            'analysing' => 'Analyse en cours',
-            'scored' => 'Analyse terminée',
-            'error_not_found' => 'Document introuvable',
-            'error_too_short' => 'Document trop court',
-            'error_too_large' => 'Document trop volumineux',
-            'error_too_long' => 'Document trop long',
-            'error_unsupported' => 'Format non pris en charge',
-            'error_extraction_failed' => "Échec de l’extraction",
-            'error_analysis_failed' => "Échec de l’analyse",
-            'error_sending_failed' => "Échec de l’envoi",
-            default => 'Non envoyé',
+        $key = match ($status) {
+            'sent' => 'sent',
+            'queue' => 'queue',
+            'analysing' => 'analysing',
+            'scored' => 'scored',
+            'error_not_found' => 'error_not_found',
+            'error_too_short' => 'error_too_short',
+            'error_too_large' => 'error_too_large',
+            'error_too_long' => 'error_too_long',
+            'error_unsupported' => 'error_unsupported',
+            'error_extraction_failed' => 'error_extraction_failed',
+            'error_analysis_failed' => 'error_analysis_failed',
+            'error_sending_failed' => 'error_sending_failed',
+            'error_delete' => 'error_delete',
+            default => 'not_sent',
         };
+
+        return __('plugins.generic.compilatio.documents.' . $key);
     }
 
     private function getGlobalScore(mixed $lightReports): ?float

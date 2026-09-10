@@ -22,7 +22,7 @@
     container.appendChild(createButton(
       'compilatio-retry-button',
       documentData.retryUrl,
-      'Renvoyer',
+      window.pkpCompilatioDocuments.messages.retry,
     ));
   }
 
@@ -30,14 +30,14 @@
     container.appendChild(createButton(
       'compilatio-analysis-button',
       documentData.analyseUrl,
-      'Lancer l’analyse',
+      window.pkpCompilatioDocuments.messages.launch,
     ));
   }
 
   function appendScoredStatus(container, documentData) {
     var reportLabel = null !== documentData.score && undefined !== documentData.score
       ? Number(documentData.score).toFixed(1) + '%'
-      : 'Voir le rapport';
+      : window.pkpCompilatioDocuments.messages.report;
     var reportButton = createButton(
       'compilatio-report-button',
       documentData.reportUrl,

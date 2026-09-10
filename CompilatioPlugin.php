@@ -15,6 +15,7 @@ use APP\template\TemplateManager;
 use Illuminate\Support\Facades\Event;
 use PKP\core\APIRouter;
 use PKP\core\JSONMessage;
+use PKP\facades\Locale;
 use PKP\linkAction\LinkAction;
 use PKP\linkAction\request\AjaxModal;
 use PKP\plugins\GenericPlugin;
@@ -38,6 +39,8 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
         if (!parent::register($category, $path, $mainContextId)) {
             return false;
         }
+
+        $this->addLocaleData();
 
         Hook::add('APIHandler::endpoints::plugin', [$this, 'registerApiControllers']);
         Hook::add('TemplateManager::display', [$this, 'addAssets']);
@@ -185,7 +188,19 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
         $templateMgr->addJavaScript(
             'compilatioDocumentsConfig',
             'window.pkpCompilatioDocuments = '
-                . json_encode(['apiUrl' => $documentsApiUrl], JSON_UNESCAPED_SLASHES)
+                . json_encode([
+                    'apiUrl' => $documentsApiUrl,
+                    'locale' => Locale::getLocale(),
+                    'messages' => [
+                        'retry' => __('plugins.generic.compilatio.documents.retry'),
+                        'launch' => __('plugins.generic.compilatio.documents.launch'),
+                        'report' => __('plugins.generic.compilatio.documents.report'),
+                        'reportMissing' => __('plugins.generic.compilatio.documents.reportMissing'),
+                        'reportBlocked' => __('plugins.generic.compilatio.documents.reportBlocked'),
+                        'apiError' => __('plugins.generic.compilatio.documents.apiError'),
+                        'analysing' => __('plugins.generic.compilatio.documents.analysing'),
+                    ],
+                ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)
                 . ';',
             ['contexts' => ['backend'], 'inline' => true]
         );

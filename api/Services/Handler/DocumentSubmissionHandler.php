@@ -16,6 +16,8 @@ use PKP\author\Author;
 use PKP\db\DAORegistry;
 use PKP\plugins\Plugin;
 use PKP\security\Role;
+use PKP\services\PKPFileService;
+use PKP\submission\Genre;
 use PKP\submission\GenreDAO;
 use PKP\submissionFile\SubmissionFile;
 use RuntimeException;
@@ -23,9 +25,7 @@ use Throwable;
 
 final class DocumentSubmissionHandler
 {
-    public function __construct(private readonly Plugin $plugin)
-    {
-    }
+    public function __construct(private readonly Plugin $plugin) {}
 
     public function handle(
         Submission $submission,
@@ -40,15 +40,26 @@ final class DocumentSubmissionHandler
             return;
         }
 
+        $submissionId = $submission->getId();
+        $submissionFileId = $submissionFile->getId();
+        if (null === $submissionId || null === $submissionFileId) {
+            return;
+        }
+
         $store = new CompilatioDocumentStore();
-        if ($store->existsForSubmissionFile($submissionFile->getId())) {
-            CompilatioDebugLogger::log('Document already sent', $submissionFile->getId());
+        if ($store->existsForSubmissionFile($submissionFileId)) {
             return;
         }
 
         try {
-            $document = $this->buildDocument($submission, $submissionFile, $contextId);
-            $store->insetDocument($document);
+            $document = $this->buildDocument(
+                $submission,
+                $submissionFile,
+                $contextId,
+                $submissionId,
+                $submissionFileId,
+            );
+            $store->insertDocument($document);
 
             $compilatioDocumentRepository = new CompilatioDocumentRepository(
                 new CompilatioClient(
@@ -59,37 +70,43 @@ final class DocumentSubmissionHandler
             );
 
             $result = $compilatioDocumentRepository->create($document);
-            $response = $result->response;
-            $remoteDocument = $response->document->data->document;
+            $remoteDocument = $result->document;
+            $status = $result->status;
 
-            $store->markUploaded($document->submissionFileId, $response, $result->status);
+            if (Document::STATUS_SENT === $status) {
+                $launchMode = $this->plugin->getSetting($contextId, 'analysisLaunchMode');
+                if (in_array($launchMode, ['automatic', 'scheduled'], true)) {
+                    $status = Document::STATUS_QUEUE;
+                }
+            }
+
+            $store->markUploaded($document->submissionFileId, $remoteDocument, $status);
 
             CompilatioDebugLogger::log('Document sent', [
                 'submissionFileId' => $document->submissionFileId,
                 'externalId' => $remoteDocument->id,
-                'httpStatus' => $response->statusCode,
-                'status' => $result->status,
+                'status' => $status,
             ]);
         } catch (CompilatioDocumentUploadException $exception) {
             $store->markError(
-                $submissionFile->getId(),
+                $submissionFileId,
                 $exception->status,
                 $exception->getMessage(),
             );
             CompilatioDebugLogger::log('Document upload error', [
-                'submissionFileId' => $submissionFile->getId(),
+                'submissionFileId' => $submissionFileId,
                 'httpStatus' => $exception->httpStatus,
                 'status' => $exception->status,
                 'error' => $exception->getMessage(),
             ]);
         } catch (Throwable $exception) {
             $store->markError(
-                $submissionFile->getId(),
+                $submissionFileId,
                 Document::STATUS_ERROR_SENDING_FAILED,
                 $exception->getMessage(),
             );
             CompilatioDebugLogger::log('Document upload error', [
-                'submissionFileId' => $submissionFile->getId(),
+                'submissionFileId' => $submissionFileId,
                 'httpStatus' => $exception->getCode(),
                 'status' => Document::STATUS_ERROR_SENDING_FAILED,
                 'error' => $exception->getMessage(),
@@ -101,6 +118,8 @@ final class DocumentSubmissionHandler
         Submission $submission,
         SubmissionFile $submissionFile,
         int $contextId,
+        int $submissionId,
+        int $submissionFileId,
     ): Document {
         $fileId = $submissionFile->getData('fileId');
         $uploaderUserId = $submissionFile->getData('uploaderUserId');
@@ -109,9 +128,25 @@ final class DocumentSubmissionHandler
         }
 
         $fileService = app()->get('file');
+        if (!$fileService instanceof PKPFileService) {
+            throw new RuntimeException('The OJS file service is unavailable.');
+        }
+
+        /** @var object|null $file */
         $file = $fileService->get($fileId);
-        if (!$file || !$fileService->fs->has($file->path)) {
+        if (null === $file) {
+            throw new RuntimeException('The OJS document can not be found.');
+        }
+
+        $fileProperties = get_object_vars($file);
+        $path = $fileProperties['path'] ?? null;
+        if (!is_string($path) || '' === $path || !$fileService->fs->has($path)) {
             throw new RuntimeException('The physical OJS document can not be found.');
+        }
+
+        $contentType = $fileProperties['mimetype'] ?? null;
+        if (!is_string($contentType) || '' === $contentType) {
+            $contentType = 'application/octet-stream';
         }
 
         $uploader = Repo::user()->get($uploaderUserId);
@@ -125,42 +160,53 @@ final class DocumentSubmissionHandler
         }
 
         $authors = [];
-        foreach ($publication->getData('authors') as $author) {
+        $publicationAuthors = $publication->getData('authors');
+        if (!is_iterable($publicationAuthors)) {
+            throw new RuntimeException('The OJS publication authors are invalid.');
+        }
+
+        foreach ($publicationAuthors as $author) {
+            if (!$author instanceof Author) {
+                continue;
+            }
+
             if ($this->isTranslator($author)) {
                 continue;
             }
 
             $authors[] = new DocumentAuthor(
-                $this->clean((string) $author->getLocalizedGivenName()),
-                $this->clean((string) $author->getLocalizedFamilyName()),
-                (string) $author->getEmail(),
+                $this->clean($author->getLocalizedGivenName()),
+                $this->clean($author->getLocalizedFamilyName()),
+                $this->clean($author->getEmail()),
             );
         }
 
         $originalName = $submissionFile->getLocalizedData('name');
         $description = $publication->getLocalizedData('abstract');
         $filename = $fileService->formatFilename(
-            $file->path,
+            $path,
             is_string($originalName) && $originalName !== '' ? $originalName : 'document'
         );
 
         return new Document(
             contextId: $contextId,
-            submissionId: $submission->getId(),
-            submissionFileId: $submissionFile->getId(),
+            submissionId: $submissionId,
+            submissionFileId: $submissionFileId,
             fileId: $fileId,
             uploaderUserId: $uploaderUserId,
             folderId: $this->requireStringSetting($contextId, 'compilatioFolderId'),
             filename: $filename,
-            title: $this->clean((string) $publication->getLocalizedTitle()),
+            title: $this->clean($publication->getLocalizedTitle()),
             description: $this->clean(is_string($description) ? $description : ''),
-            path: $file->path,
-            contentType: (string) ($file->mimetype ?? 'application/octet-stream'),
-            indexed: (bool) $this->plugin->getSetting($contextId, 'automaticIndexingEnabled'),
+            path: $path,
+            contentType: $contentType,
+            indexed: $this->isTruthy(
+                $this->plugin->getSetting($contextId, 'automaticIndexingEnabled')
+            ),
             depositor: new DocumentAuthor(
-                $this->clean((string) $uploader->getLocalizedGivenName()),
-                $this->clean((string) $uploader->getLocalizedFamilyName()),
-                (string) $uploader->getEmail(),
+                $this->clean($uploader->getLocalizedGivenName()),
+                $this->clean($uploader->getLocalizedFamilyName()),
+                $this->clean($uploader->getEmail()),
             ),
             authors: $authors,
         );
@@ -169,11 +215,11 @@ final class DocumentSubmissionHandler
     private function isTranslator(Author $author): bool
     {
         $userGroup = $author->getUserGroup();
+        $roleId = $userGroup->getAttribute('roleId');
 
-        return $userGroup !== null
-            && (bool) $userGroup->isDefault
-            && (int) $userGroup->roleId === Role::ROLE_ID_AUTHOR
-            && !(bool) $userGroup->permitSelfRegistration;
+        return $this->isTruthy($userGroup->getAttribute('isDefault'))
+            && in_array($roleId, [Role::ROLE_ID_AUTHOR, (string) Role::ROLE_ID_AUTHOR], true)
+            && !$this->isTruthy($userGroup->getAttribute('permitSelfRegistration'));
     }
 
     private function isArticleText(
@@ -182,6 +228,7 @@ final class DocumentSubmissionHandler
     ): bool {
         /** @var GenreDAO $genreDao */
         $genreDao = DAORegistry::getDAO('GenreDAO');
+        /** @var Genre|null $articleTextGenre */
         $articleTextGenre = $genreDao->getByKey('SUBMISSION', $contextId);
 
         return $articleTextGenre !== null
@@ -198,8 +245,13 @@ final class DocumentSubmissionHandler
         return $value;
     }
 
-    private function clean(string $value): string
+    private function clean(mixed $value): string
     {
-        return trim(strip_tags($value));
+        return is_string($value) ? trim(strip_tags($value)) : '';
+    }
+
+    private function isTruthy(mixed $value): bool
+    {
+        return true === $value || 1 === $value || '1' === $value;
     }
 }

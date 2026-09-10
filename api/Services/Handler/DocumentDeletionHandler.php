@@ -22,6 +22,10 @@ final class DocumentDeletionHandler
     public function handle(SubmissionFile $submissionFile): void
     {
         $submissionFileId = $submissionFile->getId();
+        if (null === $submissionFileId) {
+            return;
+        }
+
         $compilatioDocumentStore = new CompilatioDocumentStore();
         $document = $compilatioDocumentStore->getForSubmissionFile($submissionFileId);
 
@@ -29,14 +33,14 @@ final class DocumentDeletionHandler
             return;
         }
 
-        $externalId = $document->external_id ?? null;
-        if (!is_string($externalId) || $externalId === '') {
+        $externalId = $document->externalId;
+        if (null === $externalId || '' === $externalId) {
             $compilatioDocumentStore->deleteForSubmissionFile($submissionFileId);
             return;
         }
 
         try {
-            $contextId = (int) $document->context_id;
+            $contextId = $document->contextId;
             $compilatioDocumentRepository = new CompilatioDocumentRepository(
                 new CompilatioClient(
                     $this->requireStringSetting($contextId, 'apiKey'),

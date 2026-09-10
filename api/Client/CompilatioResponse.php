@@ -17,20 +17,7 @@ final class CompilatioResponse
             $nextValue = $properties[$property] ?? null;
 
             if (!is_object($nextValue)) {
-                $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? [];
-                $file = isset($caller['file'])
-                    ? self::relativeFile($caller['file'])
-                    : 'unknown file';
-                $line = isset($caller['line'])
-                    ? $caller['line']
-                    : 0;
-
-                throw new RuntimeException(sprintf(
-                    'Compilatio API returned an invalid response at "%s" (%s:%d).',
-                    implode('.', $currentPath),
-                    $file,
-                    $line
-                ));
+                self::throwWithBacktrace($currentPath, 'an object');
             }
 
             $value = $nextValue;
@@ -100,5 +87,27 @@ final class CompilatioResponse
         return str_starts_with($file, $projectDirectory)
             ? substr($file, strlen($projectDirectory))
             : $file;
+    }
+
+    /**
+     * @param array<string> $currentPath
+     */
+    private static function throwWithBacktrace(array $currentPath, string $expectedType): never
+    {
+        $caller = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? [];
+        $file = isset($caller['file'])
+            ? self::relativeFile($caller['file'])
+            : 'unknown file';
+        $line = isset($caller['line'])
+            ? $caller['line']
+            : 0;
+
+        throw new RuntimeException(sprintf(
+            'Compilatio API returned an invalid response at "%s": expected %s (%s:%d).',
+            implode('.', $currentPath),
+            $expectedType,
+            $file,
+            $line
+        ));
     }
 }

@@ -22,7 +22,6 @@ final readonly class Document
 
     public const STATUS_ANALYSING_IN_PROGRESS = [self::STATUS_QUEUE, self::STATUS_ANALYSING];
 
-
     /** @param list<DocumentAuthor> $authors */
     public function __construct(
         public int $contextId,
@@ -34,11 +33,15 @@ final readonly class Document
         public string $filename,
         public string $title,
         public string $description,
-        public string $path,
-        public string $contentType,
         public bool $indexed,
-        public DocumentAuthor $depositor,
         public array $authors,
-    ) {
-    }
+        public ?int $id = null,
+        public ?string $path = null,
+        public ?string $contentType = null,
+        public ?DocumentAuthor $depositor = null,
+        public ?string $externalId = null,
+        public ?string $status = null,
+        public ?string $lightReports = null,
+        public ?string $errorMessage = null
+    ) {}
 }

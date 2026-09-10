@@ -9,6 +9,11 @@ final class CompilatioDocumentStatusResolver
 {
     public function resolve(int|string $status): string
     {
+        return $this->tryResolve($status) ?? Document::STATUS_ERROR_SENDING_FAILED;
+    }
+
+    public function tryResolve(int|string $status): ?string
+    {
         if (is_string($status) && ctype_digit($status)) {
             $status = (int) $status;
         }
@@ -27,7 +32,7 @@ final class CompilatioDocumentStatusResolver
             'Analyzed' => Document::STATUS_SCORED,
             'In queue' => Document::STATUS_QUEUE,
             'pending' => Document::STATUS_ERROR_SENDING_FAILED,
-            default => Document::STATUS_ERROR_SENDING_FAILED,
+            default => null,
         };
     }
 

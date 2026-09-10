@@ -44,9 +44,12 @@
     reportWindow.location.href = result.url;
   }
 
-  function handleAnalysisResult(container, result) {
+  function handleAnalysisResult(container, button, result) {
     container.dataset.status = result.status;
-    container.innerHTML = '<span class="compilatio-document-label">Analyse en cours</span>';
+    var label = document.createElement('span');
+    label.className = 'compilatio-document-label';
+    label.textContent = 'Analyse en cours';
+    button.replaceWith(label);
   }
 
   async function handleAction(event, documentsByFileId) {
@@ -79,7 +82,7 @@
       } else if (isReport) {
         handleReportResult(reportWindow, result);
       } else {
-        handleAnalysisResult(container, result);
+        handleAnalysisResult(container, button, result);
       }
     } catch (error) {
       if (reportWindow) {

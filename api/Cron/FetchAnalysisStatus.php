@@ -6,9 +6,9 @@ use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
 use APP\plugins\generic\compilatio\api\DTO\Document;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentStore;
+use APP\plugins\generic\compilatio\api\Services\Resolver\CompilatioDocumentStatusResolver;
 use APP\plugins\generic\compilatio\CompilatioPlugin;
 use GuzzleHttp\Client;
-use Illuminate\Support\Facades\DB;
 use PKP\scheduledTask\ScheduledTask;
 use PKP\scheduledTask\ScheduledTaskHelper;
 use RuntimeException;
@@ -16,7 +16,6 @@ use Throwable;
 
 final class FetchAnalysisStatus extends ScheduledTask
 {
-    private const TABLE = 'compilatio_documents';
     private const FAILED_STATES = ['crashed', 'aborted', 'canceled'];
 
     /** @var array<int, CompilatioDocumentRepository> */
@@ -34,14 +33,10 @@ final class FetchAnalysisStatus extends ScheduledTask
 
     protected function executeActions(): bool
     {
-        $documents = DB::table(self::TABLE)
-            ->whereIn('status', Document::STATUS_ANALYSING_IN_PROGRESS)
-            ->whereNotNull('external_id')
-            ->get();
-
         $store = new CompilatioDocumentStore();
-        $successful = true;
+        $documents = $store->getPendingSynchronization();
 
+        $successful = true;
         foreach ($documents as $document) {
             try {
                 $this->synchronizeDocument($document, $store);
@@ -58,44 +53,94 @@ final class FetchAnalysisStatus extends ScheduledTask
             }
         }
 
+        $documents = $store->getFailedDeletion();
+
+        foreach ($documents as $document) {
+            try {
+                $this->deleteDocument($document, $store);
+            } catch (Throwable $exception) {
+                $successful = false;
+                $this->addExecutionLogEntry(
+                    sprintf(
+                        'Unable to delete document %d: %s',
+                        $document->id,
+                        $exception->getMessage(),
+                    ),
+                    ScheduledTaskHelper::SCHEDULED_TASK_MESSAGE_TYPE_ERROR,
+                );
+            }
+        }
+
+
         return $successful;
     }
 
     private function synchronizeDocument(
-        object $document,
+        Document $document,
         CompilatioDocumentStore $store,
     ): void {
-        $externalId = $document->external_id ?? null;
+        $externalId = $document->externalId ?? null;
         if (!is_string($externalId) || '' === $externalId) {
             throw new RuntimeException('The Compilatio document ID is missing.');
         }
 
-        $response = $this->getRepository((int) $document->context_id)
+        $remoteDocument = $this->getRepository((int) $document->contextId)
             ->getById($externalId);
-        $remoteDocument = $response->data->document ?? null;
 
-        if (!is_object($remoteDocument)) {
-            throw new RuntimeException('Compilatio returned an invalid document.');
-        }
-
-        $lightReports = $remoteDocument->light_reports ?? null;
+        $lightReports = $remoteDocument->lightReports;
 
         if (null !== $lightReports) {
             $store->updateLightReports(
-                (int) $document->submission_file_id,
+                (int) $document->submissionFileId,
                 $lightReports,
                 Document::STATUS_SCORED,
             );
             return;
         }
 
-        if (!in_array($remoteDocument->state ?? null, self::FAILED_STATES, true)) {
+        $status = null !== $remoteDocument->status
+            ? (new CompilatioDocumentStatusResolver())->tryResolve($remoteDocument->status)
+            : null;
+
+        if (in_array($remoteDocument->analyses, self::FAILED_STATES, true)) {
+            $status = Document::STATUS_ERROR_ANALYSIS_FAILED;
+        }
+
+        // An upload status may lag behind a manually launched analysis.
+        if (null === $status || Document::STATUS_SENT === $status || $document->status === $status) {
             return;
         }
-        
+
         $store->updateStatus(
-            (int) $document->submission_file_id,
-            Document::STATUS_ERROR_ANALYSIS_FAILED,
+            (int) $document->submissionFileId,
+            $status,
+        );
+    }
+
+    private function deleteDocument(Document $document, CompilatioDocumentStore $store): void
+    {
+        $externalId = $document->externalId ?? null;
+        if (!is_string($externalId) || '' === $externalId) {
+            throw new RuntimeException('The Compilatio document ID is missing.');
+        }
+
+        try {
+            $this->getRepository((int) $document->contextId)
+                ->delete($externalId);
+        } catch (Throwable $exception) {
+            throw new RuntimeException(
+                sprintf(
+                    'Unable to delete document %d in Compilatio: %s',
+                    $document->id,
+                    $exception->getMessage(),
+                ),
+                0,
+                $exception,
+            );
+        }
+
+        $store->deleteForSubmissionFile(
+            (int) $document->submissionFileId,
         );
     }
 
@@ -117,7 +162,7 @@ final class FetchAnalysisStatus extends ScheduledTask
     private function requireSetting(int $contextId, string $name): string
     {
         $value = $this->plugin->getSetting($contextId, $name);
-        if (!is_string($value) || $value === '') {
+        if (!is_string($value) || '' === $value) {
             throw new RuntimeException(
                 "The Compilatio setting {$name} is missing for context {$contextId}."
             );

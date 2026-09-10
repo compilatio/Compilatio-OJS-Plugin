@@ -101,7 +101,7 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
 
         return $actions;
     }
-    
+
     /** @param array<string, mixed> $args */
     public function manage($args, $request): JSONMessage
     {
@@ -262,7 +262,7 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
     public function handleSubmissionSubmitted(SubmissionSubmitted $event): void
     {
         $contextId = $event->context->getId();
-        if (!$this->getEnabled($contextId)) {
+        if (!$contextId || !$this->getEnabled($contextId)) {
             return;
         }
 
@@ -313,7 +313,7 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
     {
         /** @var Role[] $roles */
         $roles = array_merge($user->getRoles($contextId), $user->getRoles(null));
-        $roleIds = array_map(static fn ($role) => $role->getRoleId(), $roles);
+        $roleIds = array_map(static fn($role) => $role->getRoleId(), $roles);
 
         return (bool) array_intersect(
             [Role::ROLE_ID_MANAGER, Role::ROLE_ID_SITE_ADMIN],

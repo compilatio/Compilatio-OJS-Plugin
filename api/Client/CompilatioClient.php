@@ -2,6 +2,7 @@
 
 namespace APP\plugins\generic\compilatio\api\Client;
 
+use APP\plugins\generic\compilatio\api\DTO\CompilatioResponse;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -53,14 +54,17 @@ class CompilatioClient
      */
     public function postFile(string $endpoint, array $payload, bool $addUserId = false): object
     {
-        return $this->postFileWithStatus($endpoint, $payload, $addUserId)['body'];
+        return $this->postFileWithStatus($endpoint, $payload, $addUserId)->body;
     }
 
     /**
      * @param array<int, array<string, mixed>> $payload
-     * @return array{statusCode: int, body: object}
      */
-    public function postFileWithStatus(string $endpoint, array $payload, bool $addUserId = false): array
+    public function postFileWithStatus(
+        string $endpoint,
+        array $payload,
+        bool $addUserId = false,
+    ): CompilatioResponse
     {
         $options = [
             RequestOptions::MULTIPART => $payload
@@ -68,10 +72,10 @@ class CompilatioClient
 
         $response = $this->request('POST', $endpoint, $addUserId, $options);
         $this->assertSuccessfulResponse($response);
-        return [
-            'statusCode' => $response->getStatusCode(),
-            'body' => $this->checkJsonBody($response),
-        ];
+        return new CompilatioResponse(
+            statusCode: $response->getStatusCode(),
+            body: $this->checkJsonBody($response),
+        );
     }
 
     public function delete(string $endpoint, bool $addUserId = false): void

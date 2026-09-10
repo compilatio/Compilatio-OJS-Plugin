@@ -3,12 +3,15 @@
 namespace APP\plugins\generic\compilatio\api\Repository;
 
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
+use APP\plugins\generic\compilatio\api\Client\CompilatioResponse as CompilatioResponseReader;
+use APP\plugins\generic\compilatio\api\DTO\Analysis;
+use APP\plugins\generic\compilatio\api\DTO\CompilatioDocument;
 use APP\plugins\generic\compilatio\api\DTO\Document;
 use APP\plugins\generic\compilatio\api\DTO\DocumentAuthor;
-use APP\plugins\generic\compilatio\api\DTO\DocumentUploadResponse;
 use APP\plugins\generic\compilatio\api\DTO\DocumentUploadResult;
 use APP\plugins\generic\compilatio\api\Exception\CompilatioDocumentUploadException;
 use APP\plugins\generic\compilatio\api\Services\Resolver\CompilatioDocumentStatusResolver;
+use PKP\services\PKPFileService;
 use RuntimeException;
 use Throwable;
 
@@ -16,31 +19,29 @@ final class CompilatioDocumentRepository
 {
     private const REPORT_REDIRECT_URL = 'https://app.compilatio.net/api/private/reports/redirect/';
 
-    public function __construct(private readonly CompilatioClient $client)
-    {
-    }
+    public function __construct(private readonly CompilatioClient $client) {}
 
-    public function getById(string $documentId): object
+    public function getById(string $documentId): CompilatioDocument
     {
         if ('' === $documentId) {
             throw new RuntimeException('The Compilatio document ID is missing.');
         }
 
-        $document = $this->client->get(
+        $response = $this->client->get(
             'private/documents/' . rawurlencode($documentId),
             true,
         );
 
-        return $document;
+        return CompilatioDocument::build(
+            CompilatioResponseReader::objectAt($response, 'data', 'document'),
+        );
     }
 
     public function create(Document $document): DocumentUploadResult
     {
         $statusResolver = new CompilatioDocumentStatusResolver();
-        $stream = app()->get('file')->fs->readStream($document->path);
-        if (!is_resource($stream)) {
-            throw new RuntimeException('Unable to open the OJS document.');
-        }
+        $depositor = self::getDepositor($document);
+        $stream = self::getStream($document);
 
         try {
             $multipart = [
@@ -53,7 +54,7 @@ final class CompilatioDocumentRepository
                 $this->part('user_notes[description]', $document->description)
             ];
 
-            $this->addPerson($multipart, 'depositor', $document->depositor);
+            $this->addPerson($multipart, 'depositor', $depositor);
             foreach ($document->authors as $index => $author) {
                 $this->addPerson($multipart, "authors[{$index}]", $author);
             }
@@ -73,21 +74,19 @@ final class CompilatioDocumentRepository
                 );
             }
 
-            $responseBody = $response['body'];
-            $remoteStatus = $responseBody->data->document->status ?? null;
-            $status = is_int($remoteStatus) || is_string($remoteStatus)
-                ? $statusResolver->resolve($remoteStatus)
-                : $statusResolver->fromHttpStatus($response['statusCode']);
+            $remoteDocument = CompilatioDocument::build(
+                CompilatioResponseReader::objectAt($response->body, 'data', 'document'),
+            );
+            $status = null !== $remoteDocument->status
+                ? $statusResolver->resolve($remoteDocument->status)
+                : $statusResolver->fromHttpStatus($response->statusCode);
 
             return new DocumentUploadResult(
-                new DocumentUploadResponse(
-                    $response['statusCode'],
-                    $responseBody,
-                ),
-                $status,
+                document: $remoteDocument,
+                status: $status,
             );
         } finally {
-            if (is_resource($stream)) fclose($stream);
+            $this->closeStream($stream);
         }
     }
 
@@ -104,7 +103,7 @@ final class CompilatioDocumentRepository
         );
     }
 
-    public function launchAnalysis(string $documentId): object
+    public function launchAnalysis(string $documentId): Analysis
     {
         if ('' === $documentId) {
             throw new RuntimeException('The Compilatio document ID is missing.');
@@ -116,7 +115,7 @@ final class CompilatioDocumentRepository
             true,
         );
 
-        return $analysis;
+        return Analysis::build($analysis);
     }
 
     public function getReportUrl(string $documentId): string
@@ -130,7 +129,8 @@ final class CompilatioDocumentRepository
             [],
             true,
         );
-        $jwt = $response->data->jwt ?? null;
+        $data = CompilatioResponseReader::objectAt($response, 'data');
+        $jwt = get_object_vars($data)['jwt'] ?? null;
 
         if (!is_string($jwt) || '' === $jwt) {
             throw new RuntimeException('Compilatio returned a report without a JWT.');
@@ -149,6 +149,13 @@ final class CompilatioDocumentRepository
             'private/document/' . rawurlencode($documentId),
             true,
         );
+    }
+
+    private function closeStream(mixed $stream): void
+    {
+        if (is_resource($stream)) {
+            fclose($stream);
+        }
     }
 
     /**
@@ -181,5 +188,35 @@ final class CompilatioDocumentRepository
         }
 
         return $part;
+    }
+
+    /** @return resource */
+    private function getStream(Document $document)
+    {
+        $fileService = app()->get('file');
+        if (!$fileService instanceof PKPFileService) {
+            throw new RuntimeException('The OJS file service is unavailable.');
+        }
+
+        $path = $document->path;
+        if (null === $path || '' === $path) {
+            throw new RuntimeException('The OJS document path is missing.');
+        }
+
+        $stream = $fileService->fs->readStream($path);
+        if (!is_resource($stream)) {
+            throw new RuntimeException('Unable to open the OJS document.');
+        }
+        return $stream;
+    }
+
+    private static function getDepositor(Document $document): DocumentAuthor
+    {
+        $depositor = $document->depositor;
+        if (!$depositor instanceof DocumentAuthor) {
+            throw new RuntimeException('The OJS document depositor is missing.');
+        }
+
+        return $depositor;
     }
 }

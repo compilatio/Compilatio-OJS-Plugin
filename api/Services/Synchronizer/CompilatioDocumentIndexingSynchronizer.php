@@ -21,8 +21,8 @@ final class CompilatioDocumentIndexingSynchronizer
             throw new RuntimeException('The local Compilatio document can not be found.');
         }
 
-        $externalId = $document->external_id ?? null;
-        if (!is_string($externalId) || $externalId === '') {
+        $externalId = $document->externalId;
+        if (null === $externalId || '' === $externalId) {
             throw new RuntimeException('The document has not been sent to Compilatio yet.');
         }
 

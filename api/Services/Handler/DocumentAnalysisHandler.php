@@ -2,6 +2,7 @@
 
 namespace APP\plugins\generic\compilatio\api\Services\Handler;
 
+use APP\plugins\generic\compilatio\api\DTO\Analysis;
 use APP\plugins\generic\compilatio\api\DTO\Document;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentStore;
@@ -12,18 +13,17 @@ final class DocumentAnalysisHandler
     public function __construct(
         private readonly CompilatioDocumentRepository $remoteDocuments,
         private readonly CompilatioDocumentStore $localDocuments,
-    ) {
-    }
+    ) {}
 
-    public function launch(int $submissionFileId): object
+    public function launch(int $submissionFileId): Analysis
     {
         $document = $this->localDocuments->getForSubmissionFile($submissionFileId);
         if (!$document) {
             throw new RuntimeException('The local Compilatio document can not be found.');
         }
 
-        $externalId = $document->external_id ?? null;
-        if (!is_string($externalId) || '' === $externalId) {
+        $externalId = $document->externalId;
+        if (null === $externalId || '' === $externalId) {
             throw new RuntimeException('The document has not been sent to Compilatio.');
         }
 
@@ -32,7 +32,7 @@ final class DocumentAnalysisHandler
         }
 
         $analysis = $this->remoteDocuments->launchAnalysis($externalId);
-        $status = true === ($analysis->running ?? false) || 'running' === ($analysis->state ?? null)
+        $status = true === ($analysis->running) || 'running' === ($analysis->state)
             ? Document::STATUS_ANALYSING
             : Document::STATUS_QUEUE;
 
@@ -51,8 +51,8 @@ final class DocumentAnalysisHandler
             throw new RuntimeException('The local Compilatio document can not be found.');
         }
 
-        $externalId = $document->external_id ?? null;
-        if (!is_string($externalId) || '' === $externalId) {
+        $externalId = $document->externalId;
+        if (null === $externalId || '' === $externalId) {
             throw new RuntimeException('The document has not been sent to Compilatio.');
         }
 

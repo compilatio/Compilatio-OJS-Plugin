@@ -2,15 +2,21 @@
 
 namespace APP\plugins\generic\compilatio\api\Repository;
 
+use APP\plugins\generic\compilatio\api\DTO\CompilatioDocument;
 use APP\plugins\generic\compilatio\api\DTO\Document;
-use APP\plugins\generic\compilatio\api\DTO\DocumentUploadResponse;
+use APP\plugins\generic\compilatio\api\Mapper\DocumentDatabaseMapper;
 use Illuminate\Support\Facades\DB;
-use JsonException;
-use RuntimeException;
 
 final class CompilatioDocumentStore
 {
     private const TABLE = 'compilatio_documents';
+
+    private readonly DocumentDatabaseMapper $documentMapper;
+
+    public function __construct()
+    {
+        $this->documentMapper = new DocumentDatabaseMapper();
+    }
 
     public function existsForSubmissionFile(int $submissionFileId): bool
     {
@@ -20,21 +26,60 @@ final class CompilatioDocumentStore
             ->exists();
     }
 
-    public function getForSubmissionFile(int $submissionFileId): ?object
+    public function getForSubmissionFile(int $submissionFileId): ?Document
     {
-        return DB::table(self::TABLE)
+        $dbDocument = DB::table(self::TABLE)
             ->where('submission_file_id', $submissionFileId)
             ->first();
+
+        if (null === $dbDocument) {
+            return null;
+        }
+
+        return $this->documentMapper->map($dbDocument);
     }
 
-    /** @return array<int, object> */
+    /** @return array<int, Document> */
     public function getForSubmission(int $submissionId, int $contextId): array
     {
-        return DB::table(self::TABLE)
+        $dbDocuments = DB::table(self::TABLE)
             ->where('submission_id', $submissionId)
             ->where('context_id', $contextId)
             ->get()
             ->all();
+
+        return array_map(
+            fn($dbDocument) => $this->documentMapper->map($dbDocument),
+            $dbDocuments,
+        );
+    }
+
+    /** @return array<int, Document> */
+    public function getPendingSynchronization(): array
+    {
+        $documents = DB::table(self::TABLE)
+            ->whereIn('status', [Document::STATUS_SENT, ...Document::STATUS_ANALYSING_IN_PROGRESS])
+            ->whereNotNull('external_id')
+            ->get();
+
+        return array_map(
+            fn($dbDocument) => $this->documentMapper->map($dbDocument),
+            $documents->all(),
+        );
+    }
+
+    /** @return array<int, Document> */
+    public function getFailedDeletion(): array
+    {
+        $documents = DB::table(self::TABLE)
+            ->where('status', Document::STATUS_ERROR_DELETE)
+            ->whereNotNull('external_id')
+            ->get();
+
+        return array_map(
+            fn($dbDocument) => $this->documentMapper->map($dbDocument),
+            $documents->all(),
+        );
     }
 
     public function deleteForSubmissionFile(int $submissionFileId): void
@@ -44,7 +89,7 @@ final class CompilatioDocumentStore
             ->delete();
     }
 
-    public function insetDocument(Document $document): void
+    public function insertDocument(Document $document): void
     {
         $now = date('Y-m-d H:i:s');
         DB::table(self::TABLE)->updateOrInsert(
@@ -69,34 +114,18 @@ final class CompilatioDocumentStore
 
     public function markUploaded(
         int $submissionFileId,
-        DocumentUploadResponse $response,
+        CompilatioDocument $document,
         string $status,
-    ): void
-    {
-        $document = $response->document->data->document ?? null;
-        $externalId = is_object($document) ? ($document->id ?? null) : null;
-        if (!is_string($externalId) || $externalId === '') {
-            $responseKeys = implode(', ', array_keys(get_object_vars($response->document)));
-            throw new RuntimeException(
-                sprintf(
-                    'Compilatio returned a document without an ID (response fields: %s).',
-                    $responseKeys !== '' ? $responseKeys : 'none'
-                ),
-                $response->statusCode,
-            );
-        }
-
+    ): void {
         $now = date('Y-m-d H:i:s');
 
         DB::table(self::TABLE)
             ->where('submission_file_id', $submissionFileId)
             ->update([
-                'external_id' => $externalId,
+                'external_id' => $document->id,
                 'status' => $status,
                 'error_message' => null,
-                'light_reports' => $this->encodeLightReports(
-                    $document->light_reports ?? null
-                ),
+                'light_reports' => $document->lightReports,
                 'submitted_at' => $now,
                 'last_synced_at' => $now,
                 'updated_at' => $now,
@@ -107,8 +136,7 @@ final class CompilatioDocumentStore
         int $submissionFileId,
         string $status,
         string $message,
-    ): void
-    {
+    ): void {
         DB::table(self::TABLE)
             ->where('submission_file_id', $submissionFileId)
             ->update([
@@ -156,42 +184,17 @@ final class CompilatioDocumentStore
 
     public function updateLightReports(
         int $submissionFileId,
-        mixed $lightReports,
+        ?string $lightReports,
         string $status,
     ): void {
         DB::table(self::TABLE)
             ->where('submission_file_id', $submissionFileId)
             ->update([
-                'light_reports' => $this->encodeLightReports($lightReports),
+                'light_reports' => $lightReports,
                 'status' => $status,
                 'error_message' => null,
                 'last_synced_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
-    }
-
-    private function stringOrNull(mixed $value): ?string
-    {
-        return is_string($value) && $value !== '' ? $value : null;
-    }
-
-    private function encodeLightReports(mixed $lightReports): ?string
-    {
-        if ($lightReports === null) {
-            return null;
-        }
-
-        try {
-            return json_encode(
-                $lightReports,
-                JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
-            );
-        } catch (JsonException $exception) {
-            throw new RuntimeException(
-                'Compilatio returned invalid light reports.',
-                0,
-                $exception,
-            );
-        }
     }
 }

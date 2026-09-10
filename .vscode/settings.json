@@ -23,7 +23,7 @@
     "phpsab.standard": "moodle",
     "phpsab.snifferMode": "onSave",
     "[php]": {
-        "editor.defaultFormatter": "valeryanm.vscode-phpsab",
+        "editor.defaultFormatter": "bmewburn.vscode-intelephense-client",
         "editor.formatOnSave": true
     }
 }

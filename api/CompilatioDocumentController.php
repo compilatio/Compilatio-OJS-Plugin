@@ -4,6 +4,7 @@ namespace APP\plugins\generic\compilatio\api;
 
 use APP\facades\Repo;
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
+use APP\plugins\generic\compilatio\api\DTO\Document;
 use APP\plugins\generic\compilatio\api\Logger\CompilatioDebugLogger;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentStore;
@@ -21,15 +22,16 @@ use Throwable;
 
 final class CompilatioDocumentController extends PKPBaseController
 {
-    public function __construct(private readonly Plugin $plugin)
-    {
-    }
+    public function __construct(private readonly Plugin $plugin) {}
 
     public function getHandlerPath(): string
     {
         return 'plugins/compilatio/documents';
     }
 
+    /**
+     * @return array<string>
+     */
     public function getRouteGroupMiddleware(): array
     {
         return [
@@ -48,7 +50,7 @@ final class CompilatioDocumentController extends PKPBaseController
     public function getGroupRoutes(): void
     {
         Route::get('submission/{submissionId}', $this->getSubmissionDocuments(...));
-        Route::post('{submissionFileId}/retry', $this->compilatioDocumentStore(...));
+        Route::post('{submissionFileId}/retry', $this->resendDocument(...));
         Route::post('{submissionFileId}/analyse', $this->analyse(...));
         Route::post('{submissionFileId}/report', $this->report(...));
     }
@@ -63,11 +65,11 @@ final class CompilatioDocumentController extends PKPBaseController
                 $contextId,
             );
 
-            return response()->json(array_map(fn (object $document): array => [
-                'submissionFileId' => (int) $document->submission_file_id,
+            return response()->json(array_map(fn(Document $document): array => [
+                'submissionFileId' => (int) $document->submissionFileId,
                 'status' => is_string($document->status ?? null) ? $document->status : '',
                 'statusLabel' => $this->getStatusLabel($document->status ?? null),
-                'score' => $this->getGlobalScore($document->light_reports ?? null),
+                'score' => $this->getGlobalScore($document->lightReports ?? null),
             ], $documents));
         } catch (Throwable $exception) {
             return $this->errorResponse($exception);
@@ -85,18 +87,18 @@ final class CompilatioDocumentController extends PKPBaseController
                 throw new RuntimeException('The Compilatio document can not be found.', 404);
             }
 
-            $contextId = $this->authorizeSubmission((int) $localDocument->submission_id);
-            if ((int) $localDocument->context_id !== $contextId) {
+            $contextId = $this->authorizeSubmission((int) $localDocument->submissionId);
+            if ((int) $localDocument->contextId !== $contextId) {
                 throw new RuntimeException('Access denied.', 403);
             }
             if ('error_sending_failed' !== ($localDocument->status ?? null)) {
                 throw new RuntimeException('Only a failed document upload can be retried.', 409);
             }
 
-            $submission = Repo::submission()->get((int) $localDocument->submission_id);
+            $submission = Repo::submission()->get((int) $localDocument->submissionId);
             $submissionFile = Repo::submissionFile()->get(
                 $submissionFileId,
-                (int) $localDocument->submission_id,
+                (int) $localDocument->submissionId,
             );
             if (!$submission || !$submissionFile) {
                 throw new RuntimeException('The OJS document can not be found.', 404);
@@ -113,8 +115,8 @@ final class CompilatioDocumentController extends PKPBaseController
                 throw new RuntimeException('The retried document can not be found.', 500);
             }
             if ('error_sending_failed' === ($retriedDocument->status ?? null)) {
-                $message = is_string($retriedDocument->error_message ?? null)
-                    ? $retriedDocument->error_message
+                $message = is_string($retriedDocument->errorMessage ?? null)
+                    ? $retriedDocument->errorMessage
                     : 'The document could not be sent to Compilatio.';
                 throw new RuntimeException($message, 502);
             }
@@ -125,7 +127,7 @@ final class CompilatioDocumentController extends PKPBaseController
                     ? $retriedDocument->status
                     : '',
                 'statusLabel' => $this->getStatusLabel($retriedDocument->status ?? null),
-                'score' => $this->getGlobalScore($retriedDocument->light_reports ?? null),
+                'score' => $this->getGlobalScore($retriedDocument->lightReports ?? null),
             ]);
         } catch (Throwable $exception) {
             return $this->errorResponse($exception);
@@ -140,11 +142,9 @@ final class CompilatioDocumentController extends PKPBaseController
             $analysis = $handler->launch($submissionFileId);
 
             return response()->json([
-                'analysisId' => $analysis->id,
-                'status' => ($analysis->running ?? false) === true
-                    || 'running' === ($analysis->state ?? null)
-                        ? 'analysing'
-                        : 'queue',
+                'status' => true === ($analysis->running) || 'running' === ($analysis->state)
+                    ? 'analysing'
+                    : 'queue',
             ]);
         } catch (Throwable $exception) {
             return $this->errorResponse($exception);
@@ -176,11 +176,11 @@ final class CompilatioDocumentController extends PKPBaseController
         $context = $this->getRequest()->getContext();
         $user = $this->getRequest()->getUser();
         $contextId = $context?->getId();
-        if (!$context || !$user || !is_int($contextId) || (int) $document->context_id !== $contextId) {
+        if (!$context || !$user || !is_int($contextId) || (int) $document->contextId !== $contextId) {
             throw new RuntimeException('Access denied.', 403);
         }
 
-        $this->authorizeSubmission((int) $document->submission_id);
+        $this->authorizeSubmission((int) $document->submissionId);
 
         return new DocumentAnalysisHandler(
             new CompilatioDocumentRepository(
@@ -204,14 +204,24 @@ final class CompilatioDocumentController extends PKPBaseController
         }
 
         $submission = Repo::submission()->get($submissionId);
-        if (!$submission || (int) $submission->getData('contextId') !== $contextId) {
+
+        if (null === $submission) {
             throw new RuntimeException('The submission can not be found.', 404);
         }
 
-        $roleIds = array_map(
-            static fn (Role $role): int => $role->getRoleId(),
-            array_merge($user->getRoles($contextId), $user->getRoles(null)),
-        );
+        $submissionContextId = $submission->getData('contextId');
+
+        if ($submissionContextId !== $contextId) {
+            throw new RuntimeException('The submission can not be found.', 404);
+        }
+
+        $roleIds = [];
+        foreach (array_merge($user->getRoles($contextId), $user->getRoles(null)) as $role) {
+            if ($role instanceof Role) {
+                $roleIds[] = $role->getRoleId();
+            }
+        }
+
         $hasEditorialAccess = (bool) array_intersect([
             Role::ROLE_ID_SITE_ADMIN,
             Role::ROLE_ID_MANAGER,
@@ -219,8 +229,13 @@ final class CompilatioDocumentController extends PKPBaseController
             Role::ROLE_ID_ASSISTANT,
         ], $roleIds);
         if (!$hasEditorialAccess) {
+            $userId = $user->getId();
+            if (!is_int($userId)) {
+                throw new RuntimeException('Access denied.', 403);
+            }
+
             $accessibleStages = Repo::user()->getAccessibleWorkflowStages(
-                $user->getId(),
+                $userId,
                 $contextId,
                 $submission,
                 $roleIds,
@@ -265,7 +280,11 @@ final class CompilatioDocumentController extends PKPBaseController
         }
 
         foreach ($reports as $report) {
-            $score = is_array($report) ? ($report['scores']['global_score_percent'] ?? null) : null;
+            if (!is_array($report) || !isset($report['scores']) || !is_array($report['scores'])) {
+                continue;
+            }
+
+            $score = $report['scores']['global_score_percent'] ?? null;
             if (is_numeric($score)) {
                 return (float) $score;
             }
@@ -287,7 +306,7 @@ final class CompilatioDocumentController extends PKPBaseController
     private function getRouteId(Request $request, string $name): int
     {
         $id = $request->route($name);
-        if (!is_string($id) && !is_int($id)) {
+        if (!is_string($id)) {
             throw new RuntimeException("The route parameter {$name} is missing.", 400);
         }
 

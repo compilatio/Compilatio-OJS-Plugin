@@ -192,12 +192,17 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
                     'apiUrl' => $documentsApiUrl,
                     'locale' => Locale::getLocale(),
                     'messages' => [
+                        'index' => __('plugins.generic.compilatio.documents.index'),
+                        'unindex' => __('plugins.generic.compilatio.documents.unindex'),
+                        'indexed' => __('plugins.generic.compilatio.documents.indexed'),
+                        'notIndexed' => __('plugins.generic.compilatio.documents.notIndexed'),
                         'retry' => __('plugins.generic.compilatio.documents.retry'),
                         'launch' => __('plugins.generic.compilatio.documents.launch'),
                         'report' => __('plugins.generic.compilatio.documents.report'),
                         'reportMissing' => __('plugins.generic.compilatio.documents.reportMissing'),
                         'reportBlocked' => __('plugins.generic.compilatio.documents.reportBlocked'),
                         'apiError' => __('plugins.generic.compilatio.documents.apiError'),
+                        'queue' => __('plugins.generic.compilatio.documents.queue'),
                         'analysing' => __('plugins.generic.compilatio.documents.analysing'),
                     ],
                 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)

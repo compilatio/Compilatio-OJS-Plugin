@@ -10,6 +10,7 @@ use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentStore;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentAnalysisHandler;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentSubmissionHandler;
+use APP\plugins\generic\compilatio\api\Services\Synchronizer\CompilatioDocumentIndexingSynchronizer;
 use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -53,6 +54,7 @@ final class CompilatioDocumentController extends PKPBaseController
         Route::post('{submissionFileId}/retry', $this->resendDocument(...));
         Route::post('{submissionFileId}/analyse', $this->analyse(...));
         Route::post('{submissionFileId}/report', $this->report(...));
+        Route::patch('{submissionFileId}/indexing', $this->updateIndexing(...));
     }
 
     public function getSubmissionDocuments(Request $request): JsonResponse
@@ -70,6 +72,8 @@ final class CompilatioDocumentController extends PKPBaseController
                 'status' => is_string($document->status ?? null) ? $document->status : '',
                 'statusLabel' => $this->getStatusLabel($document->status ?? null),
                 'score' => $this->getGlobalScore($document->lightReports ?? null),
+                'indexed' => $document->indexed,
+                'canIndex' => !empty($document->externalId) && Document::STATUS_ERROR_DELETE !== $document->status,
             ], $documents));
         } catch (Throwable $exception) {
             return $this->errorResponse($exception);
@@ -128,6 +132,8 @@ final class CompilatioDocumentController extends PKPBaseController
                     : '',
                 'statusLabel' => $this->getStatusLabel($retriedDocument->status ?? null),
                 'score' => $this->getGlobalScore($retriedDocument->lightReports ?? null),
+                'indexed' => $retriedDocument->indexed,
+                'canIndex' => !empty($retriedDocument->externalId) && Document::STATUS_ERROR_DELETE !== $retriedDocument->status,
             ]);
         } catch (Throwable $exception) {
             return $this->errorResponse($exception);
@@ -145,6 +151,50 @@ final class CompilatioDocumentController extends PKPBaseController
                 'status' => true === ($analysis->running) || 'running' === ($analysis->state)
                     ? 'analysing'
                     : 'queue',
+            ]);
+        } catch (Throwable $exception) {
+            return $this->errorResponse($exception);
+        }
+    }
+
+    public function updateIndexing(Request $request): JsonResponse
+    {
+        try {
+            $submissionFileId = $this->getRouteId($request, 'submissionFileId');
+            $store = new CompilatioDocumentStore();
+            $document = $store->getForSubmissionFile($submissionFileId);
+            if (!$document) {
+                throw new RuntimeException('The Compilatio document can not be found.', 404);
+            }
+
+            $contextId = $this->authorizeSubmission($document->submissionId);
+            if ($document->contextId !== $contextId) {
+                throw new RuntimeException('Access denied.', 403);
+            }
+
+            $indexed = $request->input('indexed');
+            if (!is_bool($indexed)) {
+                throw new RuntimeException(__('plugins.generic.compilatio.documents.invalidIndexed'), 422);
+            }
+            if (empty($document->externalId) || Document::STATUS_ERROR_DELETE === $document->status) {
+                throw new RuntimeException(__('plugins.generic.compilatio.documents.indexingUnavailable'), 409);
+            }
+
+            $synchronizer = new CompilatioDocumentIndexingSynchronizer(
+                new CompilatioDocumentRepository(
+                    new CompilatioClient(
+                        $this->requireSetting($contextId, 'apiKey'),
+                        new Client(),
+                        $this->requireSetting($contextId, 'compilatioUserId'),
+                    ),
+                ),
+                $store,
+            );
+            $synchronizer->synchronize($submissionFileId, $indexed);
+
+            return response()->json([
+                'submissionFileId' => $submissionFileId,
+                'indexed' => $indexed,
             ]);
         } catch (Throwable $exception) {
             return $this->errorResponse($exception);

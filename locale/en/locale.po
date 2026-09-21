@@ -62,3 +62,21 @@ msgstr "Deletion failed"
 
 msgid "plugins.generic.compilatio.documents.not_sent"
 msgstr "Not sent"
+
+msgid "plugins.generic.compilatio.documents.index"
+msgstr "Index document"
+
+msgid "plugins.generic.compilatio.documents.unindex"
+msgstr "Remove document from index"
+
+msgid "plugins.generic.compilatio.documents.indexed"
+msgstr "Document indexed"
+
+msgid "plugins.generic.compilatio.documents.notIndexed"
+msgstr "Document not indexed"
+
+msgid "plugins.generic.compilatio.documents.invalidIndexed"
+msgstr "The indexing status must be a boolean."
+
+msgid "plugins.generic.compilatio.documents.indexingUnavailable"
+msgstr "Indexing cannot be changed for this document."

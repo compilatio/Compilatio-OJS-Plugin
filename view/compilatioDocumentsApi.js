@@ -1,4 +1,7 @@
 (function () {
+  function getConfig() {
+    return window.pkpCompilatioDocuments;
+  }
 
   function addActionUrls(documentData) {
     var documentUrl = window.pkpCompilatioDocuments.apiUrl + '/' + documentData.submissionFileId;
@@ -6,6 +9,7 @@
     documentData.retryUrl = documentUrl + '/retry';
     documentData.analyseUrl = documentUrl + '/analyse';
     documentData.reportUrl = documentUrl + '/report';
+    documentData.indexingUrl = documentUrl + '/indexing';
 
     return documentData;
   }
@@ -41,6 +45,21 @@
     );
   }
 
+  function patch(url, payload) {
+    return request(url, {
+      method: 'PATCH',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-Csrf-Token': window.pkp && window.pkp.currentUser
+          ? window.pkp.currentUser.csrfToken
+          : '',
+      },
+      body: JSON.stringify(payload),
+    });
+  }
+
   function post(url) {
     return request(url, {
       method: 'POST',
@@ -59,5 +78,6 @@
     getConfig: getConfig,
     getSubmissionDocuments: getSubmissionDocuments,
     post: post,
+    patch: patch,
   };
 }());

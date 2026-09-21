@@ -3,6 +3,7 @@
     '.compilatio-retry-button',
     '.compilatio-analysis-button',
     '.compilatio-report-button',
+    '.compilatio-indexing-button',
   ].join(', ');
 
   function clearError(errorContainer) {
@@ -10,8 +11,7 @@
       return;
     }
 
-    errorContainer.hidden = true;
-    errorContainer.textContent = '';
+    window.pkpCompilatioDocumentStatus.setError(errorContainer, null);
   }
 
   function showError(errorContainer, error) {
@@ -19,8 +19,7 @@
       return;
     }
 
-    errorContainer.textContent = error.message;
-    errorContainer.hidden = false;
+    window.pkpCompilatioDocumentStatus.setError(errorContainer, error.message);
   }
 
   function handleRetryResult(documentsByFileId, container, result) {
@@ -46,15 +45,12 @@
 
   function handleAnalysisResult(container, button, result) {
     container.dataset.status = result.status;
-    var label = document.createElement('span');
-    label.className = 'compilatio-document-label';
-    label.textContent = window.pkpCompilatioDocuments.messages.analysing;
-    button.replaceWith(label);
+    button.replaceWith(window.pkpCompilatioDocumentStatus.createLoadingButton(result.status));
   }
 
   async function handleAction(event, documentsByFileId) {
     var button = event.target.closest(ACTION_SELECTOR);
-    if (!button) {
+    if (!button || button.disabled) {
       return;
     }
 
@@ -66,22 +62,39 @@
       : null;
     var isRetry = button.classList.contains('compilatio-retry-button');
     var isReport = button.classList.contains('compilatio-report-button');
+    var isIndexing = button.classList.contains('compilatio-indexing-button');
     var reportWindow = isReport ? window.open('', '_blank') : null;
 
     if (!isReport) {
-      button.disabled = true
+      button.disabled = true;
     }
 
     clearError(errorContainer);
 
     try {
-      var result = await window.pkpCompilatioDocumentsApi.post(button.dataset.url);
+      var result = isIndexing
+        ? await window.pkpCompilatioDocumentsApi.patch(button.dataset.url, {
+          indexed: 'true' !== button.dataset.indexed,
+        })
+        : await window.pkpCompilatioDocumentsApi.post(button.dataset.url);
 
-      if (isRetry) {
+      if (isIndexing) {
+        var documentData = documentsByFileId.get(result.submissionFileId);
+        if (documentData) {
+          documentData.indexed = result.indexed;
+        }
+        window.pkpCompilatioDocumentStatus.updateIndexingButton(button, result.indexed);
+        button.disabled = false;
+      } else if (isRetry) {
         handleRetryResult(documentsByFileId, container, result);
       } else if (isReport) {
         handleReportResult(reportWindow, result);
       } else {
+        var currentDocument = documentsByFileId.get(Number(container.dataset.fileId));
+        if (currentDocument) {
+          currentDocument.status = result.status;
+        }
+
         handleAnalysisResult(container, button, result);
       }
     } catch (error) {

@@ -20,16 +20,16 @@ const { t } = useI18n();
 const visibleDetections = computed(() =>
   props.detections
     .map((detection, index) => ({ detection, index }))
-    .filter(({ detection }) => detection.process !== 'rich_extraction'),
+    .filter(({ detection }) => 'rich_extraction' !== detection.process),
 );
 </script>
 
 <template>
   <SettingsField v-if="visibleDetections.length">
     <template #label>
-      <div>
-        <p class="text-sm font-medium text-slate-900">{{ t('settings_detections') }}</p>
-        <p class="mt-1 text-sm leading-5 text-slate-500">
+      <div class="text-sm">
+        <p class="font-medium text-slate-900">{{ t('settings_detections') }}</p>
+        <p class="mt-1 text-slate-500">
           {{ t('settings_detections_description') }}
         </p>
       </div>

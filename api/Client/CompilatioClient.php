@@ -19,8 +19,7 @@ class CompilatioClient
         private readonly string $token,
         private readonly ClientInterface $httpClient,
         private readonly ?string $userId = null,
-    ) {
-    }
+    ) {}
 
     /**
      * @return object
@@ -43,7 +42,7 @@ class CompilatioClient
         ];
 
         $response = $this->request('POST', $endpoint, $addUserId, $options);
-        
+
         $this->assertSuccessfulResponse($response);
         return $this->checkJsonBody($response);
     }
@@ -64,8 +63,7 @@ class CompilatioClient
         string $endpoint,
         array $payload,
         bool $addUserId = false,
-    ): CompilatioResponse
-    {
+    ): CompilatioResponse {
         $options = [
             RequestOptions::MULTIPART => $payload
         ];
@@ -147,7 +145,7 @@ class CompilatioClient
 
         $headers['X-Auth-Token'] = $this->token;
 
-        if ($addUserId && $this->userId !== null) {
+        if ($addUserId && null !== $this->userId) {
             $headers['X-LMS-USER-ID'] = $this->userId;
         }
 
@@ -167,7 +165,7 @@ class CompilatioClient
                 sprintf(
                     'Compilatio API returned status %d: %s',
                     $statusCode,
-                    $body !== '' ? $body : $response->getReasonPhrase()
+                    '' !== $body ? $body : $response->getReasonPhrase()
                 ),
                 $statusCode
             );

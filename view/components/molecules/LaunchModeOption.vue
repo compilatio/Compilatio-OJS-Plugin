@@ -22,7 +22,7 @@ const selectMode = (value: string) => {
 </script>
 
 <template>
-  <label class="flex cursor-pointer items-start gap-3 border-t border-slate-200 px-4 py-3 transition first:border-t-0 hover:bg-slate-50">
+  <label class="flex cursor-pointer items-start gap-3 border-t border-neutral-200 px-4 py-3 transition first:border-t-0 hover:bg-neutral-50">
     <AppRadio
       name="analysisLaunchMode"
       :checked="modelValue === value"
@@ -30,9 +30,9 @@ const selectMode = (value: string) => {
       :value="value"
       @select="selectMode"
     />
-    <span>
-      <span class="block text-sm font-medium text-slate-900">{{ label }}</span>
-      <span class="mt-0.5 block text-sm leading-5 text-slate-500">{{ description }}</span>
+    <span class="text-sm">
+      <span class="block font-medium text-neutral-900">{{ label }}</span>
+      <span class="mt-0.5 block text-neutral-500">{{ description }}</span>
     </span>
   </label>
 </template>

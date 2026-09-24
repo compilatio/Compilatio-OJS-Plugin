@@ -9,7 +9,7 @@
 		function mountCompilatioSettingsPanel() {ldelim}
 			var target = document.getElementById('compilatioSettingsPanelRoot');
 
-			if (!target || target.dataset.mounted === 'true') {ldelim}
+			if (!target || 'true' === target.dataset.mounted) {ldelim}
 				return;
 			{rdelim}
 

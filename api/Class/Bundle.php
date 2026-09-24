@@ -1,11 +1,13 @@
 <?php
+
 namespace APP\plugins\generic\compilatio\api\Class;
 
 use APP\plugins\generic\compilatio\api\DTO\CompilatioManagedBundle;
 use APP\plugins\generic\compilatio\api\DTO\CompilatioDetection;
 use APP\plugins\generic\compilatio\api\DTO\CompilatioUser;
 
-class Bundle {
+class Bundle
+{
     /**
      * Contain differents detections types.
      */
@@ -24,7 +26,8 @@ class Bundle {
      *
      * @param CompilatioUser $compilatioUser User from Compilatio.
      */
-    public function __construct(CompilatioUser $compilatioUser) {
+    public function __construct(CompilatioUser $compilatioUser)
+    {
         $this->managedBundle = $compilatioUser->managedBundle;
     }
 
@@ -33,7 +36,8 @@ class Bundle {
      *
      * @return list<CompilatioDetection> Return allowed detections for the bundle.
      */
-    public function getBundleDetections(object $reviewSettings): array {
+    public function getBundleDetections(object $reviewSettings): array
+    {
         $detections = $this->getDetections();
 
         $savedDetections = [];
@@ -82,7 +86,8 @@ class Bundle {
      *     stored: array<string, array{enabled: bool, configurable: bool}>
      * } Return detections for Compilatio API and normalized storage.
      */
-    public function getFolderDetectionsPayload(object $reviewSettings): array {
+    public function getFolderDetectionsPayload(object $reviewSettings): array
+    {
         $normalizedDetections = [];
         $recipeDetections = [];
 
@@ -99,7 +104,7 @@ class Bundle {
                 'configurable' => $configurable,
             ];
 
-            if ($detection->process === 'similarity' || (!$enabled && !$configurable)) {
+            if ('similarity' === $detection->process || (!$enabled && !$configurable)) {
                 continue;
             }
 
@@ -119,25 +124,18 @@ class Bundle {
      * @param string $feature Name of the feature to check.
      * @return bool Return true if the bundle has this feature, false otherwise.
      */
-    public function isBundleAuthorizedTo(string $feature): bool {
+    public function isBundleAuthorizedTo(string $feature): bool
+    {
         return in_array($feature, $this->getAuthorizedFeatures(), true);
-    }
-
-    /**
-     * Check if the current recipe is an Anasim recipe.
-     *
-     * @return bool True if recipe is an Anasim recipe, false otherwise.
-     */
-    public function isAnasimRecipe(): bool {
-        return $this->managedBundle->name === 'magister-premium';
     }
 
     /**
      * @return list<CompilatioDetection>
      */
-    private function getDetections(): array {
+    private function getDetections(): array
+    {
         foreach ($this->managedBundle->accesses as $access) {
-            if ($access->detections !== null) {
+            if (null !== $access->detections) {
                 return $access->detections;
             }
         }
@@ -150,9 +148,10 @@ class Bundle {
      *
      * @return list<string> Return authorized features for the bundle.
      */
-    private function getAuthorizedFeatures(): array {
+    private function getAuthorizedFeatures(): array
+    {
         foreach ($this->managedBundle->accesses as $access) {
-            if ($access->authorizedFeatures !== null) {
+            if (null !== $access->authorizedFeatures) {
                 return $access->authorizedFeatures;
             }
         }

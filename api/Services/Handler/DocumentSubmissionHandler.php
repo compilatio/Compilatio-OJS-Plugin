@@ -185,7 +185,7 @@ final class DocumentSubmissionHandler
         $description = $publication->getLocalizedData('abstract');
         $filename = $fileService->formatFilename(
             $path,
-            is_string($originalName) && $originalName !== '' ? $originalName : 'document'
+            is_string($originalName) && '' !== $originalName ? $originalName : 'document'
         );
 
         return new Document(
@@ -231,14 +231,14 @@ final class DocumentSubmissionHandler
         /** @var Genre|null $articleTextGenre */
         $articleTextGenre = $genreDao->getByKey('SUBMISSION', $contextId);
 
-        return $articleTextGenre !== null
+        return null !== $articleTextGenre
             && $submissionFile->getData('genreId') === $articleTextGenre->getId();
     }
 
     private function requireStringSetting(int $contextId, string $name): string
     {
         $value = $this->plugin->getSetting($contextId, $name);
-        if (!is_string($value) || $value === '') {
+        if (!is_string($value) || '' === $value) {
             throw new RuntimeException("The Compilatio setting {$name} is missing.");
         }
 

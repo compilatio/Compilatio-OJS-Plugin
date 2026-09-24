@@ -15,9 +15,7 @@ use Throwable;
 
 final class DocumentDeletionHandler
 {
-    public function __construct(private readonly Plugin $plugin)
-    {
-    }
+    public function __construct(private readonly Plugin $plugin) {}
 
     public function handle(SubmissionFile $submissionFile): void
     {
@@ -76,7 +74,7 @@ final class DocumentDeletionHandler
     private function requireStringSetting(int $contextId, string $name): string
     {
         $value = $this->plugin->getSetting($contextId, $name);
-        if (!is_string($value) || $value === '') {
+        if (!is_string($value) || '' === $value) {
             throw new RuntimeException("The Compilatio setting {$name} is missing.");
         }
 

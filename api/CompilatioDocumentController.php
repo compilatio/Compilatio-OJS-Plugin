@@ -403,7 +403,7 @@ final class CompilatioDocumentController extends PKPBaseController
             return "Compilatio Auth failed";
         }
 
-        if ($statusCode === 503) {
+        if (503 === $statusCode) {
             return 'Compilatio is currently not avalaible. Please try again later.';
         }
 

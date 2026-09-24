@@ -1,33 +1,32 @@
 <script setup lang="ts">
+import { Icon } from '@elastisafe/components';
 import { ref, useSlots } from 'vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
 
 const slots = useSlots();
 const displayHelp = ref(false);
 </script>
 
 <template>
-  <div class="grid gap-4 border-b border-slate-200 py-6 md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] md:gap-8">
-    <div class="min-w-0">
+  <div class="flex flex-col gap-4 border-b border-neutral-200 py-6 md:flex-row md:gap-8">
+    <div class="min-w-0 md:w-60 md:shrink-0">
       <div class="flex items-start gap-2">
         <slot name="label"></slot>
         <button
           v-if="slots.help"
           type="button"
-          class="mt-0.5 text-blue-600 hover:text-blue-700"
+          class="mt-0.5 text-primary-600 hover:text-primary-700"
           :aria-expanded="displayHelp"
           @click="displayHelp = !displayHelp"
         >
-          <FontAwesomeIcon :icon="faCircleQuestion" />
+          <Icon :name="'circle-question-solid'" class="size-4" />
         </button>
       </div>
-      <div v-if="displayHelp" class="mt-2 text-xs leading-5 text-slate-500">
+      <div v-if="displayHelp" class="mt-2 text-xs leading-5 text-neutral-500">
         <slot name="help"></slot>
       </div>
     </div>
 
-    <div class="min-w-0 self-center">
+    <div class="w-full min-w-0 self-center md:flex-1">
       <slot></slot>
     </div>
   </div>

@@ -49,9 +49,9 @@ const launchModes: Array<{
 <template>
   <SettingsField>
     <template #label>
-      <div>
-        <p class="text-sm font-medium text-slate-900">{{ t('settings_automatic_indexing') }}</p>
-        <p class="mt-1 text-sm leading-5 text-slate-500">
+      <div class="text-sm">
+        <p class="font-medium text-slate-900">{{ t('settings_automatic_indexing') }}</p>
+        <p class="mt-1 text-slate-500">
           {{ t('settings_automatic_indexing_description') }}
         </p>
       </div>
@@ -72,9 +72,9 @@ const launchModes: Array<{
 
   <SettingsField>
     <template #label>
-      <div>
-        <p class="text-sm font-medium text-slate-900">{{ t('settings_launch_mode') }}</p>
-        <p class="mt-1 text-sm leading-5 text-slate-500">
+      <div class="text-sm">
+        <p class="font-medium text-slate-900">{{ t('settings_launch_mode') }}</p>
+        <p class="mt-1 text-slate-500">
           {{ t('settings_launch_mode_description') }}
         </p>
       </div>
@@ -94,13 +94,13 @@ const launchModes: Array<{
     </div>
   </SettingsField>
 
-  <SettingsField v-if="launchMode === 'scheduled'">
+  <SettingsField v-if="'scheduled' === launchMode">
     <template #label>
-      <div>
-        <label for="compilatio-scheduled-at" class="block text-sm font-medium text-slate-900">
+      <div class="text-sm">
+        <label for="compilatio-scheduled-at" class="block font-medium text-slate-900">
           {{ t('settings_scheduled_at') }}
         </label>
-        <p class="mt-1 text-sm leading-5 text-slate-500">
+        <p class="mt-1 text-slate-500">
           {{ t('settings_scheduled_at_description') }}
         </p>
       </div>

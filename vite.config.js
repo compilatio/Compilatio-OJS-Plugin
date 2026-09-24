@@ -23,6 +23,7 @@ export default defineConfig({
       name: 'CompilatioPlagiarismPanelRuntime',
       formats: ['iife'],
       fileName: () => 'PlagiarismPanel.runtime.js',
+      cssFileName: 'style',
     },
     minify: false,
     outDir: resolve(__dirname, 'view/build'),

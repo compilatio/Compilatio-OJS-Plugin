@@ -95,7 +95,7 @@ class CompilatioUserRepository
      */
     private function mapAuthorizedFeatures(mixed $value): ?array
     {
-        if ($value === null) {
+        if (null === $value) {
             return null;
         }
 
@@ -125,7 +125,7 @@ class CompilatioUserRepository
      */
     private function mapDetections(mixed $value): ?array
     {
-        if ($value === null) {
+        if (null === $value) {
             return null;
         }
 

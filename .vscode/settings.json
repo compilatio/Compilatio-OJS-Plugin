@@ -25,5 +25,14 @@
     "[php]": {
         "editor.defaultFormatter": "bmewburn.vscode-intelephense-client",
         "editor.formatOnSave": true
+    },
+    "editor.colorDecorators": true,
+    "tailwindCSS.includeLanguages": {
+        "typescript": "javascript",
+        "vue": "html"
+    },
+    "css.customData": ["/home/sites/open_journal_systems/.vscode/tailwind.json"],
+    "[css]": {
+        "editor.colorDecorators": true
     }
 }

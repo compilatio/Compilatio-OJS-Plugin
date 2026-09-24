@@ -12,15 +12,13 @@ use APP\plugins\generic\compilatio\api\Services\Resolver\CompilatioLocaleResolve
 use APP\plugins\generic\compilatio\api\Services\Initializer\CompilatioPrimaryUserInitializer;
 use APP\plugins\generic\compilatio\api\Services\Synchronizer\CompilatioFolderSynchronizer;
 use APP\plugins\generic\compilatio\api\Services\Synchronizer\CompilatioUserSynchronizer;
+use APP\plugins\generic\compilatio\api\Services\Resolver\CompilatioThresholdsResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use PKP\plugins\PluginSettingsController;
 
 class CompilatioSettingsController extends PluginSettingsController
 {
-    private const DEFAULT_WARNING_THRESHOLD = 10;
-    private const DEFAULT_CRITICAL_THRESHOLD = 20;
-
     private const SETTINGS = [
         'apiKey' => 'string',
         'automaticIndexingEnabled' => 'bool',
@@ -41,7 +39,7 @@ class CompilatioSettingsController extends PluginSettingsController
         $contextId = $this->getContextId();
         $apiKey = $this->plugin->getSetting($contextId, 'apiKey');
 
-        if (!is_string($apiKey) || $apiKey === '') {
+        if (!is_string($apiKey) || '' === $apiKey) {
             return response()->json([]);
         }
 
@@ -70,7 +68,7 @@ class CompilatioSettingsController extends PluginSettingsController
         );
 
         $response['hasFolderRecipeParameters'] = $bundleSettings->hasFolderRecipeParameters;
-        
+
         if ($bundleSettings->hasFolderRecipeParameters) {
             $response['bundleDetections'] = $bundleSettings->detections ?? null;
             $this->plugin->updateSetting($contextId, 'bundleDetections', $bundleSettings->detections ?? null, 'array');
@@ -108,30 +106,29 @@ class CompilatioSettingsController extends PluginSettingsController
 
         $apiKey = $settingsFromForm['apiKey'] ?? null;
 
-        if ($apiKey !== null && !is_string($apiKey)) {
+        if (null !== $apiKey && !is_string($apiKey)) {
             throw new \RuntimeException('The API key setting is invalid.');
         }
 
-        if ($apiKey !== null && $apiKey !== '') {
+        if (null !== $apiKey && '' !== $apiKey) {
             $compilatioUserRepository = new CompilatioUserRepository($apiKey);
 
             try {
                 $apiKeyOwnerUser = $compilatioUserRepository
                     ->getApiKeyOwnerUser();
                 $settings[] = ['name' => 'apiKey', 'value' => $apiKey, 'type' => 'string'];
-                
             } catch (\RuntimeException $exception) {
-                if ($exception->getCode() === 401) {
+                if (401 === $exception->getCode()) {
                     return response()->json([
                         'error' => 'invalidApiKey',
                         'errorMessage' =>
-                            'The provided API key is invalid.',
+                        'The provided API key is invalid.',
                     ], 400);
                 }
                 return response()->json([
                     'error' => 'compilatioUnavailable',
                     'errorMessage' =>
-                        'Unable to contact Compilatio.',
+                    'Unable to contact Compilatio.',
                 ], 503);
             }
 
@@ -162,10 +159,10 @@ class CompilatioSettingsController extends PluginSettingsController
                 'compilatioUserId'
             );
 
-            if ($actualCompilatioUserId === null || $actualCompilatioUserId === '') {
+            if (null === $actualCompilatioUserId || '' === $actualCompilatioUserId) {
                 $currentUser = $this->getRequest()->getUser();
 
-                if ($currentUser === null) {
+                if (null === $currentUser) {
                     return response()->json([
                         'error' => 'unauthenticated',
                         'errorMessage' => 'The OJS user is not authenticated.',
@@ -193,12 +190,9 @@ class CompilatioSettingsController extends PluginSettingsController
             $folderConfiguration = new CompilatioFolderConfiguration(
                 warningThreshold: $thresholds['warning'],
                 criticalThreshold: $thresholds['critical'],
-                defaultIndexing:
-                    (bool) $settingsFromForm['automaticIndexingEnabled'],
-                autoAnalysis:
-                    $settingsFromForm['analysisLaunchMode'] === 'automatic',
-                scheduledAnalysisEnabled:
-                    $settingsFromForm['analysisLaunchMode'] === 'scheduled',
+                defaultIndexing: (bool) $settingsFromForm['automaticIndexingEnabled'],
+                autoAnalysis: 'automatic' === $settingsFromForm['analysisLaunchMode'],
+                scheduledAnalysisEnabled: 'scheduled' === $settingsFromForm['analysisLaunchMode'],
             );
 
             $compilatioUserId = $this->plugin->getSetting(
@@ -206,7 +200,7 @@ class CompilatioSettingsController extends PluginSettingsController
                 'compilatioUserId'
             );
 
-            if (!is_string($compilatioUserId) || $compilatioUserId === '') {
+            if (!is_string($compilatioUserId) || '' === $compilatioUserId) {
                 throw new \RuntimeException(
                     'Unable to retrieve the Compilatio user ID.'
                 );
@@ -223,7 +217,7 @@ class CompilatioSettingsController extends PluginSettingsController
 
             $context = $this->getRequest()->getContext();
 
-            if ($context === null) {
+            if (null === $context) {
                 throw new \RuntimeException('The OJS context is unavailable.');
             }
 
@@ -242,7 +236,7 @@ class CompilatioSettingsController extends PluginSettingsController
 
         $settings[] = ['name' => 'automaticIndexingEnabled', 'value' => $settingsFromForm['automaticIndexingEnabled'], 'type' => 'bool'];
         $settings[] = ['name' => 'analysisLaunchMode', 'value' => $settingsFromForm['analysisLaunchMode'], 'type' => 'string'];
-        $settings[] = ['name' => 'scheduledAnalysisAt', 'value' => $settingsFromForm['analysisLaunchMode'] === 'scheduled' ? $settingsFromForm['scheduledAnalysisAt'] : '', 'type' => 'string'];
+        $settings[] = ['name' => 'scheduledAnalysisAt', 'value' => 'scheduled' ===  $settingsFromForm['analysisLaunchMode'] ? $settingsFromForm['scheduledAnalysisAt'] : '', 'type' => 'string'];
         $settings[] = ['name' => 'thresholds', 'value' => $thresholds, 'type' => 'array'];
 
         foreach ($settings as $setting) {
@@ -268,13 +262,13 @@ class CompilatioSettingsController extends PluginSettingsController
     {
         $context = $this->getRequest()->getContext();
 
-        if ($context === null) {
+        if (null === $context) {
             throw new \RuntimeException('The OJS context is unavailable.');
         }
 
         $contextId = $context->getId();
 
-        if ($contextId === null) {
+        if (null === $contextId) {
             throw new \RuntimeException('Unable to retrieve the OJS context ID.');
         }
 
@@ -325,7 +319,7 @@ class CompilatioSettingsController extends PluginSettingsController
 
         foreach (self::SETTINGS as $settingName => $settingType) {
             $value = $this->plugin->getSetting($this->getContextId(), $settingName);
-            if ($value !== null) {
+            if (null !== $value) {
                 settype($value, $settingType);
                 $settings[$settingName] = $value;
             }
@@ -339,31 +333,8 @@ class CompilatioSettingsController extends PluginSettingsController
      */
     private function getThresholds(int $contextId): array
     {
-        $thresholds = $this->plugin->getSetting($contextId, 'thresholds');
-        $thresholds = is_array($thresholds) ? $thresholds : (array) $thresholds;
-
-        return [
-            'warning' => $this->normalizeStoredThreshold(
-                $thresholds['warning'] ?? null,
-                self::DEFAULT_WARNING_THRESHOLD
-            ),
-            'critical' => $this->normalizeStoredThreshold(
-                $thresholds['critical'] ?? null,
-                self::DEFAULT_CRITICAL_THRESHOLD
-            ),
-        ];
-    }
-
-    private function normalizeStoredThreshold(mixed $value, int $default): int
-    {
-        if (is_int($value)) {
-            return $value;
-        }
-
-        if (is_string($value) && ctype_digit($value)) {
-            return (int) $value;
-        }
-
-        return $default;
+        return (new CompilatioThresholdsResolver())->resolve(
+            $this->plugin->getSetting($contextId, 'thresholds'),
+        );
     }
 }

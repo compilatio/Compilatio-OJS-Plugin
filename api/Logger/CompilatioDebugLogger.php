@@ -28,7 +28,7 @@ final class CompilatioDebugLogger
             );
 
             $writtenBytes = file_put_contents(self::LOG_FILE, $line, FILE_APPEND | LOCK_EX);
-            if ($writtenBytes === false) {
+            if (false === $writtenBytes) {
                 throw new RuntimeException('file_put_contents returned false for ' . self::LOG_FILE);
             }
         } catch (Throwable $exception) {

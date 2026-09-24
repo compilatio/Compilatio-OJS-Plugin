@@ -1,46 +1,45 @@
+import type { CompilatioDocument } from './types/document';
+
 (function () {
-  var documentsByFileId = new Map();
-  var activeSubmissionId = null;
+  const documentsByFileId = new Map<number, CompilatioDocument>();
+  let activeSubmissionId: string | null = null;
 
   function renderDocuments() {
     window.pkpCompilatioDocumentsTable.renderDocuments(documentsByFileId);
   }
 
-  async function loadDocuments(submissionId) {
+  async function loadDocuments(submissionId: string) {
     try {
-      var documents = await window.pkpCompilatioDocumentsApi
-        .getSubmissionDocuments(submissionId);
+      const documents = await window.pkpCompilatioDocumentsApi.getSubmissionDocuments(submissionId);
 
       if (submissionId !== activeSubmissionId) {
         return;
       }
 
-      documents.forEach(function (documentData) {
+      documents.forEach(function (documentData: CompilatioDocument) {
         window.pkpCompilatioDocumentsApi.addActionUrls(documentData);
         documentsByFileId.set(documentData.submissionFileId, documentData);
       });
 
       renderDocuments();
     } catch (error) {
-      window.console.error(
-        '[Compilatio] Unable to load submission documents.',
-        error,
-      );
+      window.console.error('[Compilatio] Unable to load submission documents.', error);
     }
   }
 
   function synchronizeSubmission() {
-    var config = window.pkpCompilatioDocumentsApi.getConfig();
-    var submissionId = new URLSearchParams(window.location.search)
-      .get('workflowSubmissionId');
+    const config = window.pkpCompilatioDocumentsApi.getConfig();
+    const submissionId = new URLSearchParams(window.location.search).get('workflowSubmissionId');
 
     if (!config || !config.apiUrl || !submissionId) {
-      if (activeSubmissionId === null) {
+      if (null === activeSubmissionId) {
         return;
       }
 
       activeSubmissionId = null;
       documentsByFileId.clear();
+      window.pkpCompilatioDocumentsTable.unmountAll();
+      return;
     }
 
     if (submissionId === activeSubmissionId) {
@@ -48,13 +47,14 @@
       return;
     }
 
+    window.pkpCompilatioDocumentsTable.unmountAll();
     activeSubmissionId = submissionId;
     documentsByFileId.clear();
     loadDocuments(submissionId);
   }
 
   function initialize() {
-    window.pkpCompilatioDocumentActions.register(documentsByFileId);
+    window.addEventListener('compilatio:document-app-ready', renderDocuments);
 
     new MutationObserver(synchronizeSubmission).observe(document.body, {
       childList: true,
@@ -70,4 +70,4 @@
   } else {
     initialize();
   }
-}());
+})();

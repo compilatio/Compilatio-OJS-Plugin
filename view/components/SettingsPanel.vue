@@ -255,7 +255,9 @@ const updateDetection = (index: number, enabled: boolean) => {
   }
 };
 
-const isLaunchMode = (value: unknown): value is AnalysisLaunchMode => value.inArray(['automatic', 'manual', 'scheduled']);
+const isLaunchMode = (value: unknown): value is AnalysisLaunchMode =>
+  'string' === typeof value
+  && ['automatic', 'manual', 'scheduled'].includes(value);
 
 const setError = (message: string) => {
   data.hasError = true;

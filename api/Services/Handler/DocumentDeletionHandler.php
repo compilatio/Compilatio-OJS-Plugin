@@ -4,10 +4,10 @@ namespace APP\plugins\generic\compilatio\api\Services\Handler;
 
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
 use APP\plugins\generic\compilatio\api\DTO\Document;
-use APP\plugins\generic\compilatio\api\Logger\CompilatioDebugLogger;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentStore;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 use PKP\plugins\Plugin;
 use PKP\submissionFile\SubmissionFile;
 use RuntimeException;
@@ -50,7 +50,7 @@ final class DocumentDeletionHandler
             $compilatioDocumentRepository->delete($externalId);
             $compilatioDocumentStore->deleteForSubmissionFile($submissionFileId);
 
-            CompilatioDebugLogger::log('Document deleted', [
+            Log::info('Compilatio document deleted', [
                 'submissionFileId' => $submissionFileId,
                 'externalId' => $externalId,
             ]);
@@ -61,7 +61,7 @@ final class DocumentDeletionHandler
                 $exception->getMessage(),
             );
 
-            CompilatioDebugLogger::log('Document deletion error', [
+            Log::error('Compilatio document deletion failed', [
                 'submissionFileId' => $submissionFileId,
                 'externalId' => $externalId,
                 'httpStatus' => $exception->getCode(),

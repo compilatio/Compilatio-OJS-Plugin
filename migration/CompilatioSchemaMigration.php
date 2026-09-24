@@ -72,8 +72,8 @@ final class CompilatioSchemaMigration extends Migration
                 'ai_score',
                 'ignored_scores',
             ],
-            static fn (string $column): bool =>
-                Schema::hasColumn('compilatio_documents', $column)
+            static fn(string $column): bool =>
+            Schema::hasColumn('compilatio_documents', $column)
         ));
 
         if ($obsoleteColumns !== []) {
@@ -88,6 +88,7 @@ final class CompilatioSchemaMigration extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('compilatio_documents');
+        // Intentionally preserve the table and its data.
+        // This migration may upgrade an existing table and is not safely reversible.
     }
 }

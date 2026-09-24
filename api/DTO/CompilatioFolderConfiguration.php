@@ -10,6 +10,7 @@ final class CompilatioFolderConfiguration
         public bool $defaultIndexing,
         public bool $autoAnalysis,
         public bool $scheduledAnalysisEnabled,
+        public ?string $scheduledAnalysisAt = null,
     ) {
     }
 }

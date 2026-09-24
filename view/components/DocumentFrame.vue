@@ -52,7 +52,7 @@ const { data, pending, error, action, perform } = useDocumentActions(
       <DocumentScore
         v-if="!error"
         class="min-w-10 flex-1"
-        :score="data.score ?? 0"
+        :score="data.score ?? null"
         :thresholds="props.thresholds"
       />
       <DocumentErrorTooltip

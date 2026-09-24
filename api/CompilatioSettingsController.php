@@ -110,6 +110,14 @@ class CompilatioSettingsController extends PluginSettingsController
             throw new \RuntimeException('The API key setting is invalid.');
         }
 
+        $scheduledAnalysisAt = null;
+        if ('scheduled' === $settingsFromForm['analysisLaunchMode']) {
+            $scheduledAnalysisAt = $settingsFromForm['scheduledAnalysisAt'] ?? null;
+            if (!is_string($scheduledAnalysisAt)) {
+                throw new \RuntimeException('The scheduled analysis date is invalid.');
+            }
+        }
+
         if (null !== $apiKey && '' !== $apiKey) {
             $compilatioUserRepository = new CompilatioUserRepository($apiKey);
 
@@ -193,6 +201,7 @@ class CompilatioSettingsController extends PluginSettingsController
                 defaultIndexing: (bool) $settingsFromForm['automaticIndexingEnabled'],
                 autoAnalysis: 'automatic' === $settingsFromForm['analysisLaunchMode'],
                 scheduledAnalysisEnabled: 'scheduled' === $settingsFromForm['analysisLaunchMode'],
+                scheduledAnalysisAt: $scheduledAnalysisAt,
             );
 
             $compilatioUserId = $this->plugin->getSetting(
@@ -236,7 +245,7 @@ class CompilatioSettingsController extends PluginSettingsController
 
         $settings[] = ['name' => 'automaticIndexingEnabled', 'value' => $settingsFromForm['automaticIndexingEnabled'], 'type' => 'bool'];
         $settings[] = ['name' => 'analysisLaunchMode', 'value' => $settingsFromForm['analysisLaunchMode'], 'type' => 'string'];
-        $settings[] = ['name' => 'scheduledAnalysisAt', 'value' => 'scheduled' ===  $settingsFromForm['analysisLaunchMode'] ? $settingsFromForm['scheduledAnalysisAt'] : '', 'type' => 'string'];
+        $settings[] = ['name' => 'scheduledAnalysisAt', 'value' => $scheduledAnalysisAt ?? '', 'type' => 'string'];
         $settings[] = ['name' => 'thresholds', 'value' => $thresholds, 'type' => 'array'];
 
         foreach ($settings as $setting) {

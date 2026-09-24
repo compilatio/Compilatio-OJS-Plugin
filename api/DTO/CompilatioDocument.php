@@ -11,7 +11,7 @@ final readonly class CompilatioDocument
         public string|int|null $status,
         public ?string $lightReports,
         public ?string $state,
-        public ?string $analyses,
+        public mixed $analyses,
     ) {}
 
     public static function build(object $document): self
@@ -42,7 +42,7 @@ final readonly class CompilatioDocument
             id: $id,
             status: $status,
             lightReports: $lightReports,
-            analyses: is_string($analyses) ? $analyses : null,
+            analyses: $analyses,
             state: is_string($state) ? $state : null,
         );
     }

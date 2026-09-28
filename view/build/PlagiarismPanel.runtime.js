@@ -9908,7 +9908,7 @@
 					!(0, vue.unref)(error) ? ((0, vue.openBlock)(), (0, vue.createBlock)(DocumentScore_default, {
 						key: 0,
 						class: "min-w-10 flex-1",
-						score: (0, vue.unref)(data).score ?? 0,
+						score: (0, vue.unref)(data).score ?? null,
 						thresholds: props.thresholds
 					}, null, 8, ["score", "thresholds"])) : ((0, vue.openBlock)(), (0, vue.createBlock)(DocumentErrorTooltip_default, {
 						key: 1,
@@ -10691,11 +10691,11 @@
 				const detection = data.bundleDetections[index];
 				if (detection?.configurable) detection.enabled = enabled;
 			};
-			const isLaunchMode = (value) => value.inArray([
+			const isLaunchMode = (value) => "string" === typeof value && [
 				"automatic",
 				"manual",
 				"scheduled"
-			]);
+			].includes(value);
 			const setError = (message) => {
 				data.hasError = true;
 				data.message = message;

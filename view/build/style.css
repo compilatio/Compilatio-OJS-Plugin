@@ -3194,10 +3194,6 @@
     transition-timing-function: var(--ease-in-out) !important;
   }
 
-  .\[pid\:\%d\] {
-    pid: %d !important;
-  }
-
   :where(.divide-x-reverse > :not(:last-child)) {
     --tw-divide-x-reverse: 1 !important;
   }

@@ -9,12 +9,12 @@ use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentStore;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentAnalysisHandler;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentSubmissionHandler;
+use APP\plugins\generic\compilatio\api\Services\Logging\CompilatioOjsLogger;
 use APP\plugins\generic\compilatio\api\Services\Synchronizer\CompilatioDocumentIndexingSynchronizer;
 use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Log;
 use PKP\core\PKPBaseController;
 use PKP\plugins\Plugin;
 use PKP\security\Role;
@@ -123,7 +123,10 @@ final class CompilatioDocumentController extends PKPBaseController
 
             return response()->json($this->formatDocumentResponse($retriedDocument));
         } catch (Throwable $exception) {
-            return $this->errorResponse($exception);
+            return $this->errorResponse($exception, [
+                'action' => 'retry',
+                'submissionFileId' => $submissionFileId ?? null,
+            ]);
         }
     }
 
@@ -374,14 +377,15 @@ final class CompilatioDocumentController extends PKPBaseController
         return (int) $normalizedId;
     }
 
-    private function errorResponse(Throwable $exception): JsonResponse
+    /** @param array<string, mixed> $context */
+    private function errorResponse(Throwable $exception, array $context = []): JsonResponse
     {
         $statusCode = (int) $exception->getCode();
         if ($statusCode < 400 || $statusCode > 599) {
             $statusCode = 500;
         }
 
-        Log::error('Compilatio document API error', [
+        CompilatioOjsLogger::log('error', 'Compilatio document API error', $context + [
             'httpStatus' => $statusCode,
             'error' => $exception->getMessage(),
         ]);

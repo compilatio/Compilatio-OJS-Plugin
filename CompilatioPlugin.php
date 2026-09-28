@@ -10,9 +10,9 @@ use APP\plugins\generic\compilatio\api\CompilatioSettingsController;
 use APP\plugins\generic\compilatio\api\CompilatioDocumentController;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentSubmissionHandler;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentDeletionHandler;
+use APP\plugins\generic\compilatio\api\Services\Logging\CompilatioOjsLogger;
 use APP\plugins\generic\compilatio\migration\CompilatioSchemaMigration;
 use APP\template\TemplateManager;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Event;
 use PKP\core\APIRouter;
 use PKP\core\JSONMessage;
@@ -249,7 +249,7 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
 
         $documentSubmissionHandler = new DocumentSubmissionHandler($this);
         foreach ($submissionFiles as $submissionFile) {
-            Log::debug('Compilatio submission submitted', [
+            CompilatioOjsLogger::log('debug', 'Compilatio submission submitted', [
                 'contextId' => $contextId,
                 'submissionId' => $submission->getId(),
                 'submissionFileId' => $submissionFile->getId(),

@@ -9,9 +9,9 @@ use APP\plugins\generic\compilatio\api\DTO\DocumentAuthor;
 use APP\plugins\generic\compilatio\api\Exception\CompilatioDocumentUploadException;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentStore;
+use APP\plugins\generic\compilatio\api\Services\Logging\CompilatioOjsLogger;
 use APP\submission\Submission;
 use GuzzleHttp\Client;
-use Illuminate\Support\Facades\Log;
 use PKP\author\Author;
 use PKP\db\DAORegistry;
 use PKP\plugins\Plugin;
@@ -82,7 +82,7 @@ final class DocumentSubmissionHandler
 
             $store->markUploaded($document->submissionFileId, $remoteDocument, $status);
 
-            Log::info('Compilatio document sent', [
+            CompilatioOjsLogger::log('info', 'Compilatio document sent', [
                 'submissionFileId' => $document->submissionFileId,
                 'externalId' => $remoteDocument->id,
                 'status' => $status,
@@ -93,7 +93,7 @@ final class DocumentSubmissionHandler
                 $exception->status,
                 $exception->getMessage(),
             );
-            Log::error('Compilatio document upload failed', [
+            CompilatioOjsLogger::log('error', 'Compilatio document upload failed', [
                 'submissionFileId' => $submissionFileId,
                 'httpStatus' => $exception->httpStatus,
                 'status' => $exception->status,
@@ -105,7 +105,7 @@ final class DocumentSubmissionHandler
                 Document::STATUS_ERROR_SENDING_FAILED,
                 $exception->getMessage(),
             );
-            Log::error('Compilatio document upload failed', [
+            CompilatioOjsLogger::log('error', 'Compilatio document upload failed', [
                 'submissionFileId' => $submissionFileId,
                 'httpStatus' => $exception->getCode(),
                 'status' => Document::STATUS_ERROR_SENDING_FAILED,

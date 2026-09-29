@@ -22,6 +22,7 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
+const productName = window.pkpCompilatioDocuments.product.name;
 
 const launchModes: Array<{
   value: AnalysisLaunchMode;
@@ -52,7 +53,7 @@ const launchModes: Array<{
       <div class="text-sm">
         <p class="font-medium text-slate-900">{{ t('settings_automatic_indexing') }}</p>
         <p class="mt-1 text-slate-500">
-          {{ t('settings_automatic_indexing_description') }}
+          {{ t('settings_automatic_indexing_description', { productName }) }}
         </p>
       </div>
     </template>

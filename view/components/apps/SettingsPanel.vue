@@ -2,11 +2,13 @@
 import { computed, onMounted, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import type { AnalysisLaunchMode, Detection, Thresholds } from '../types/settings';
-import AnalysisLaunchSettings from './organisms/AnalysisLaunchSettings.vue';
-import ApiKeySettings from './organisms/ApiKeySettings.vue';
-import DetectionSettings from './organisms/DetectionSettings.vue';
-import ThresholdSettings from './organisms/ThresholdSettings.vue';
+import type { AnalysisLaunchMode, Detection, Thresholds } from '../../types/settings.js';
+import AnalysisLaunchSettings from '../organisms/AnalysisLaunchSettings.vue';
+import ApiKeySettings from '../organisms/ApiKeySettings.vue';
+import DetectionSettings from '../organisms/DetectionSettings.vue';
+import ThresholdSettings from '../organisms/ThresholdSettings.vue';
+import Compilatiologo from '../../img/compilatio_logo.vue';
+import LetimioLogo from '../../img/letimio_logo.vue';
 
 const { t } = useI18n();
 const defaultThresholds: Thresholds = { warning: 10, critical: 20 };
@@ -286,18 +288,19 @@ const toLocalDateTime = (value: string | null): string => {
   const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   return localDate.toISOString().slice(0, 16);
 };
+
+const product = window.pkpCompilatioDocuments.product;
+const productStyleClass = 'compilatio' === product.id ? 'service-magister' : 'service-letimio';
 </script>
 
 <template>
-  <section class="service-magister overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-900 shadow-sm">
+  <section class="overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-900 shadow-sm" :class="productStyleClass">
     <header class="border-b border-neutral-200 px-6 py-5 sm:px-8">
-      <img
-        src="../img/compilatio_logo.svg"
-        :alt="t('settings_logo_alt')"
-        class="h-10 w-auto"
-      />
+      <Compilatiologo v-if="'compilatio' === product.id" class="block h-16 w-auto max-w-full"/>
+      <LetimioLogo v-else class="block h-16 w-auto max-w-full"/>
+
       <div class="mt-5">
-        <h2 class="text-xl font-semibold tracking-tight">{{ t('settings_title') }}</h2>
+        <h2 class="text-xl font-semibold tracking-tight">{{ t('settings_title', { productName: product.name }) }}</h2>
         <p class="mt-1 max-w-2xl text-sm leading-6 text-neutral-600">
           {{ t('settings_description') }}
         </p>

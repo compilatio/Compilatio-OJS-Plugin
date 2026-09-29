@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import type { PropType } from 'vue';
-import type { CompilatioDocument } from '../types/document';
-import type { CompilatioDocumentsApi } from '../types/documentsApi';
-import DocumentScore from './atoms/DocumentScore.vue';
-import DocumentIndexingButton from './molecules/DocumentIndexingButton.vue';
-import DocumentAnalysisButton from './molecules/DocumentAnalysisButton.vue';
-import DocumentErrorTooltip from './molecules/DocumentErrorTooltip.vue';
-import { useDocumentActions } from '../composables/useDocumentActions.js';
-import logo from '../img/compilatio_magister_logo_short.svg';
+import type { CompilatioDocument } from '../../types/document';
+import type { CompilatioDocumentsApi } from '../../types/documentsApi';
+import DocumentScore from '../atoms/DocumentScore.vue';
+import DocumentIndexingButton from '../molecules/DocumentIndexingButton.vue';
+import DocumentAnalysisButton from '../molecules/DocumentAnalysisButton.vue';
+import DocumentErrorTooltip from '../molecules/DocumentErrorTooltip.vue';
+import { useDocumentActions } from '../../composables/useDocumentActions.js';
+import Compilatiologo from '../../img/compilatio_magister_logo_short.vue';
+import Letimiologo from '../../img/letimio_logo_short.vue';
 
 const emit = defineEmits<{ updated: [document: CompilatioDocument] }>();
 const { t } = useI18n();
@@ -30,35 +31,37 @@ const { data, pending, error, action, perform } = useDocumentActions(
   t,
   (updated) => emit('updated', updated),
 );
+
+const product = props.api.getConfig().product;
+const productClassStyle = 'compilatio' === product.id ? 'service-magister' : 'service-letimio';
 </script>
 
 <template>
   <span
-    class="service-magister compilatio-document-status inline-block box-border w-49 rounded-l bg-neutral-100 p-1 align-middle"
+    class="inline-block box-border w-49 rounded-l-sm bg-neutral-100 p-1 align-middle"
+    :class="productClassStyle"
     :data-status="data.status"
   >
     <span class="flex items-center gap-1">
       <span
         class="flex size-8 items-center justify-center"
         role="img"
-        aria-label="Compilatio Magister"
+        :aria-label="product.name + ' logo'"
       >
-        <img
-          :src="logo"
-          alt="Compilatio Magister logo"
-          class="h-auto w-7"
-        />
+        <Compilatiologo v-if="'compilatio' === product.id" />
+        <Letimiologo v-else />
       </span>
       <DocumentScore
         v-if="!error"
         class="min-w-10 flex-1"
-        :score="data.score ?? null"
+        :score="data.score ?? undefined"
         :thresholds="props.thresholds"
       />
       <DocumentErrorTooltip
         v-else
         :document-id="data.submissionFileId"
         :message="error"
+        :product-name="product.name"
       />
       <span 
         v-if="!error"

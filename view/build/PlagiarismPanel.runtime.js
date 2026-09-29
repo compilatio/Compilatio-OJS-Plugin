@@ -39,210 +39,6 @@
 	}) : target, mod));
 	//#endregion
 	vue = __toESM(vue, 1);
-	//#region view/compilatioDocumentsApi.ts
-	(function() {
-		function getConfig() {
-			return window.pkpCompilatioDocuments;
-		}
-		function addActionUrls(documentData) {
-			const documentUrl = window.pkpCompilatioDocuments.apiUrl + "/" + documentData.submissionFileId;
-			documentData.retryUrl = documentUrl + "/retry";
-			documentData.analyseUrl = documentUrl + "/analyse";
-			documentData.reportUrl = documentUrl + "/report";
-			documentData.indexingUrl = documentUrl + "/indexing";
-			return documentData;
-		}
-		async function getErrorMessage(response) {
-			try {
-				return (await response.json()).errorMessage || window.pkpCompilatioDocuments.messages.apiError + " (" + response.status + ")";
-			} catch {
-				return window.pkpCompilatioDocuments.messages.apiError + " (" + response.status + ")";
-			}
-		}
-		async function request(url, options) {
-			const response = await fetch(url, options);
-			if (!response.ok) throw new Error(await getErrorMessage(response));
-			return response.json();
-		}
-		function getSubmissionDocuments(submissionId) {
-			const config = window.pkpCompilatioDocuments;
-			return request(config.apiUrl + "/submission/" + encodeURIComponent(submissionId), {
-				credentials: "same-origin",
-				headers: { Accept: "application/json" }
-			});
-		}
-		function patch(url, payload) {
-			return request(url, {
-				method: "PATCH",
-				credentials: "same-origin",
-				headers: {
-					Accept: "application/json",
-					"Content-Type": "application/json",
-					"X-Csrf-Token": window.pkp && window.pkp.currentUser ? window.pkp.currentUser.csrfToken : ""
-				},
-				body: JSON.stringify(payload)
-			});
-		}
-		function post(url) {
-			return request(url, {
-				method: "POST",
-				credentials: "same-origin",
-				headers: {
-					Accept: "application/json",
-					"X-Csrf-Token": window.pkp && window.pkp.currentUser ? window.pkp.currentUser.csrfToken : ""
-				}
-			});
-		}
-		window.pkpCompilatioDocumentsApi = {
-			addActionUrls,
-			getConfig,
-			getSubmissionDocuments,
-			post,
-			patch
-		};
-	})();
-	//#endregion
-	//#region view/compilatioDocumentsTable.ts
-	(function() {
-		const mountedApps = /* @__PURE__ */ new Map();
-		function addCompilatioHeader(row) {
-			const table = row.closest("table");
-			const headerRow = table ? table.querySelector("thead tr") : null;
-			if (!headerRow || headerRow.querySelector(".compilatio-document-header")) return;
-			const currentHeader = headerRow.children.length > 2 ? headerRow.children[2] : null;
-			if (!currentHeader) return;
-			const header = document.createElement("th");
-			header.className = currentHeader.className;
-			header.classList.add("compilatio-document-header", "w-52", "min-w-52", "text-start");
-			header.scope = "col";
-			header.textContent = "Compilatio";
-			headerRow.insertBefore(header, currentHeader);
-		}
-		function getFileRow(submissionFileId) {
-			const fileLink = document.querySelector("a[href*=\"submissionFileId=" + submissionFileId + "\"]");
-			if (!fileLink) return null;
-			const row = fileLink.closest("tr");
-			const filenameCell = fileLink.closest("th");
-			return row && filenameCell ? {
-				row,
-				filenameCell
-			} : null;
-		}
-		function getOrCreateCompilatioCell(row, filenameCell) {
-			const existingCell = row.querySelector(".compilatio-document-cell");
-			if (existingCell) return existingCell;
-			const dateCell = filenameCell.nextElementSibling;
-			const cell = document.createElement("td");
-			cell.className = dateCell ? dateCell.className : "";
-			cell.classList.add("compilatio-document-cell", "w-52", "min-w-52", "text-start");
-			row.insertBefore(cell, dateCell);
-			return cell;
-		}
-		function cleanup(documentsByFileId) {
-			mountedApps.forEach(function(entry, target) {
-				if (!target.isConnected || !documentsByFileId.has(entry.fileId)) {
-					entry.app.unmount();
-					target.remove();
-					mountedApps.delete(target);
-				}
-			});
-		}
-		function renderDocuments(documentsByFileId) {
-			cleanup(documentsByFileId);
-			const mountDocumentApp = window.mountCompilatioDocumentApp;
-			if (!mountDocumentApp) return;
-			documentsByFileId.forEach(function(documentData, submissionFileId) {
-				const fileRow = getFileRow(submissionFileId);
-				if (!fileRow) return;
-				addCompilatioHeader(fileRow.row);
-				const cell = getOrCreateCompilatioCell(fileRow.row, fileRow.filenameCell);
-				const current = cell.querySelector(".compilatio-document-app");
-				if (current) {
-					const existing = mountedApps.get(current);
-					if (existing && existing.fileId === submissionFileId) return;
-					if (existing) {
-						existing.app.unmount();
-						mountedApps.delete(current);
-					}
-					current.remove();
-				}
-				const target = document.createElement("span");
-				target.className = "compilatio-document-app";
-				cell.appendChild(target);
-				const app = mountDocumentApp(target, documentData, function(updated) {
-					documentsByFileId.set(submissionFileId, updated);
-				});
-				mountedApps.set(target, {
-					app,
-					fileId: submissionFileId
-				});
-			});
-		}
-		function unmountAll() {
-			mountedApps.forEach(function(entry, target) {
-				entry.app.unmount();
-				target.remove();
-			});
-			mountedApps.clear();
-		}
-		window.pkpCompilatioDocumentsTable = {
-			renderDocuments,
-			unmountAll
-		};
-	})();
-	//#endregion
-	//#region view/compilatioDocuments.ts
-	(function() {
-		const documentsByFileId = /* @__PURE__ */ new Map();
-		let activeSubmissionId = null;
-		function renderDocuments() {
-			window.pkpCompilatioDocumentsTable.renderDocuments(documentsByFileId);
-		}
-		async function loadDocuments(submissionId) {
-			try {
-				const documents = await window.pkpCompilatioDocumentsApi.getSubmissionDocuments(submissionId);
-				if (submissionId !== activeSubmissionId) return;
-				documents.forEach(function(documentData) {
-					window.pkpCompilatioDocumentsApi.addActionUrls(documentData);
-					documentsByFileId.set(documentData.submissionFileId, documentData);
-				});
-				renderDocuments();
-			} catch (error) {
-				window.console.error("[Compilatio] Unable to load submission documents.", error);
-			}
-		}
-		function synchronizeSubmission() {
-			const config = window.pkpCompilatioDocumentsApi.getConfig();
-			const submissionId = new URLSearchParams(window.location.search).get("workflowSubmissionId");
-			if (!config || !config.apiUrl || !submissionId) {
-				if (null === activeSubmissionId) return;
-				activeSubmissionId = null;
-				documentsByFileId.clear();
-				window.pkpCompilatioDocumentsTable.unmountAll();
-				return;
-			}
-			if (submissionId === activeSubmissionId) {
-				renderDocuments();
-				return;
-			}
-			window.pkpCompilatioDocumentsTable.unmountAll();
-			activeSubmissionId = submissionId;
-			documentsByFileId.clear();
-			loadDocuments(submissionId);
-		}
-		function initialize() {
-			window.addEventListener("compilatio:document-app-ready", renderDocuments);
-			new MutationObserver(synchronizeSubmission).observe(document.body, {
-				childList: true,
-				subtree: true
-			});
-			window.addEventListener("popstate", synchronizeSubmission);
-			synchronizeSubmission();
-		}
-		if ("loading" === document.readyState) document.addEventListener("DOMContentLoaded", initialize);
-		else initialize();
-	})();
-	//#endregion
 	//#region node_modules/@intlify/shared/dist/shared.mjs
 	/*!
 	* shared v9.14.5
@@ -3689,12 +3485,354 @@
 	registerMessageResolver(resolveValue);
 	registerLocaleFallbacker(fallbackWithLocaleChain);
 	//#endregion
+	//#region view/locales/en.js
+	var en_default = {
+		retry: "Resend",
+		launch: "Start analysis",
+		report: "View report",
+		reportMissing: "{productName} did not return a report link.",
+		reportBlocked: "The browser blocked opening the report.",
+		apiError: "{productName} error",
+		queue: "Analysis queued",
+		analysing: "Analysis in progress",
+		index: "Index document",
+		unindex: "Remove document from index",
+		indexed: "Document indexed",
+		notIndexed: "Document not indexed",
+		common_disabled: "Disabled",
+		common_enabled: "Enabled",
+		detection_similarity: "Similarity detection",
+		detection_unrecognized_text_language: "Unrecognized text language",
+		detection_ai_detection: "AI-generated content detection",
+		detection_spellchecker: "Spell checker",
+		detection_rewording: "Rewording detection",
+		detection_always_enabled: "Always enabled",
+		detection_disabled_by_admin: "Disabled by the administrator",
+		detection_not_in_subscription: "Not included in your subscription",
+		settings_api_key: "{productName} API key",
+		settings_api_key_description: "Authenticates this journal with {productName} services.",
+		settings_api_key_placeholder: "Enter the API key",
+		settings_automatic_indexing: "Automatic indexing",
+		settings_automatic_indexing_description: "Automatically sends eligible documents to {productName}.",
+		settings_description: "Configure the connection, analysis launch mode and detections available for this journal.",
+		settings_detections: "Analysis options",
+		settings_detections_description: "Enable the detections available with your {productName} plan.",
+		settings_error_initialization: "Unable to initialize the plugin settings.",
+		settings_error_loading: "Unable to load the settings.",
+		settings_error_missing_api_url: "The settings API URL is missing.",
+		settings_error_required_fields: "The API key and, in scheduled mode, the launch date are required.",
+		settings_error_saving: "Unable to save the settings.",
+		settings_error_threshold_order: "The warning threshold must not be greater than the critical threshold.",
+		settings_launch_mode: "Analysis launch",
+		settings_launch_mode_automatic: "Automatic",
+		settings_launch_mode_automatic_description: "The analysis starts as soon as the document is indexed.",
+		settings_launch_mode_description: "Choose when analyses should begin.",
+		settings_launch_mode_manual: "Manual",
+		settings_launch_mode_manual_description: "An authorized user starts each analysis.",
+		settings_launch_mode_scheduled: "Scheduled",
+		settings_launch_mode_scheduled_description: "Analyses start at the configured date and time.",
+		settings_loading: "Loading settings…",
+		settings_logo_alt: "{productName}",
+		settings_save: "Save settings",
+		settings_saved: "The settings have been saved.",
+		settings_saving: "Saving…",
+		settings_scheduled_at: "Launch date and time",
+		settings_scheduled_at_description: "The date uses your browser’s time zone.",
+		settings_title: "{productName} settings",
+		settings_thresholds: "Similarity thresholds",
+		settings_thresholds_description: "Set the warning and critical similarity levels, from 0 to 100.",
+		settings_threshold_warning: "Warning threshold (%)",
+		settings_threshold_critical: "Critical threshold (%)"
+	};
+	//#endregion
+	//#region view/locales/fr.js
+	var fr_default = {
+		retry: "Renvoyer",
+		launch: "Lancer l’analyse",
+		report: "Voir le rapport",
+		reportMissing: "{productName} n’a pas retourné de lien vers le rapport.",
+		reportBlocked: "Le navigateur a bloqué l’ouverture du rapport.",
+		apiError: "Erreur {productName}",
+		queue: "Analyse en attente",
+		analysing: "Analyse en cours",
+		index: "Indexer le document",
+		unindex: "Désindexer le document",
+		indexed: "Document indexé",
+		notIndexed: "Document non indexé",
+		common_disabled: "Désactivé",
+		common_enabled: "Activé",
+		detection_similarity: "Détection de similitudes",
+		detection_unrecognized_text_language: "Langue du texte non reconnue",
+		detection_ai_detection: "Détection de contenus générés par IA",
+		detection_spellchecker: "Correcteur orthographique",
+		detection_rewording: "Détection de reformulations",
+		detection_always_enabled: "Toujours activée",
+		detection_disabled_by_admin: "Désactivée par l’administrateur",
+		detection_not_in_subscription: "Non compris dans votre abonnement",
+		settings_api_key: "Clé API {productName}",
+		settings_api_key_description: "Authentifie cette revue auprès des services {productName}.",
+		settings_api_key_placeholder: "Saisir la clé API",
+		settings_automatic_indexing: "Indexation automatique",
+		settings_automatic_indexing_description: "Envoie automatiquement les documents éligibles vers {productName}.",
+		settings_description: "Configurez la connexion, le déclenchement des analyses et les détections disponibles pour cette revue.",
+		settings_detections: "Options d’analyse",
+		settings_detections_description: "Activez les détections autorisées par votre offre {productName}.",
+		settings_error_initialization: "Impossible de charger la configuration du plugin.",
+		settings_error_loading: "Impossible de charger la configuration.",
+		settings_error_missing_api_url: "L’URL de l’API de configuration est absente.",
+		settings_error_required_fields: "La clé API et, en mode planifié, la date de lancement sont obligatoires.",
+		settings_error_saving: "Impossible d’enregistrer les paramètres.",
+		settings_error_threshold_order: "Le seuil d’avertissement ne doit pas être supérieur au seuil critique.",
+		settings_launch_mode: "Lancement des analyses",
+		settings_launch_mode_automatic: "Automatique",
+		settings_launch_mode_automatic_description: "L’analyse démarre dès que le document est indexé.",
+		settings_launch_mode_description: "Définissez quand les analyses doivent commencer.",
+		settings_launch_mode_manual: "Manuel",
+		settings_launch_mode_manual_description: "Un utilisateur autorisé déclenche chaque analyse.",
+		settings_launch_mode_scheduled: "Planifié",
+		settings_launch_mode_scheduled_description: "Les analyses démarrent à la date et à l’heure configurées.",
+		settings_loading: "Chargement de la configuration…",
+		settings_logo_alt: "{productName}",
+		settings_save: "Enregistrer les paramètres",
+		settings_saved: "Les paramètres ont été enregistrés.",
+		settings_saving: "Enregistrement…",
+		settings_scheduled_at: "Date et heure de lancement",
+		settings_scheduled_at_description: "La date utilise le fuseau horaire de votre navigateur.",
+		settings_title: "Paramètres {productName}",
+		settings_thresholds: "Seuils de similarité",
+		settings_thresholds_description: "Définissez les niveaux de similarité d’avertissement et critique, de 0 à 100.",
+		settings_threshold_warning: "Seuil d’avertissement (%)",
+		settings_threshold_critical: "Seuil critique (%)"
+	};
+	//#endregion
+	//#region view/compilatioDocumentsApi.ts
+	(function() {
+		function getConfig() {
+			return window.pkpCompilatioDocuments;
+		}
+		function addActionUrls(documentData) {
+			const documentUrl = window.pkpCompilatioDocuments.apiUrl + "/" + documentData.submissionFileId;
+			documentData.retryUrl = documentUrl + "/retry";
+			documentData.analyseUrl = documentUrl + "/analyse";
+			documentData.reportUrl = documentUrl + "/report";
+			documentData.indexingUrl = documentUrl + "/indexing";
+			return documentData;
+		}
+		async function getErrorMessage(response) {
+			const i18n = createI18n({
+				legacy: false,
+				locale: window.pkpCompilatioDocuments.locale,
+				fallbackLocale: "fr",
+				messages: {
+					en: en_default,
+					fr: fr_default
+				}
+			});
+			try {
+				return (await response.json()).errorMessage || i18n.global.t("apiError", { productName: getConfig().product.name }) + " (" + response.status + ")";
+			} catch {
+				return i18n.global.t("apiError", { productName: getConfig().product.name }) + " (" + response.status + ")";
+			}
+		}
+		async function request(url, options) {
+			const response = await fetch(url, options);
+			if (!response.ok) throw new Error(await getErrorMessage(response));
+			return response.json();
+		}
+		function getSubmissionDocuments(submissionId) {
+			const config = window.pkpCompilatioDocuments;
+			return request(config.apiUrl + "/submission/" + encodeURIComponent(submissionId), {
+				credentials: "same-origin",
+				headers: { Accept: "application/json" }
+			});
+		}
+		function patch(url, payload) {
+			return request(url, {
+				method: "PATCH",
+				credentials: "same-origin",
+				headers: {
+					Accept: "application/json",
+					"Content-Type": "application/json",
+					"X-Csrf-Token": window.pkp && window.pkp.currentUser ? window.pkp.currentUser.csrfToken : ""
+				},
+				body: JSON.stringify(payload)
+			});
+		}
+		function post(url) {
+			return request(url, {
+				method: "POST",
+				credentials: "same-origin",
+				headers: {
+					Accept: "application/json",
+					"X-Csrf-Token": window.pkp && window.pkp.currentUser ? window.pkp.currentUser.csrfToken : ""
+				}
+			});
+		}
+		window.pkpCompilatioDocumentsApi = {
+			addActionUrls,
+			getConfig,
+			getSubmissionDocuments,
+			post,
+			patch
+		};
+	})();
+	//#endregion
+	//#region view/compilatioDocumentsTable.ts
+	(function() {
+		const mountedApps = /* @__PURE__ */ new Map();
+		function addCompilatioHeader(row) {
+			const table = row.closest("table");
+			const headerRow = table ? table.querySelector("thead tr") : null;
+			if (!headerRow || headerRow.querySelector(".compilatio-document-header")) return;
+			const currentHeader = headerRow.children.length > 2 ? headerRow.children[2] : null;
+			if (!currentHeader) return;
+			const header = document.createElement("th");
+			header.className = currentHeader.className;
+			header.classList.add("compilatio-document-header", "w-52", "min-w-52", "text-start");
+			header.scope = "col";
+			header.textContent = "Compilatio";
+			headerRow.insertBefore(header, currentHeader);
+		}
+		function getFileRow(submissionFileId) {
+			const row = document.querySelector(`tr.gridRow[id$="-row-${submissionFileId}"]`);
+			if (row?.cells[0]) return {
+				row,
+				filenameCell: row.cells[0]
+			};
+			const filenameCell = Array.from(document.querySelectorAll("a[href*=\"submissionFileId=\"]")).find((link) => {
+				return new URL(link.href, window.location.href).searchParams.get("submissionFileId") === String(submissionFileId);
+			})?.closest("th, td");
+			const linkRow = filenameCell?.closest("tr");
+			return linkRow && filenameCell ? {
+				row: linkRow,
+				filenameCell
+			} : null;
+		}
+		function getOrCreateCompilatioCell(row, filenameCell) {
+			const existingCell = row.querySelector(".compilatio-document-cell");
+			if (existingCell) return existingCell;
+			const dateCell = filenameCell.nextElementSibling;
+			const cell = document.createElement("td");
+			cell.className = dateCell ? dateCell.className : "";
+			cell.classList.add("compilatio-document-cell", "w-52", "min-w-52", "text-start");
+			row.insertBefore(cell, dateCell);
+			return cell;
+		}
+		function cleanup(documentsByFileId) {
+			mountedApps.forEach(function(entry, target) {
+				if (!target.isConnected || !documentsByFileId.has(entry.fileId)) {
+					entry.app.unmount();
+					target.remove();
+					mountedApps.delete(target);
+				}
+			});
+		}
+		function renderDocuments(documentsByFileId) {
+			cleanup(documentsByFileId);
+			const mountDocumentApp = window.mountCompilatioDocumentApp;
+			if (!mountDocumentApp) return;
+			documentsByFileId.forEach(function(documentData, submissionFileId) {
+				const fileRow = getFileRow(submissionFileId);
+				if (!fileRow) return;
+				addCompilatioHeader(fileRow.row);
+				const cell = getOrCreateCompilatioCell(fileRow.row, fileRow.filenameCell);
+				const current = cell.querySelector(".compilatio-document-app");
+				if (current) {
+					const existing = mountedApps.get(current);
+					if (existing && existing.fileId === submissionFileId) return;
+					if (existing) {
+						existing.app.unmount();
+						mountedApps.delete(current);
+					}
+					current.remove();
+				}
+				const target = document.createElement("span");
+				target.className = "compilatio-document-app";
+				cell.appendChild(target);
+				const app = mountDocumentApp(target, documentData, function(updated) {
+					documentsByFileId.set(submissionFileId, updated);
+				});
+				mountedApps.set(target, {
+					app,
+					fileId: submissionFileId
+				});
+			});
+		}
+		function unmountAll() {
+			mountedApps.forEach(function(entry, target) {
+				entry.app.unmount();
+				target.remove();
+			});
+			mountedApps.clear();
+		}
+		window.pkpCompilatioDocumentsTable = {
+			renderDocuments,
+			unmountAll
+		};
+	})();
+	//#endregion
+	//#region view/compilatioDocuments.ts
+	(function() {
+		const documentsByFileId = /* @__PURE__ */ new Map();
+		let activeSubmissionId = null;
+		function renderDocuments() {
+			window.pkpCompilatioDocumentsTable.renderDocuments(documentsByFileId);
+		}
+		async function loadDocuments(submissionId) {
+			try {
+				const documents = await window.pkpCompilatioDocumentsApi.getSubmissionDocuments(submissionId);
+				if (submissionId !== activeSubmissionId) return;
+				documents.forEach(function(documentData) {
+					window.pkpCompilatioDocumentsApi.addActionUrls(documentData);
+					documentsByFileId.set(documentData.submissionFileId, documentData);
+				});
+				renderDocuments();
+			} catch (error) {
+				window.console.error("[Compilatio] Unable to load submission documents.", error);
+			}
+		}
+		function synchronizeSubmission() {
+			const config = window.pkpCompilatioDocumentsApi.getConfig();
+			const submissionId = new URLSearchParams(window.location.search).get("workflowSubmissionId");
+			if (!config || !config.apiUrl || !submissionId) {
+				if (null === activeSubmissionId) return;
+				activeSubmissionId = null;
+				documentsByFileId.clear();
+				window.pkpCompilatioDocumentsTable.unmountAll();
+				return;
+			}
+			if (submissionId === activeSubmissionId) {
+				renderDocuments();
+				return;
+			}
+			window.pkpCompilatioDocumentsTable.unmountAll();
+			activeSubmissionId = submissionId;
+			documentsByFileId.clear();
+			loadDocuments(submissionId);
+		}
+		function initialize() {
+			window.addEventListener("compilatio:document-app-ready", renderDocuments);
+			new MutationObserver(synchronizeSubmission).observe(document.body, {
+				childList: true,
+				subtree: true
+			});
+			window.addEventListener("popstate", synchronizeSubmission);
+			synchronizeSubmission();
+		}
+		if ("loading" === document.readyState) document.addEventListener("DOMContentLoaded", initialize);
+		else initialize();
+	})();
+	//#endregion
 	//#region view/components/atoms/DocumentScore.vue
 	var DocumentScore_default = /* @__PURE__ */ (0, vue.defineComponent)({
 		__name: "DocumentScore",
 		props: {
 			score: {
-				type: [Number, String],
+				type: [
+					Number,
+					String,
+					null
+				],
 				default: null
 			},
 			thresholds: {
@@ -3722,7 +3860,7 @@
 	});
 	//#endregion
 	//#region view/components/atoms/DocumentButton.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$13 = [
+	var _hoisted_1$17 = [
 		"title",
 		"aria-label",
 		"disabled"
@@ -3751,7 +3889,7 @@
 					"aria-label": __props.label,
 					disabled: __props.disabled,
 					onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("click", $event))
-				}, [(0, vue.renderSlot)(_ctx.$slots, "default")], 8, _hoisted_1$13);
+				}, [(0, vue.renderSlot)(_ctx.$slots, "default")], 8, _hoisted_1$17);
 			};
 		}
 	});
@@ -9714,7 +9852,7 @@
 	});
 	//#endregion
 	//#region view/components/molecules/DocumentErrorTooltip.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$12 = ["aria-describedby"];
+	var _hoisted_1$16 = ["aria-describedby"];
 	var _hoisted_2$9 = ["id"];
 	//#endregion
 	//#region view/components/molecules/DocumentErrorTooltip.vue
@@ -9726,6 +9864,10 @@
 				required: true
 			},
 			message: {
+				type: String,
+				required: true
+			},
+			productName: {
 				type: String,
 				required: true
 			}
@@ -9760,7 +9902,7 @@
 					onBlur: hideTooltip,
 					onClick: showTooltip,
 					onKeydown: (0, vue.withKeys)(dismissTooltip, ["esc"])
-				}, (0, vue.toDisplayString)((0, vue.unref)(t)("apiError")), 41, _hoisted_1$12), (0, vue.createElementVNode)("span", {
+				}, (0, vue.toDisplayString)((0, vue.unref)(t)("apiError", { productName: props.productName })), 41, _hoisted_1$16), (0, vue.createElementVNode)("span", {
 					id: tooltipId.value,
 					role: "tooltip",
 					class: (0, vue.normalizeClass)([tooltipOpen.value && !tooltipDismissed.value ? "block" : "hidden", "compilatio-tooltip"])
@@ -9771,6 +9913,7 @@
 	//#endregion
 	//#region view/composables/useDocumentActions.ts
 	function useDocumentActions(initialDocument, api, t, onUpdated) {
+		const productName = api.getConfig().product.name;
 		const data = (0, vue.ref)({ ...initialDocument });
 		const pending = (0, vue.ref)("");
 		const error = (0, vue.ref)(data.value.status.startsWith("error_") ? data.value.statusLabel : "");
@@ -9827,20 +9970,20 @@
 			error.value = "";
 			try {
 				if ("index" === kind) {
-					if (!data.value.indexingUrl) throw new Error(t("apiError"));
+					if (!data.value.indexingUrl) throw new Error(t("apiError", { productName }));
 					updateDocument(await api.patch(data.value.indexingUrl, { indexed: !data.value.indexed }));
 					return;
 				}
 				if ("report" === kind && !reportWindow) throw new Error(t("reportBlocked"));
-				if (!currentAction || !("url" in currentAction) || !currentAction.url) throw new Error(t("apiError"));
+				if (!currentAction || !("url" in currentAction) || !currentAction.url) throw new Error(t("apiError", { productName }));
 				const result = await api.post(currentAction.url);
 				if ("report" === kind) {
-					if (!result.url || !reportWindow) throw new Error(t("reportMissing"));
+					if (!result.url || !reportWindow) throw new Error(t("reportMissing", { productName }));
 					reportWindow.location.href = result.url;
 				} else updateDocument(result, "retry" === kind);
 			} catch (exception) {
 				reportWindow?.close();
-				if (mounted) error.value = exception instanceof Error && exception.message ? exception.message : t("apiError");
+				if (mounted) error.value = exception instanceof Error && exception.message ? exception.message : t("apiError", { productName });
 			} finally {
 				if (mounted) pending.value = "";
 			}
@@ -9854,25 +9997,74 @@
 		};
 	}
 	//#endregion
-	//#region view/img/compilatio_magister_logo_short.svg
-	var compilatio_magister_logo_short_default = "data:image/svg+xml,%3csvg%20width='19'%20height='19'%20viewBox='0%200%2019%2019'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='M7.45149%203.14356C8.36356%203.11105%209.44921%203.34927%2010.2731%203.73604C10.6317%203.90435%2010.9087%204.08923%2011.2497%204.26261C11.1493%204.51922%2010.9627%204.89714%2010.8423%205.15232L10.2033%206.50528C10.0572%206.8113%209.89082%207.13862%209.77646%207.45583C9.27192%206.924%208.52289%206.65299%207.8044%206.61792C6.01678%206.5307%204.71395%207.68842%204.61479%209.47844C4.45735%2012.3199%207.75873%2013.6708%209.76158%2011.7785C10.5163%2012.5475%2011.3316%2013.3681%2012.1118%2014.1074C12.1468%2014.1468%2012.1366%2014.1277%2012.1474%2014.1832C12.1106%2014.2797%2011.7255%2014.5804%2011.6207%2014.6657C10.6666%2015.4428%209.40739%2015.975%208.1767%2016.0701C6.47226%2016.2155%204.77976%2015.6787%203.47071%2014.5775C2.14921%2013.4587%201.33063%2011.8573%201.1977%2010.1309C0.959841%206.94953%203.02966%204.03502%206.17444%203.31571C6.61909%203.21401%206.99792%203.1771%207.45149%203.14356Z'%20fill='%2364358C'/%3e%3cpath%20d='M13.4299%203.44818C14.0891%203.47935%2014.8002%203.46642%2015.4656%203.46662C16.2751%203.47351%2017.0848%203.46807%2017.8942%203.45031L17.8923%206.9357C17.8925%207.26158%2017.8975%207.58868%2017.8902%207.91416C17.8787%207.92643%2017.8673%207.93868%2017.8558%207.95092C17.7315%208.11741%2017.1791%208.65233%2017.0121%208.81924L15.2886%2010.5374C15.2792%209.68029%2015.2846%208.80459%2015.2888%207.94693C14.6808%207.95723%2014.0285%207.94317%2013.4276%207.96395L13.4275%205.01227C13.4272%204.50123%2013.417%203.9556%2013.4299%203.44818Z'%20fill='%2364358C'/%3e%3cpath%20d='M15.2888%207.94694C15.732%207.9228%2016.2901%207.9487%2016.7442%207.94098C16.9913%207.93677%2017.6252%207.92733%2017.8558%207.95093C17.7316%208.11742%2017.1791%208.65233%2017.0121%208.81925L15.2886%2010.5374C15.2792%209.6803%2015.2846%208.80459%2015.2888%207.94694Z'%20fill='%23A7358C'/%3e%3c/svg%3e";
-	//#endregion
-	//#region view/components/DocumentFrame.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$11 = ["data-status"];
-	var _hoisted_2$8 = { class: "flex items-center gap-1" };
-	var _hoisted_3$8 = {
-		class: "flex size-8 items-center justify-center",
-		role: "img",
-		"aria-label": "Compilatio Magister"
+	//#region \0plugin-vue:export-helper
+	var _plugin_vue_export_helper_default = (sfc, props) => {
+		const target = sfc.__vccOpts || sfc;
+		for (const [key, val] of props) target[key] = val;
+		return target;
 	};
-	var _hoisted_4$7 = ["src"];
-	var _hoisted_5$4 = {
+	//#endregion
+	//#region view/img/compilatio_magister_logo_short.vue
+	var _sfc_main$3 = {};
+	var _hoisted_1$15 = {
+		viewBox: "0 0 19 19",
+		fill: "none",
+		xmlns: "http://www.w3.org/2000/svg"
+	};
+	function _sfc_render$3(_ctx, _cache) {
+		return (0, vue.openBlock)(), (0, vue.createElementBlock)("svg", _hoisted_1$15, [..._cache[0] || (_cache[0] = [
+			(0, vue.createElementVNode)("path", {
+				d: "M7.45149 3.14356C8.36356 3.11105 9.44921 3.34927 10.2731 3.73604C10.6317 3.90435 10.9087 4.08923 11.2497 4.26261C11.1493 4.51922 10.9627 4.89714 10.8423 5.15232L10.2033 6.50528C10.0572 6.8113 9.89082 7.13862 9.77646 7.45583C9.27192 6.924 8.52289 6.65299 7.8044 6.61792C6.01678 6.5307 4.71395 7.68842 4.61479 9.47844C4.45735 12.3199 7.75873 13.6708 9.76158 11.7785C10.5163 12.5475 11.3316 13.3681 12.1118 14.1074C12.1468 14.1468 12.1366 14.1277 12.1474 14.1832C12.1106 14.2797 11.7255 14.5804 11.6207 14.6657C10.6666 15.4428 9.40739 15.975 8.1767 16.0701C6.47226 16.2155 4.77976 15.6787 3.47071 14.5775C2.14921 13.4587 1.33063 11.8573 1.1977 10.1309C0.959841 6.94953 3.02966 4.03502 6.17444 3.31571C6.61909 3.21401 6.99792 3.1771 7.45149 3.14356Z",
+				style: { "fill": "#64358c" }
+			}, null, -1),
+			(0, vue.createElementVNode)("path", {
+				d: "M13.4299 3.44818C14.0891 3.47935 14.8002 3.46642 15.4656 3.46662C16.2751 3.47351 17.0848 3.46807 17.8942 3.45031L17.8923 6.9357C17.8925 7.26158 17.8975 7.58868 17.8902 7.91416C17.8787 7.92643 17.8673 7.93868 17.8558 7.95092C17.7315 8.11741 17.1791 8.65233 17.0121 8.81924L15.2886 10.5374C15.2792 9.68029 15.2846 8.80459 15.2888 7.94693C14.6808 7.95723 14.0285 7.94317 13.4276 7.96395L13.4275 5.01227C13.4272 4.50123 13.417 3.9556 13.4299 3.44818Z",
+				style: { "fill": "#64358c" }
+			}, null, -1),
+			(0, vue.createElementVNode)("path", {
+				d: "M15.2888 7.94694C15.732 7.9228 16.2901 7.9487 16.7442 7.94098C16.9913 7.93677 17.6252 7.92733 17.8558 7.95093C17.7316 8.11742 17.1791 8.65233 17.0121 8.81925L15.2886 10.5374C15.2792 9.6803 15.2846 8.80459 15.2888 7.94694Z",
+				style: { "fill": "#a7358c" }
+			}, null, -1)
+		])]);
+	}
+	var compilatio_magister_logo_short_default = /*#__PURE__*/ _plugin_vue_export_helper_default(_sfc_main$3, [["render", _sfc_render$3]]);
+	//#endregion
+	//#region view/img/letimio_logo_short.vue
+	var _sfc_main$2 = {};
+	var _hoisted_1$14 = {
+		id: "Calque_1",
+		"data-name": "Calque 1",
+		xmlns: "http://www.w3.org/2000/svg",
+		viewBox: "0 0 129.88 131.04"
+	};
+	function _sfc_render$2(_ctx, _cache) {
+		return (0, vue.openBlock)(), (0, vue.createElementBlock)("svg", _hoisted_1$14, [..._cache[0] || (_cache[0] = [(0, vue.createElementVNode)("g", null, [(0, vue.createElementVNode)("g", null, [(0, vue.createElementVNode)("polygon", {
+			style: { "fill": "#022c3e" },
+			points: "129.88 43.86 129.87 43.87 129.88 43.87 129.88 43.86"
+		}), (0, vue.createElementVNode)("polygon", {
+			style: { "fill": "#95d687" },
+			points: "86.01 0 86.01 43.87 129.87 43.87 129.88 43.86 129.88 0 86.01 0"
+		})]), (0, vue.createElementVNode)("polygon", {
+			style: { "fill": "#1b3c3f" },
+			points: "104.39 43.87 129.87 43.87 104.39 69.35 104.39 43.87"
+		})], -1), (0, vue.createElementVNode)("polygon", {
+			style: { "fill": "#1b3c3f" },
+			points: "87.29 112.09 36.18 112.11 36.18 0 0 0 0 131.04 81.7 131.04 87.29 112.09"
+		}, null, -1)])]);
+	}
+	var letimio_logo_short_default = /*#__PURE__*/ _plugin_vue_export_helper_default(_sfc_main$2, [["render", _sfc_render$2]]);
+	//#endregion
+	//#region view/components/apps/DocumentFrame.vue?vue&type=script&setup=true&lang.ts
+	var _hoisted_1$13 = ["data-status"];
+	var _hoisted_2$8 = { class: "flex items-center gap-1" };
+	var _hoisted_3$8 = ["aria-label"];
+	var _hoisted_4$7 = {
 		key: 2,
 		class: "size-9"
 	};
-	var _hoisted_6$4 = { class: "size-9" };
+	var _hoisted_5$4 = { class: "size-9" };
 	//#endregion
-	//#region view/components/DocumentFrame.vue
+	//#region view/components/apps/DocumentFrame.vue
 	var DocumentFrame_default = /* @__PURE__ */ (0, vue.defineComponent)({
 		__name: "DocumentFrame",
 		props: {
@@ -9895,33 +10087,40 @@
 			const { t } = useI18n();
 			const props = __props;
 			const { data, pending, error, action, perform } = useDocumentActions(props.document, props.api, t, (updated) => emit("updated", updated));
+			const product = props.api.getConfig().product;
+			const productClassStyle = "compilatio" === product.id ? "service-magister" : "service-letimio";
 			return (_ctx, _cache) => {
 				return (0, vue.openBlock)(), (0, vue.createElementBlock)("span", {
-					class: "service-magister compilatio-document-status inline-block box-border w-49 rounded-l bg-neutral-100 p-1 align-middle",
+					class: (0, vue.normalizeClass)(["inline-block box-border w-49 rounded-l-sm bg-neutral-100 p-1 align-middle", (0, vue.unref)(productClassStyle)]),
 					"data-status": (0, vue.unref)(data).status
 				}, [(0, vue.createElementVNode)("span", _hoisted_2$8, [
-					(0, vue.createElementVNode)("span", _hoisted_3$8, [(0, vue.createElementVNode)("img", {
-						src: (0, vue.unref)(compilatio_magister_logo_short_default),
-						alt: "Compilatio Magister logo",
-						class: "h-auto w-7"
-					}, null, 8, _hoisted_4$7)]),
+					(0, vue.createElementVNode)("span", {
+						class: "flex size-8 items-center justify-center",
+						role: "img",
+						"aria-label": (0, vue.unref)(product).name + " logo"
+					}, ["compilatio" === (0, vue.unref)(product).id ? ((0, vue.openBlock)(), (0, vue.createBlock)(compilatio_magister_logo_short_default, { key: 0 })) : ((0, vue.openBlock)(), (0, vue.createBlock)(letimio_logo_short_default, { key: 1 }))], 8, _hoisted_3$8),
 					!(0, vue.unref)(error) ? ((0, vue.openBlock)(), (0, vue.createBlock)(DocumentScore_default, {
 						key: 0,
 						class: "min-w-10 flex-1",
-						score: (0, vue.unref)(data).score ?? null,
+						score: (0, vue.unref)(data).score ?? void 0,
 						thresholds: props.thresholds
 					}, null, 8, ["score", "thresholds"])) : ((0, vue.openBlock)(), (0, vue.createBlock)(DocumentErrorTooltip_default, {
 						key: 1,
 						"document-id": (0, vue.unref)(data).submissionFileId,
-						message: (0, vue.unref)(error)
-					}, null, 8, ["document-id", "message"])),
-					!(0, vue.unref)(error) ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("span", _hoisted_5$4, [(0, vue.unref)(data).canIndex ? ((0, vue.openBlock)(), (0, vue.createBlock)(DocumentIndexingButton_default, {
+						message: (0, vue.unref)(error),
+						"product-name": (0, vue.unref)(product).name
+					}, null, 8, [
+						"document-id",
+						"message",
+						"product-name"
+					])),
+					!(0, vue.unref)(error) ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("span", _hoisted_4$7, [(0, vue.unref)(data).canIndex ? ((0, vue.openBlock)(), (0, vue.createBlock)(DocumentIndexingButton_default, {
 						key: 0,
 						indexed: (0, vue.unref)(data).indexed,
 						disabled: Boolean((0, vue.unref)(pending)),
 						onToggle: _cache[0] || (_cache[0] = ($event) => (0, vue.unref)(perform)("index"))
 					}, null, 8, ["indexed", "disabled"])) : (0, vue.createCommentVNode)("", true)])) : (0, vue.createCommentVNode)("", true),
-					(0, vue.createElementVNode)("span", _hoisted_6$4, [(0, vue.unref)(action) ? ((0, vue.openBlock)(), (0, vue.createBlock)(DocumentAnalysisButton_default, {
+					(0, vue.createElementVNode)("span", _hoisted_5$4, [(0, vue.unref)(action) ? ((0, vue.openBlock)(), (0, vue.createBlock)(DocumentAnalysisButton_default, {
 						key: 0,
 						action: (0, vue.unref)(action),
 						disabled: Boolean((0, vue.unref)(pending)),
@@ -9931,16 +10130,13 @@
 						"disabled",
 						"onActivate"
 					])) : (0, vue.createCommentVNode)("", true)])
-				])], 8, _hoisted_1$11);
+				])], 10, _hoisted_1$13);
 			};
 		}
 	});
 	//#endregion
-	//#region view/img/compilatio_logo.svg
-	var compilatio_logo_default = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20id='Calque_1'%20data-name='Calque%201'%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201509.47%20214'%3e%3cdefs%3e%3cstyle%3e%20.cls-1%20{%20fill:%20%23ef83b3;%20}%20.cls-2%20{%20fill:%20%23e62d38;%20}%20%3c/style%3e%3c/defs%3e%3cg%3e%3cpath%20class='cls-2'%20d='M98.65,114.47c-6.1-6.15-14.77-9.72-24.81-9.72-20.09,0-34.65,14.67-34.65,34.89s14.57,34.89,34.65,34.89c10.04,0,18.71-3.57,24.81-9.91l27.57,27.36c-13.39,13.48-31.9,22.01-52.38,22.01C33.08,214,0,180.69,0,139.65s33.08-74.35,73.84-74.35c20.28,0,38.59,8.13,51.98,21.61l-27.17,27.56Z'/%3e%3cpath%20class='cls-2'%20d='M221.98,65.31c40.76,0,73.84,33.51,73.84,74.55s-33.08,74.15-73.84,74.15-73.65-33.11-73.65-74.15,32.88-74.55,73.65-74.55ZM221.98,104.16c-19.3,0-35.05,15.86-35.05,35.49s15.75,35.49,35.05,35.49,35.25-16.06,35.25-35.49-15.75-35.49-35.25-35.49Z'/%3e%3cpath%20class='cls-2'%20d='M406.67,120.42l60.06-55.12h17.53v148.7h-38.99v-76.33l-38.59,35.49-38.79-35.29v76.13h-38.99V65.31h17.53l60.25,55.12Z'/%3e%3cpath%20class='cls-2'%20d='M530.28,65.31h62.22c29.93,0,54.35,24.58,54.35,54.72s-24.22,54.52-53.56,54.52h-24.22v39.45h-38.79V65.31ZM568.82,140.84h19.22c11.82,0,21.27-9.32,21.27-21.21s-9.45-21.41-21.27-21.41h-19.22v42.63Z'/%3e%3cpath%20class='cls-2'%20d='M680.42,65.31h38.79v148.7h-38.79V65.31Z'/%3e%3cpath%20class='cls-2'%20d='M873.77,214l68.92-148.7h17.53l69.51,148.7h-38.79l-9.06-19.43h-60.45l-8.86,19.43h-38.79ZM936.58,161.66h30.13l-14.96-32.71-15.16,32.71Z'/%3e%3cpath%20class='cls-2'%20d='M1036.24,65.31h116.37v38.66h-39.19v110.03h-38.79v-110.03h-38.4v-38.66Z'/%3e%3cpath%20class='cls-2'%20d='M1191.29,65.31h38.79v148.7h-38.79V65.31Z'/%3e%3cpath%20class='cls-2'%20d='M1346.39,65.31c40.76,0,73.84,33.51,73.84,74.55s-33.08,74.15-73.84,74.15-73.64-33.11-73.64-74.15,32.88-74.55,73.64-74.55ZM1346.39,104.16c-19.3,0-35.05,15.86-35.05,35.49s15.75,35.49,35.05,35.49,35.25-16.06,35.25-35.49-15.75-35.49-35.25-35.49Z'/%3e%3cpolygon%20class='cls-2'%20points='804.5%20174.75%20804.5%2065.31%20765.71%2065.31%20765.71%20214%20836.88%20214%20855.57%20174.75%20804.5%20174.75'/%3e%3c/g%3e%3cg%3e%3cpolygon%20class='cls-2'%20points='1509.47%2065.25%201509.46%2065.26%201509.47%2065.26%201509.47%2065.25'/%3e%3cpolygon%20class='cls-2'%20points='1444.21%200%201444.21%2065.26%201509.46%2065.26%201509.47%2065.25%201509.47%200%201444.21%200'/%3e%3c/g%3e%3cpolygon%20class='cls-1'%20points='1471.55%2065.26%201509.46%2065.26%201471.55%20103.16%201471.55%2065.26'/%3e%3c/svg%3e";
-	//#endregion
 	//#region view/components/atoms/AppSwitch.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$10 = ["aria-checked", "disabled"];
+	var _hoisted_1$12 = ["aria-checked", "disabled"];
 	//#endregion
 	//#region view/components/atoms/AppSwitch.vue
 	var AppSwitch_default = /* @__PURE__ */ (0, vue.defineComponent)({
@@ -9971,13 +10167,13 @@
 				}, null, 2), (0, vue.createElementVNode)("span", {
 					"aria-hidden": "true",
 					class: (0, vue.normalizeClass)(["compilatio-switch-thumb", __props.modelValue ? "translate-x-5" : "translate-x-0"])
-				}, null, 2)], 10, _hoisted_1$10);
+				}, null, 2)], 10, _hoisted_1$12);
 			};
 		}
 	});
 	//#endregion
 	//#region view/components/atoms/AppTextInput.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$9 = [
+	var _hoisted_1$11 = [
 		"autocomplete",
 		"disabled",
 		"name",
@@ -10037,13 +10233,13 @@
 					type: __props.type,
 					value: __props.modelValue,
 					onInput: handleInput
-				}, null, 40, _hoisted_1$9);
+				}, null, 40, _hoisted_1$11);
 			};
 		}
 	});
 	//#endregion
 	//#region view/components/atoms/AppRadio.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$8 = [
+	var _hoisted_1$10 = [
 		"checked",
 		"disabled",
 		"name",
@@ -10082,13 +10278,13 @@
 					name: __props.name,
 					value: __props.value,
 					onChange: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("select", __props.value))
-				}, null, 40, _hoisted_1$8);
+				}, null, 40, _hoisted_1$10);
 			};
 		}
 	});
 	//#endregion
 	//#region view/components/molecules/LaunchModeOption.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$7 = { class: "flex cursor-pointer items-start gap-3 border-t border-neutral-200 px-4 py-3 transition first:border-t-0 hover:bg-neutral-50" };
+	var _hoisted_1$9 = { class: "flex cursor-pointer items-start gap-3 border-t border-neutral-200 px-4 py-3 transition first:border-t-0 hover:bg-neutral-50" };
 	var _hoisted_2$7 = { class: "text-sm" };
 	var _hoisted_3$7 = { class: "block font-medium text-neutral-900" };
 	var _hoisted_4$6 = { class: "mt-0.5 block text-neutral-500" };
@@ -10125,7 +10321,7 @@
 				emit("update:modelValue", value);
 			};
 			return (_ctx, _cache) => {
-				return (0, vue.openBlock)(), (0, vue.createElementBlock)("label", _hoisted_1$7, [(0, vue.createVNode)(AppRadio_default, {
+				return (0, vue.openBlock)(), (0, vue.createElementBlock)("label", _hoisted_1$9, [(0, vue.createVNode)(AppRadio_default, {
 					name: "analysisLaunchMode",
 					checked: __props.modelValue === __props.value,
 					disabled: __props.disabled,
@@ -10141,7 +10337,7 @@
 	});
 	//#endregion
 	//#region view/components/molecules/SettingsField.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$6 = { class: "flex flex-col gap-4 border-b border-neutral-200 py-6 md:flex-row md:gap-8" };
+	var _hoisted_1$8 = { class: "flex flex-col gap-4 border-b border-neutral-200 py-6 md:flex-row md:gap-8" };
 	var _hoisted_2$6 = { class: "min-w-0 md:w-60 md:shrink-0" };
 	var _hoisted_3$6 = { class: "flex items-start gap-2" };
 	var _hoisted_4$5 = ["aria-expanded"];
@@ -10158,7 +10354,7 @@
 			const slots = (0, vue.useSlots)();
 			const displayHelp = (0, vue.ref)(false);
 			return (_ctx, _cache) => {
-				return (0, vue.openBlock)(), (0, vue.createElementBlock)("div", _hoisted_1$6, [(0, vue.createElementVNode)("div", _hoisted_2$6, [(0, vue.createElementVNode)("div", _hoisted_3$6, [(0, vue.renderSlot)(_ctx.$slots, "label"), (0, vue.unref)(slots).help ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("button", {
+				return (0, vue.openBlock)(), (0, vue.createElementBlock)("div", _hoisted_1$8, [(0, vue.createElementVNode)("div", _hoisted_2$6, [(0, vue.createElementVNode)("div", _hoisted_3$6, [(0, vue.renderSlot)(_ctx.$slots, "label"), (0, vue.unref)(slots).help ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("button", {
 					key: 0,
 					type: "button",
 					class: "mt-0.5 text-primary-600 hover:text-primary-700",
@@ -10173,7 +10369,7 @@
 	});
 	//#endregion
 	//#region view/components/organisms/AnalysisLaunchSettings.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$5 = { class: "text-sm" };
+	var _hoisted_1$7 = { class: "text-sm" };
 	var _hoisted_2$5 = { class: "font-medium text-slate-900" };
 	var _hoisted_3$5 = { class: "mt-1 text-slate-500" };
 	var _hoisted_4$4 = { class: "flex items-center gap-3" };
@@ -10184,8 +10380,8 @@
 	var _hoisted_6$2 = { class: "text-sm" };
 	var _hoisted_7$2 = { class: "font-medium text-slate-900" };
 	var _hoisted_8$2 = { class: "mt-1 text-slate-500" };
-	var _hoisted_9$2 = { class: "overflow-hidden rounded-md border border-slate-200" };
-	var _hoisted_10$1 = { class: "text-sm" };
+	var _hoisted_9$1 = { class: "overflow-hidden rounded-md border border-slate-200" };
+	var _hoisted_10 = { class: "text-sm" };
 	var _hoisted_11 = {
 		for: "compilatio-scheduled-at",
 		class: "block font-medium text-slate-900"
@@ -10220,6 +10416,7 @@
 		],
 		setup(__props) {
 			const { t } = useI18n();
+			const productName = window.pkpCompilatioDocuments.product.name;
 			const launchModes = [
 				{
 					value: "automatic",
@@ -10240,7 +10437,7 @@
 			return (_ctx, _cache) => {
 				return (0, vue.openBlock)(), (0, vue.createElementBlock)(vue.Fragment, null, [
 					(0, vue.createVNode)(SettingsField_default, null, {
-						label: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_1$5, [(0, vue.createElementVNode)("p", _hoisted_2$5, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_automatic_indexing")), 1), (0, vue.createElementVNode)("p", _hoisted_3$5, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_automatic_indexing_description")), 1)])]),
+						label: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_1$7, [(0, vue.createElementVNode)("p", _hoisted_2$5, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_automatic_indexing")), 1), (0, vue.createElementVNode)("p", _hoisted_3$5, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_automatic_indexing_description", { productName: (0, vue.unref)(productName) })), 1)])]),
 						default: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_4$4, [(0, vue.createVNode)(AppSwitch_default, {
 							id: "automatic-indexing",
 							disabled: __props.disabled,
@@ -10251,7 +10448,7 @@
 					}),
 					(0, vue.createVNode)(SettingsField_default, null, {
 						label: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_6$2, [(0, vue.createElementVNode)("p", _hoisted_7$2, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_launch_mode")), 1), (0, vue.createElementVNode)("p", _hoisted_8$2, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_launch_mode_description")), 1)])]),
-						default: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_9$2, [((0, vue.openBlock)(), (0, vue.createElementBlock)(vue.Fragment, null, (0, vue.renderList)(launchModes, (mode) => {
+						default: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_9$1, [((0, vue.openBlock)(), (0, vue.createElementBlock)(vue.Fragment, null, (0, vue.renderList)(launchModes, (mode) => {
 							return (0, vue.createVNode)(LaunchModeOption_default, {
 								key: mode.value,
 								description: (0, vue.unref)(t)(mode.descriptionKey),
@@ -10271,7 +10468,7 @@
 						_: 1
 					}),
 					"scheduled" === __props.launchMode ? ((0, vue.openBlock)(), (0, vue.createBlock)(SettingsField_default, { key: 0 }, {
-						label: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_10$1, [(0, vue.createElementVNode)("label", _hoisted_11, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_scheduled_at")), 1), (0, vue.createElementVNode)("p", _hoisted_12, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_scheduled_at_description")), 1)])]),
+						label: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_10, [(0, vue.createElementVNode)("label", _hoisted_11, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_scheduled_at")), 1), (0, vue.createElementVNode)("p", _hoisted_12, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_scheduled_at_description")), 1)])]),
 						default: (0, vue.withCtx)(() => [(0, vue.createVNode)(AppTextInput_default, {
 							id: "compilatio-scheduled-at",
 							disabled: __props.disabled,
@@ -10288,7 +10485,7 @@
 	});
 	//#endregion
 	//#region view/components/organisms/ApiKeySettings.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$4 = { class: "text-sm" };
+	var _hoisted_1$6 = { class: "text-sm" };
 	var _hoisted_2$4 = {
 		for: "compilatio-api-key",
 		class: "block font-medium text-neutral-900"
@@ -10311,9 +10508,10 @@
 		emits: ["update:modelValue"],
 		setup(__props) {
 			const { t } = useI18n();
+			const productName = window.pkpCompilatioDocuments.product.name;
 			return (_ctx, _cache) => {
 				return (0, vue.openBlock)(), (0, vue.createBlock)(SettingsField_default, null, {
-					label: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_1$4, [(0, vue.createElementVNode)("label", _hoisted_2$4, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_api_key")), 1), (0, vue.createElementVNode)("p", _hoisted_3$4, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_api_key_description")), 1)])]),
+					label: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_1$6, [(0, vue.createElementVNode)("label", _hoisted_2$4, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_api_key", { productName: (0, vue.unref)(productName) })), 1), (0, vue.createElementVNode)("p", _hoisted_3$4, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_api_key_description", { productName: (0, vue.unref)(productName) })), 1)])]),
 					default: (0, vue.withCtx)(() => [(0, vue.createVNode)(AppTextInput_default, {
 						id: "compilatio-api-key",
 						autocomplete: "new-password",
@@ -10335,7 +10533,7 @@
 	});
 	//#endregion
 	//#region view/components/molecules/DetectionOption.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$3 = { class: "flex min-h-12 items-center justify-between gap-4 border-t border-neutral-200 py-3 first:border-t-0" };
+	var _hoisted_1$5 = { class: "flex min-h-12 items-center justify-between gap-4 border-t border-neutral-200 py-3 first:border-t-0" };
 	var _hoisted_2$3 = ["for"];
 	var _hoisted_3$3 = {
 		key: 0,
@@ -10364,7 +10562,7 @@
 			const emit = __emit;
 			const { t } = useI18n();
 			return (_ctx, _cache) => {
-				return (0, vue.openBlock)(), (0, vue.createElementBlock)("div", _hoisted_1$3, [(0, vue.createElementVNode)("label", {
+				return (0, vue.openBlock)(), (0, vue.createElementBlock)("div", _hoisted_1$5, [(0, vue.createElementVNode)("label", {
 					for: `detection_${__props.detection.process}`,
 					class: (0, vue.normalizeClass)(["text-sm text-neutral-800", __props.detection.configurable && __props.detection.availableInSubscription ? "cursor-pointer" : ""])
 				}, [(0, vue.createTextVNode)((0, vue.toDisplayString)((0, vue.unref)(t)(`detection_${__props.detection.process}`)) + " ", 1), !__props.detection.availableInSubscription ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("span", _hoisted_3$3, (0, vue.toDisplayString)((0, vue.unref)(t)("detection_not_in_subscription")), 1)) : !__props.detection.configurable ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("span", _hoisted_4$3, (0, vue.toDisplayString)(__props.detection.enabled ? (0, vue.unref)(t)("detection_always_enabled") : (0, vue.unref)(t)("detection_disabled_by_admin")), 1)) : (0, vue.createCommentVNode)("", true)], 10, _hoisted_2$3), (0, vue.createVNode)(AppSwitch_default, {
@@ -10382,7 +10580,7 @@
 	});
 	//#endregion
 	//#region view/components/organisms/DetectionSettings.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$2 = { class: "text-sm" };
+	var _hoisted_1$4 = { class: "text-sm" };
 	var _hoisted_2$2 = { class: "font-medium text-slate-900" };
 	var _hoisted_3$2 = { class: "mt-1 text-slate-500" };
 	var _hoisted_4$2 = { class: "overflow-hidden rounded-md border border-slate-200 px-4" };
@@ -10405,13 +10603,14 @@
 			const props = __props;
 			const emit = __emit;
 			const { t } = useI18n();
+			const productName = window.pkpCompilatioDocuments.product.name;
 			const visibleDetections = (0, vue.computed)(() => props.detections.map((detection, index) => ({
 				detection,
 				index
 			})).filter(({ detection }) => "rich_extraction" !== detection.process));
 			return (_ctx, _cache) => {
 				return visibleDetections.value.length ? ((0, vue.openBlock)(), (0, vue.createBlock)(SettingsField_default, { key: 0 }, {
-					label: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_1$2, [(0, vue.createElementVNode)("p", _hoisted_2$2, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_detections")), 1), (0, vue.createElementVNode)("p", _hoisted_3$2, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_detections_description")), 1)])]),
+					label: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_1$4, [(0, vue.createElementVNode)("p", _hoisted_2$2, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_detections")), 1), (0, vue.createElementVNode)("p", _hoisted_3$2, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_detections_description", { productName: (0, vue.unref)(productName) })), 1)])]),
 					default: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_4$2, [((0, vue.openBlock)(true), (0, vue.createElementBlock)(vue.Fragment, null, (0, vue.renderList)(visibleDetections.value, (item) => {
 						return (0, vue.openBlock)(), (0, vue.createBlock)(DetectionOption_default, {
 							key: item.detection.process,
@@ -10431,7 +10630,7 @@
 	});
 	//#endregion
 	//#region view/components/organisms/ThresholdSettings.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1$1 = { class: "text-sm" };
+	var _hoisted_1$3 = { class: "text-sm" };
 	var _hoisted_2$1 = { class: "font-medium text-neutral-900" };
 	var _hoisted_3$1 = { class: "mt-1 text-neutral-500" };
 	var _hoisted_4$1 = { class: "grid gap-4 text-sm text-neutral-700 sm:grid-cols-2" };
@@ -10443,7 +10642,7 @@
 		"min",
 		"value"
 	];
-	var _hoisted_9$1 = {
+	var _hoisted_9 = {
 		key: 0,
 		class: "mt-3 text-sm font-medium text-danger-700",
 		role: "alert"
@@ -10483,7 +10682,7 @@
 			};
 			return (_ctx, _cache) => {
 				return (0, vue.openBlock)(), (0, vue.createBlock)(SettingsField_default, null, {
-					label: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_1$1, [(0, vue.createElementVNode)("p", _hoisted_2$1, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_thresholds")), 1), (0, vue.createElementVNode)("p", _hoisted_3$1, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_thresholds_description")), 1)])]),
+					label: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_1$3, [(0, vue.createElementVNode)("p", _hoisted_2$1, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_thresholds")), 1), (0, vue.createElementVNode)("p", _hoisted_3$1, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_thresholds_description")), 1)])]),
 					default: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_4$1, [(0, vue.createElementVNode)("label", null, [(0, vue.createElementVNode)("span", _hoisted_5$1, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_threshold_warning")), 1), (0, vue.createElementVNode)("input", {
 						class: "compilatio-input",
 						disabled: __props.disabled,
@@ -10500,29 +10699,65 @@
 						value: __props.critical,
 						type: "number",
 						onInput: _cache[1] || (_cache[1] = ($event) => updateNumber("critical", $event))
-					}, null, 40, _hoisted_8$1)])]), warningExceedsCritical.value ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("p", _hoisted_9$1, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_error_threshold_order")), 1)) : (0, vue.createCommentVNode)("", true)]),
+					}, null, 40, _hoisted_8$1)])]), warningExceedsCritical.value ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("p", _hoisted_9, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_error_threshold_order")), 1)) : (0, vue.createCommentVNode)("", true)]),
 					_: 1
 				});
 			};
 		}
 	});
 	//#endregion
-	//#region view/components/SettingsPanel.vue?vue&type=script&setup=true&lang.ts
-	var _hoisted_1 = { class: "service-magister overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-900 shadow-sm" };
-	var _hoisted_2 = { class: "border-b border-neutral-200 px-6 py-5 sm:px-8" };
-	var _hoisted_3 = ["alt"];
-	var _hoisted_4 = { class: "mt-5" };
-	var _hoisted_5 = { class: "text-xl font-semibold tracking-tight" };
-	var _hoisted_6 = { class: "mt-1 max-w-2xl text-sm leading-6 text-neutral-600" };
-	var _hoisted_7 = {
+	//#region view/img/compilatio_logo.vue
+	var _sfc_main$1 = {};
+	var _hoisted_1$2 = {
+		id: "Calque_1",
+		"data-name": "Calque 1",
+		xmlns: "http://www.w3.org/2000/svg",
+		viewBox: "0 0 1509.47 214"
+	};
+	function _sfc_render$1(_ctx, _cache) {
+		return (0, vue.openBlock)(), (0, vue.createElementBlock)("svg", _hoisted_1$2, [..._cache[0] || (_cache[0] = [(0, vue.createStaticVNode)("<g fill=\"#e62d38\"><path d=\"M98.65,114.47c-6.1-6.15-14.77-9.72-24.81-9.72-20.09,0-34.65,14.67-34.65,34.89s14.57,34.89,34.65,34.89c10.04,0,18.71-3.57,24.81-9.91l27.57,27.36c-13.39,13.48-31.9,22.01-52.38,22.01C33.08,214,0,180.69,0,139.65s33.08-74.35,73.84-74.35c20.28,0,38.59,8.13,51.98,21.61l-27.17,27.56Z\"></path><path d=\"M221.98,65.31c40.76,0,73.84,33.51,73.84,74.55s-33.08,74.15-73.84,74.15-73.65-33.11-73.65-74.15,32.88-74.55,73.65-74.55ZM221.98,104.16c-19.3,0-35.05,15.86-35.05,35.49s15.75,35.49,35.05,35.49,35.25-16.06,35.25-35.49-15.75-35.49-35.25-35.49Z\"></path><path d=\"M406.67,120.42l60.06-55.12h17.53v148.7h-38.99v-76.33l-38.59,35.49-38.79-35.29v76.13h-38.99V65.31h17.53l60.25,55.12Z\"></path><path d=\"M530.28,65.31h62.22c29.93,0,54.35,24.58,54.35,54.72s-24.22,54.52-53.56,54.52h-24.22v39.45h-38.79V65.31ZM568.82,140.84h19.22c11.82,0,21.27-9.32,21.27-21.21s-9.45-21.41-21.27-21.41h-19.22v42.63Z\"></path><path d=\"M680.42,65.31h38.79v148.7h-38.79V65.31Z\"></path><path d=\"M873.77,214l68.92-148.7h17.53l69.51,148.7h-38.79l-9.06-19.43h-60.45l-8.86,19.43h-38.79ZM936.58,161.66h30.13l-14.96-32.71-15.16,32.71Z\"></path><path d=\"M1036.24,65.31h116.37v38.66h-39.19v110.03h-38.79v-110.03h-38.4v-38.66Z\"></path><path d=\"M1191.29,65.31h38.79v148.7h-38.79V65.31Z\"></path><path d=\"M1346.39,65.31c40.76,0,73.84,33.51,73.84,74.55s-33.08,74.15-73.84,74.15-73.64-33.11-73.64-74.15,32.88-74.55,73.64-74.55ZM1346.39,104.16c-19.3,0-35.05,15.86-35.05,35.49s15.75,35.49,35.05,35.49,35.25-16.06,35.25-35.49-15.75-35.49-35.25-35.49Z\"></path><polygon points=\"804.5 174.75 804.5 65.31 765.71 65.31 765.71 214 836.88 214 855.57 174.75 804.5 174.75\"></polygon></g><g fill=\"#e62d38\"><polygon points=\"1509.47 65.25 1509.46 65.26 1509.47 65.26 1509.47 65.25\"></polygon><polygon points=\"1444.21 0 1444.21 65.26 1509.46 65.26 1509.47 65.25 1509.47 0 1444.21 0\"></polygon></g><polygon fill=\"#ef83b3\" points=\"1471.55 65.26 1509.46 65.26 1471.55 103.16 1471.55 65.26\"></polygon>", 3)])]);
+	}
+	var compilatio_logo_default = /*#__PURE__*/ _plugin_vue_export_helper_default(_sfc_main$1, [["render", _sfc_render$1]]);
+	//#endregion
+	//#region view/img/letimio_logo.vue
+	var _sfc_main = {};
+	var _hoisted_1$1 = {
+		xmlns: "http://www.w3.org/2000/svg",
+		viewBox: "0 0 512 94"
+	};
+	function _sfc_render(_ctx, _cache) {
+		return (0, vue.openBlock)(), (0, vue.createElementBlock)("svg", _hoisted_1$1, [..._cache[0] || (_cache[0] = [
+			(0, vue.createElementVNode)("path", {
+				d: "M 123.379 77.083 C 114.701 90.177 103.938 94 93.056 94 C 76.04 94 60.186 84.729 60.186 62.594 C 60.186 40.457 74.657 28.175 96.062 28.175 C 118.75 28.175 123.96 42.896 122.918 59.232 L 82.643 59.232 C 83.224 76.501 91.091 82.06 101.282 82.06 C 107.065 82.06 114.129 80.324 119.451 74.756 L 123.389 77.074 L 123.379 77.083 Z M 82.754 52.971 L 103.127 52.971 C 103.477 39.876 100.12 34.196 94.328 34.196 C 87.614 34.196 83.566 41.962 82.754 52.971 M 397.788 62.242 C 397.788 41.962 413.411 28.166 433.903 28.166 C 454.396 28.166 467.584 40.799 467.584 59.924 C 467.584 80.204 451.961 94 431.588 94 C 411.216 94 397.788 81.367 397.788 62.242 M 444.666 63.517 C 444.666 44.742 440.848 34.196 431.699 34.196 C 423.131 34.196 420.706 43.348 420.706 58.53 C 420.706 77.304 424.524 87.97 433.673 87.97 C 442.24 87.97 444.666 78.819 444.666 63.517 M 163.544 38.601 L 178.244 38.601 L 179.748 29.56 L 163.544 29.56 L 163.544 9.743 L 158.222 9.743 C 146.648 28.286 143.872 30.023 133.681 31.186 L 133.681 38.601 L 141.778 38.601 L 141.778 92.902 L 163.535 92.902 L 163.535 38.601 L 163.544 38.601 Z M 361.497 31.444 L 361.497 92.902 L 383.253 92.902 L 383.253 28.637 L 361.497 31.444 Z M 371.798 22.837 C 378.743 22.837 383.723 17.74 383.723 11.128 C 383.723 4.054 378.743 0 371.798 0 C 364.854 0 359.874 5.098 359.874 11.589 C 359.874 18.655 364.854 22.828 371.798 22.828 L 371.798 22.837 Z M 192.189 31.444 L 192.189 92.902 L 213.954 92.902 L 213.954 28.637 L 192.189 31.444 Z M 202.491 22.837 C 209.435 22.837 214.415 17.74 214.415 11.128 C 214.415 4.054 209.435 0 202.491 0 C 195.546 0 190.566 5.098 190.566 11.589 C 190.566 18.655 195.546 22.828 202.491 22.828 L 202.491 22.837 Z M 324.238 28.175 C 312.783 28.175 304.566 33.623 300.277 42.544 C 298.313 33.503 292.411 28.175 281.067 28.175 C 269.723 28.175 262.317 33.042 257.918 41.159 L 257.457 41.159 L 257.457 28.646 L 235.849 31.435 L 235.849 92.911 L 257.891 92.911 L 258.038 59.241 C 258.038 46.728 262.437 39.073 270.885 39.073 C 277.138 39.073 279.453 43.126 279.453 52.287 L 279.508 92.911 L 301.126 92.911 L 301.218 59.241 C 301.218 46.728 305.617 39.073 314.065 39.073 C 320.318 39.073 322.633 43.126 322.633 52.287 L 322.744 92.911 L 344.361 92.911 L 344.398 51.364 C 344.398 36.995 338.957 28.184 324.256 28.184 L 324.238 28.175 Z M 54.588 80.702 L 23.259 80.711 L 23.259 9.743 L 0 9.743 L 0 92.902 L 51.609 92.902 L 54.588 80.702 Z",
+				fill: "#1b3c3f",
+				style: { "stroke-width": "1" }
+			}, null, -1),
+			(0, vue.createElementVNode)("path", {
+				d: "M 483.788 1.034 L 483.788 29.275 L 512 29.275 L 512 1.034 L 483.788 1.034 Z",
+				fill: "#95d687"
+			}, null, -1),
+			(0, vue.createElementVNode)("path", {
+				d: "M 495.621 45.684 L 512 29.275 L 495.621 29.275 L 495.621 45.684 Z",
+				fill: "#1b3c3f"
+			}, null, -1)
+		])]);
+	}
+	var letimio_logo_default = /*#__PURE__*/ _plugin_vue_export_helper_default(_sfc_main, [["render", _sfc_render]]);
+	//#endregion
+	//#region view/components/apps/SettingsPanel.vue?vue&type=script&setup=true&lang.ts
+	var _hoisted_1 = { class: "border-b border-neutral-200 px-6 py-5 sm:px-8" };
+	var _hoisted_2 = { class: "mt-5" };
+	var _hoisted_3 = { class: "text-xl font-semibold tracking-tight" };
+	var _hoisted_4 = { class: "mt-1 max-w-2xl text-sm leading-6 text-neutral-600" };
+	var _hoisted_5 = {
 		key: 0,
 		class: "flex items-center gap-3 px-6 py-10 text-sm text-neutral-600 sm:px-8"
 	};
-	var _hoisted_8 = { class: "px-6 sm:px-8" };
-	var _hoisted_9 = { class: "flex justify-end border-t border-neutral-200 px-6 py-4 sm:px-8" };
-	var _hoisted_10 = ["disabled"];
+	var _hoisted_6 = { class: "px-6 sm:px-8" };
+	var _hoisted_7 = { class: "flex justify-end border-t border-neutral-200 px-6 py-4 sm:px-8" };
+	var _hoisted_8 = ["disabled"];
 	//#endregion
-	//#region view/components/SettingsPanel.vue
+	//#region view/components/apps/SettingsPanel.vue
 	var SettingsPanel_default = /* @__PURE__ */ (0, vue.defineComponent)({
 		__name: "SettingsPanel",
 		setup(__props) {
@@ -10711,16 +10946,20 @@
 				const date = new Date(value);
 				return (/* @__PURE__ */ new Date(date.getTime() - date.getTimezoneOffset() * 6e4)).toISOString().slice(0, 16);
 			};
+			const product = window.pkpCompilatioDocuments.product;
+			const productStyleClass = "compilatio" === product.id ? "service-magister" : "service-letimio";
 			return (_ctx, _cache) => {
-				return (0, vue.openBlock)(), (0, vue.createElementBlock)("section", _hoisted_1, [(0, vue.createElementVNode)("header", _hoisted_2, [(0, vue.createElementVNode)("img", {
-					src: compilatio_logo_default,
-					alt: (0, vue.unref)(t)("settings_logo_alt"),
-					class: "h-10 w-auto"
-				}, null, 8, _hoisted_3), (0, vue.createElementVNode)("div", _hoisted_4, [(0, vue.createElementVNode)("h2", _hoisted_5, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_title")), 1), (0, vue.createElementVNode)("p", _hoisted_6, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_description")), 1)])]), data.isLoading ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("div", _hoisted_7, [_cache[6] || (_cache[6] = (0, vue.createElementVNode)("span", { class: "size-4 animate-spin rounded-full border-2 border-neutral-300 border-t-primary-600" }, null, -1)), (0, vue.createTextVNode)(" " + (0, vue.toDisplayString)((0, vue.unref)(t)("settings_loading")), 1)])) : ((0, vue.openBlock)(), (0, vue.createElementBlock)("form", {
+				return (0, vue.openBlock)(), (0, vue.createElementBlock)("section", { class: (0, vue.normalizeClass)(["overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-900 shadow-sm", (0, vue.unref)(productStyleClass)]) }, [(0, vue.createElementVNode)("header", _hoisted_1, ["compilatio" === (0, vue.unref)(product).id ? ((0, vue.openBlock)(), (0, vue.createBlock)(compilatio_logo_default, {
+					key: 0,
+					class: "block h-16 w-auto max-w-full"
+				})) : ((0, vue.openBlock)(), (0, vue.createBlock)(letimio_logo_default, {
+					key: 1,
+					class: "block h-16 w-auto max-w-full"
+				})), (0, vue.createElementVNode)("div", _hoisted_2, [(0, vue.createElementVNode)("h2", _hoisted_3, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_title", { productName: (0, vue.unref)(product).name })), 1), (0, vue.createElementVNode)("p", _hoisted_4, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_description")), 1)])]), data.isLoading ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("div", _hoisted_5, [_cache[6] || (_cache[6] = (0, vue.createElementVNode)("span", { class: "size-4 animate-spin rounded-full border-2 border-neutral-300 border-t-primary-600" }, null, -1)), (0, vue.createTextVNode)(" " + (0, vue.toDisplayString)((0, vue.unref)(t)("settings_loading")), 1)])) : ((0, vue.openBlock)(), (0, vue.createElementBlock)("form", {
 					key: 1,
 					onSubmit: (0, vue.withModifiers)(saveSettings, ["prevent"])
 				}, [
-					(0, vue.createElementVNode)("div", _hoisted_8, [
+					(0, vue.createElementVNode)("div", _hoisted_6, [
 						(0, vue.createVNode)(ApiKeySettings_default, {
 							modelValue: data.apiKey,
 							"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => data.apiKey = $event),
@@ -10765,118 +11004,22 @@
 						role: "status",
 						class: (0, vue.normalizeClass)(["mx-6 mb-5 rounded-md border px-4 py-3 text-sm sm:mx-8", data.hasError ? "border-danger-200 bg-danger-50 text-danger-700" : "border-success-200 bg-success-50 text-success-700"])
 					}, (0, vue.toDisplayString)(data.message), 3)) : (0, vue.createCommentVNode)("", true),
-					(0, vue.createElementVNode)("footer", _hoisted_9, [(0, vue.createElementVNode)("button", {
+					(0, vue.createElementVNode)("footer", _hoisted_7, [(0, vue.createElementVNode)("button", {
 						type: "submit",
 						class: "compilatio-save-button",
 						disabled: data.isSaving || !canSave.value
-					}, (0, vue.toDisplayString)(data.isSaving ? (0, vue.unref)(t)("settings_saving") : (0, vue.unref)(t)("settings_save")), 9, _hoisted_10)])
-				], 32))]);
+					}, (0, vue.toDisplayString)(data.isSaving ? (0, vue.unref)(t)("settings_saving") : (0, vue.unref)(t)("settings_save")), 9, _hoisted_8)])
+				], 32))], 2);
 			};
 		}
 	});
 	//#endregion
-	//#region view/locales/en.js
-	var en_default = {
-		common_disabled: "Disabled",
-		common_enabled: "Enabled",
-		detection_similarity: "Similarity detection",
-		detection_unrecognized_text_language: "Unrecognized text language",
-		detection_ai_detection: "AI-generated content detection",
-		detection_spellchecker: "Spell checker",
-		detection_rewording: "Rewording detection",
-		detection_always_enabled: "Always enabled",
-		detection_disabled_by_admin: "Disabled by the administrator",
-		detection_not_in_subscription: "Not included in your subscription",
-		settings_api_key: "Compilatio API key",
-		settings_api_key_description: "Authenticates this journal with Compilatio services.",
-		settings_api_key_placeholder: "Enter the API key",
-		settings_automatic_indexing: "Automatic indexing",
-		settings_automatic_indexing_description: "Automatically sends eligible documents to Compilatio.",
-		settings_description: "Configure the connection, analysis launch mode and detections available for this journal.",
-		settings_detections: "Analysis options",
-		settings_detections_description: "Enable the detections available with your Compilatio plan.",
-		settings_error_initialization: "Unable to initialize the plugin settings.",
-		settings_error_loading: "Unable to load the settings.",
-		settings_error_missing_api_url: "The settings API URL is missing.",
-		settings_error_required_fields: "The API key and, in scheduled mode, the launch date are required.",
-		settings_error_saving: "Unable to save the settings.",
-		settings_error_threshold_order: "The warning threshold must not be greater than the critical threshold.",
-		settings_launch_mode: "Analysis launch",
-		settings_launch_mode_automatic: "Automatic",
-		settings_launch_mode_automatic_description: "The analysis starts as soon as the document is indexed.",
-		settings_launch_mode_description: "Choose when analyses should begin.",
-		settings_launch_mode_manual: "Manual",
-		settings_launch_mode_manual_description: "An authorized user starts each analysis.",
-		settings_launch_mode_scheduled: "Scheduled",
-		settings_launch_mode_scheduled_description: "Analyses start at the configured date and time.",
-		settings_loading: "Loading settings…",
-		settings_logo_alt: "Compilatio",
-		settings_save: "Save settings",
-		settings_saved: "The settings have been saved.",
-		settings_saving: "Saving…",
-		settings_scheduled_at: "Launch date and time",
-		settings_scheduled_at_description: "The date uses your browser’s time zone.",
-		settings_title: "Compilatio settings",
-		settings_thresholds: "Similarity thresholds",
-		settings_thresholds_description: "Set the warning and critical similarity levels, from 0 to 100.",
-		settings_threshold_warning: "Warning threshold (%)",
-		settings_threshold_critical: "Critical threshold (%)"
-	};
-	//#endregion
-	//#region view/locales/fr.js
-	var fr_default = {
-		common_disabled: "Désactivé",
-		common_enabled: "Activé",
-		detection_similarity: "Détection de similitudes",
-		detection_unrecognized_text_language: "Langue du texte non reconnue",
-		detection_ai_detection: "Détection de contenus générés par IA",
-		detection_spellchecker: "Correcteur orthographique",
-		detection_rewording: "Détection de reformulations",
-		detection_always_enabled: "Toujours activée",
-		detection_disabled_by_admin: "Désactivée par l’administrateur",
-		detection_not_in_subscription: "Non compris dans votre abonnement",
-		settings_api_key: "Clé API Compilatio",
-		settings_api_key_description: "Authentifie cette revue auprès des services Compilatio.",
-		settings_api_key_placeholder: "Saisir la clé API",
-		settings_automatic_indexing: "Indexation automatique",
-		settings_automatic_indexing_description: "Envoie automatiquement les documents éligibles vers Compilatio.",
-		settings_description: "Configurez la connexion, le déclenchement des analyses et les détections disponibles pour cette revue.",
-		settings_detections: "Options d’analyse",
-		settings_detections_description: "Activez les détections autorisées par votre offre Compilatio.",
-		settings_error_initialization: "Impossible de charger la configuration du plugin.",
-		settings_error_loading: "Impossible de charger la configuration.",
-		settings_error_missing_api_url: "L’URL de l’API de configuration est absente.",
-		settings_error_required_fields: "La clé API et, en mode planifié, la date de lancement sont obligatoires.",
-		settings_error_saving: "Impossible d’enregistrer les paramètres.",
-		settings_error_threshold_order: "Le seuil d’avertissement ne doit pas être supérieur au seuil critique.",
-		settings_launch_mode: "Lancement des analyses",
-		settings_launch_mode_automatic: "Automatique",
-		settings_launch_mode_automatic_description: "L’analyse démarre dès que le document est indexé.",
-		settings_launch_mode_description: "Définissez quand les analyses doivent commencer.",
-		settings_launch_mode_manual: "Manuel",
-		settings_launch_mode_manual_description: "Un utilisateur autorisé déclenche chaque analyse.",
-		settings_launch_mode_scheduled: "Planifié",
-		settings_launch_mode_scheduled_description: "Les analyses démarrent à la date et à l’heure configurées.",
-		settings_loading: "Chargement de la configuration…",
-		settings_logo_alt: "Compilatio",
-		settings_save: "Enregistrer les paramètres",
-		settings_saved: "Les paramètres ont été enregistrés.",
-		settings_saving: "Enregistrement…",
-		settings_scheduled_at: "Date et heure de lancement",
-		settings_scheduled_at_description: "La date utilise le fuseau horaire de votre navigateur.",
-		settings_title: "Paramètres Compilatio",
-		settings_thresholds: "Seuils de similarité",
-		settings_thresholds_description: "Définissez les niveaux de similarité d’avertissement et critique, de 0 à 100.",
-		settings_threshold_warning: "Seuil d’avertissement (%)",
-		settings_threshold_critical: "Seuil critique (%)"
-	};
-	//#endregion
 	//#region view/PlagiarismPanel.entry.ts
 	window.mountCompilatioSettingsApp = (target) => {
-		const locale = (document.documentElement.lang || "fr").replace("_", "-").split("-")[0];
+		console.log(document.documentElement.lang);
 		const i18n = createI18n({
 			legacy: false,
-			locale,
+			locale: document.documentElement.lang.toLowerCase().startsWith("en") ? "en" : "fr",
 			fallbackLocale: "fr",
 			messages: {
 				en: en_default,
@@ -10890,7 +11033,6 @@
 	};
 	window.mountCompilatioDocumentApp = (target, documentData, onUpdated) => {
 		const config = window.pkpCompilatioDocuments;
-		const locale = (config.locale || document.documentElement.lang || "fr").replace("_", "-");
 		const app = window.pkp.pkpCreateVueApp({ render: () => (0, vue.h)(DocumentFrame_default, {
 			document: documentData,
 			thresholds: config.thresholds,
@@ -10899,8 +11041,12 @@
 		}) });
 		app.use(createI18n({
 			legacy: false,
-			locale,
-			messages: { [locale]: config.messages }
+			locale: (config.locale || document.documentElement.lang).toLowerCase().startsWith("en") ? "en" : "fr",
+			fallbackLocale: "fr",
+			messages: {
+				en: en_default,
+				fr: fr_default
+			}
 		}));
 		app.mount(target);
 		return app;

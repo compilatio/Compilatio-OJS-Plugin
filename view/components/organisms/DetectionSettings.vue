@@ -17,6 +17,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const productName = window.pkpCompilatioDocuments.product.name;
 const visibleDetections = computed(() =>
   props.detections
     .map((detection, index) => ({ detection, index }))
@@ -30,7 +31,7 @@ const visibleDetections = computed(() =>
       <div class="text-sm">
         <p class="font-medium text-slate-900">{{ t('settings_detections') }}</p>
         <p class="mt-1 text-slate-500">
-          {{ t('settings_detections_description') }}
+          {{ t('settings_detections_description', { productName }) }}
         </p>
       </div>
     </template>

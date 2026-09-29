@@ -1,4 +1,7 @@
 import { CompilatioDocument } from "./types/document";
+import { createI18n } from 'vue-i18n';
+import en from './locales/en.js';
+import fr from './locales/fr.js';
 
 (function () {
   function getConfig() {
@@ -17,14 +20,20 @@ import { CompilatioDocument } from "./types/document";
   }
 
   async function getErrorMessage(response: Response) {
+    const i18n = createI18n({
+      legacy: false,
+      locale: window.pkpCompilatioDocuments.locale,
+      fallbackLocale: 'fr',
+      messages: { en, fr },
+    });
     try {
       const body = await response.json();
       return (
         body.errorMessage ||
-        window.pkpCompilatioDocuments.messages.apiError + ' (' + response.status + ')'
+        i18n.global.t('apiError', { productName: getConfig().product.name }) + ' (' + response.status + ')'
       );
     } catch {
-      return window.pkpCompilatioDocuments.messages.apiError + ' (' + response.status + ')';
+      return i18n.global.t('apiError', { productName: getConfig().product.name }) + ' (' + response.status + ')';
     }
   }
 

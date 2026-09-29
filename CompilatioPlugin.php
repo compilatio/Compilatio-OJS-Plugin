@@ -3,13 +3,14 @@
 namespace APP\plugins\generic\compilatio;
 
 use APP\core\Application;
+use APP\plugins\generic\compilatio\api\Services\Resolver\CompilatioThresholdsResolver;
 use APP\facades\Repo;
 use APP\plugins\generic\compilatio\api\Cron\FetchAnalysisStatus;
 use APP\plugins\generic\compilatio\api\CompilatioSettingsController;
 use APP\plugins\generic\compilatio\api\CompilatioDocumentController;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentSubmissionHandler;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentDeletionHandler;
-use APP\plugins\generic\compilatio\api\Logger\CompilatioDebugLogger;
+use APP\plugins\generic\compilatio\api\Services\Logging\CompilatioOjsLogger;
 use APP\plugins\generic\compilatio\migration\CompilatioSchemaMigration;
 use APP\template\TemplateManager;
 use Illuminate\Support\Facades\Event;
@@ -108,7 +109,7 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
     /** @param array<string, mixed> $args */
     public function manage($args, $request): JSONMessage
     {
-        if ($request->getUserVar('verb') !== 'settings') {
+        if ('settings' !== $request->getUserVar('verb')) {
             return parent::manage($args, $request);
         }
 
@@ -172,12 +173,6 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
 
         $jsFile = __DIR__ . '/view/build/PlagiarismPanel.runtime.js';
         $cssFile = __DIR__ . '/view/build/style.css';
-        $documentStatusJsFile = __DIR__ . '/view/compilatioDocumentStatus.js';
-        $documentsApiJsFile = __DIR__ . '/view/compilatioDocumentsApi.js';
-        $documentsTableJsFile = __DIR__ . '/view/compilatioDocumentsTable.js';
-        $documentActionsJsFile = __DIR__ . '/view/compilatioDocumentActions.js';
-        $documentsJsFile = __DIR__ . '/view/compilatioDocuments.js';
-        $documentsCssFile = __DIR__ . '/view/compilatioDocuments.css';
         $documentsApiUrl = $request->getDispatcher()->url(
             $request,
             Application::ROUTE_API,
@@ -191,13 +186,21 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
                 . json_encode([
                     'apiUrl' => $documentsApiUrl,
                     'locale' => Locale::getLocale(),
+                    'thresholds' => (new CompilatioThresholdsResolver())->resolve(
+                        $this->getSetting($contextId, 'thresholds'),
+                    ),
                     'messages' => [
+                        'index' => __('plugins.generic.compilatio.documents.index'),
+                        'unindex' => __('plugins.generic.compilatio.documents.unindex'),
+                        'indexed' => __('plugins.generic.compilatio.documents.indexed'),
+                        'notIndexed' => __('plugins.generic.compilatio.documents.notIndexed'),
                         'retry' => __('plugins.generic.compilatio.documents.retry'),
                         'launch' => __('plugins.generic.compilatio.documents.launch'),
                         'report' => __('plugins.generic.compilatio.documents.report'),
                         'reportMissing' => __('plugins.generic.compilatio.documents.reportMissing'),
                         'reportBlocked' => __('plugins.generic.compilatio.documents.reportBlocked'),
                         'apiError' => __('plugins.generic.compilatio.documents.apiError'),
+                        'queue' => __('plugins.generic.compilatio.documents.queue'),
                         'analysing' => __('plugins.generic.compilatio.documents.analysing'),
                     ],
                 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)
@@ -216,43 +219,6 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
             ]
         );
 
-        $templateMgr->addJavaScript(
-            'compilatioDocumentStatus',
-            $baseUrl . '/' . $pluginPath
-                . '/view/compilatioDocumentStatus.js?v=' . filemtime($documentStatusJsFile),
-            ['contexts' => ['backend']]
-        );
-
-        $templateMgr->addJavaScript(
-            'compilatioDocumentsApi',
-            $baseUrl . '/' . $pluginPath
-                . '/view/compilatioDocumentsApi.js?v=' . filemtime($documentsApiJsFile),
-            ['contexts' => ['backend']]
-        );
-
-        $templateMgr->addJavaScript(
-            'compilatioDocumentsTable',
-            $baseUrl . '/' . $pluginPath
-                . '/view/compilatioDocumentsTable.js?v=' . filemtime($documentsTableJsFile),
-            ['contexts' => ['backend']]
-        );
-
-        $templateMgr->addJavaScript(
-            'compilatioDocumentActions',
-            $baseUrl . '/' . $pluginPath
-                . '/view/compilatioDocumentActions.js?v=' . filemtime($documentActionsJsFile),
-            ['contexts' => ['backend']]
-        );
-
-        $templateMgr->addJavaScript(
-            'compilatioDocuments',
-            $baseUrl . '/' . $pluginPath
-                . '/view/compilatioDocuments.js?v=' . filemtime($documentsJsFile),
-            [
-                'contexts' => ['backend'],
-                'priority' => PKPTemplateManager::STYLE_SEQUENCE_LATE,
-            ]
-        );
 
         $templateMgr->addStyleSheet(
             'compilatioTailwind',
@@ -262,13 +228,6 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
             [
                 'contexts' => ['backend'],
             ]
-        );
-
-        $templateMgr->addStyleSheet(
-            'compilatioDocuments',
-            $baseUrl . '/' . $pluginPath
-                . '/view/compilatioDocuments.css?v=' . filemtime($documentsCssFile),
-            ['contexts' => ['backend']]
         );
 
         return false;
@@ -290,7 +249,7 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
 
         $documentSubmissionHandler = new DocumentSubmissionHandler($this);
         foreach ($submissionFiles as $submissionFile) {
-            CompilatioDebugLogger::log('SubmissionSubmitted', [
+            CompilatioOjsLogger::log('debug', 'Compilatio submission submitted', [
                 'contextId' => $contextId,
                 'submissionId' => $submission->getId(),
                 'submissionFileId' => $submissionFile->getId(),

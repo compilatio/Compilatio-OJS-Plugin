@@ -64,7 +64,7 @@ const canSave = computed(() => {
     return false;
   }
 
-  const scheduledDateIsValid = data.analysisLaunchMode !== 'scheduled'
+  const scheduledDateIsValid = 'scheduled' !== data.analysisLaunchMode
     || Boolean(data.scheduledAnalysisAt);
   const thresholdsAreValid = Number.isInteger(data.thresholds.warning)
     && Number.isInteger(data.thresholds.critical)
@@ -141,7 +141,7 @@ const saveSettings = async () => {
         bundleDetections: serializeDetections(data.bundleDetections),
         thresholds: data.thresholds,
         scheduledAnalysisAt:
-          data.analysisLaunchMode === 'scheduled'
+          'scheduled' === data.analysisLaunchMode
             ? new Date(data.scheduledAnalysisAt).toISOString()
             : null,
       }),
@@ -162,18 +162,18 @@ const saveSettings = async () => {
 };
 
 const applySettings = (settings: Record<string, unknown>) => {
-  if (typeof settings.apiKey === 'string') {
+  if ('string' === typeof settings.apiKey) {
     data.apiKey = settings.apiKey;
   }
 
-  data.automaticIndexingEnabled = settings.automaticIndexingEnabled === true;
+  data.automaticIndexingEnabled = true === settings.automaticIndexingEnabled;
   data.analysisLaunchMode = isLaunchMode(settings.analysisLaunchMode)
     ? settings.analysisLaunchMode
     : 'manual';
   data.scheduledAnalysisAt = toLocalDateTime(
-    typeof settings.scheduledAnalysisAt === 'string' ? settings.scheduledAnalysisAt : null,
+    'string' === typeof settings.scheduledAnalysisAt ? settings.scheduledAnalysisAt : null,
   );
-  data.hasFolderRecipeParameters = settings.hasFolderRecipeParameters === true;
+  data.hasFolderRecipeParameters = true === settings.hasFolderRecipeParameters;
   data.bundleDetections = normalizeDetections(
     settings.bundleDetections,
     data.hasFolderRecipeParameters,
@@ -187,10 +187,10 @@ const normalizeThresholds = (value: unknown): Thresholds => {
   }
 
   return {
-    warning: typeof value.warning === 'number'
+    warning: 'number' === typeof value.warning
       ? value.warning
       : defaultThresholds.warning,
-    critical: typeof value.critical === 'number'
+    critical: 'number' === typeof value.critical
       ? value.critical
       : defaultThresholds.critical,
   };
@@ -230,8 +230,8 @@ const normalizeDetections = (
 
     return [{
       process,
-      enabled: configuration.enabled === true,
-      configurable: configuration.configurable === true,
+      enabled: true === configuration.enabled,
+      configurable: true === configuration.configurable,
       availableInSubscription: true,
     }];
   });
@@ -241,12 +241,12 @@ const isApiDetection = (
   value: unknown,
 ): value is Omit<Detection, 'availableInSubscription'> =>
   isRecord(value)
-  && typeof value.process === 'string'
-  && typeof value.enabled === 'boolean'
-  && typeof value.configurable === 'boolean';
+  && 'string' === typeof value.process
+  && 'boolean' === typeof value.enabled
+  && 'boolean' === typeof value.configurable;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
+  'object' === typeof value && null !== value;
 
 const updateDetection = (index: number, enabled: boolean) => {
   const detection = data.bundleDetections[index];
@@ -256,7 +256,8 @@ const updateDetection = (index: number, enabled: boolean) => {
 };
 
 const isLaunchMode = (value: unknown): value is AnalysisLaunchMode =>
-  value === 'automatic' || value === 'manual' || value === 'scheduled';
+  'string' === typeof value
+  && ['automatic', 'manual', 'scheduled'].includes(value);
 
 const setError = (message: string) => {
   data.hasError = true;
@@ -264,16 +265,16 @@ const setError = (message: string) => {
 };
 
 const getErrorMessage = (result: any, fallback: string): string => {
-  if (typeof result?.errorMessage === 'string') {
+  if ('string' === typeof result?.errorMessage) {
     return result.errorMessage;
   }
 
-  if (typeof result?.error === 'string') {
+  if ('string' === typeof result?.error ) {
     return result.error;
   }
 
   const firstError = result?.errors ? Object.values(result.errors).flat()[0] : null;
-  return typeof firstError === 'string' ? firstError : fallback;
+  return 'string' === typeof firstError && null !== firstError ? firstError : fallback;
 };
 
 const toLocalDateTime = (value: string | null): string => {
@@ -288,8 +289,8 @@ const toLocalDateTime = (value: string | null): string => {
 </script>
 
 <template>
-  <section class="overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-900 shadow-sm">
-    <header class="border-b border-slate-200 px-6 py-5 sm:px-8">
+  <section class="service-magister overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-900 shadow-sm">
+    <header class="border-b border-neutral-200 px-6 py-5 sm:px-8">
       <img
         src="../img/compilatio_logo.svg"
         :alt="t('settings_logo_alt')"
@@ -297,14 +298,14 @@ const toLocalDateTime = (value: string | null): string => {
       />
       <div class="mt-5">
         <h2 class="text-xl font-semibold tracking-tight">{{ t('settings_title') }}</h2>
-        <p class="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
+        <p class="mt-1 max-w-2xl text-sm leading-6 text-neutral-600">
           {{ t('settings_description') }}
         </p>
       </div>
     </header>
 
-    <div v-if="data.isLoading" class="flex items-center gap-3 px-6 py-10 text-sm text-slate-600 sm:px-8">
-      <span class="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600"></span>
+    <div v-if="data.isLoading" class="flex items-center gap-3 px-6 py-10 text-sm text-neutral-600 sm:px-8">
+      <span class="size-4 animate-spin rounded-full border-2 border-neutral-300 border-t-primary-600"></span>
       {{ t('settings_loading') }}
     </div>
 
@@ -343,16 +344,16 @@ const toLocalDateTime = (value: string | null): string => {
         role="status"
         class="mx-6 mb-5 rounded-md border px-4 py-3 text-sm sm:mx-8"
         :class="data.hasError
-          ? 'border-red-200 bg-red-50 text-red-700'
-          : 'border-green-200 bg-green-50 text-green-700'"
+          ? 'border-danger-200 bg-danger-50 text-danger-700'
+          : 'border-success-200 bg-success-50 text-success-700'"
       >
         {{ data.message }}
       </div>
 
-      <footer class="flex justify-end border-t border-slate-200 bg-slate-50 px-6 py-4 sm:px-8">
+      <footer class="flex justify-end border-t border-neutral-200 px-6 py-4 sm:px-8">
         <button
           type="submit"
-          class="inline-flex min-w-36 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          class="compilatio-save-button"
           :disabled="data.isSaving || !canSave"
         >
           {{ data.isSaving ? t('settings_saving') : t('settings_save') }}

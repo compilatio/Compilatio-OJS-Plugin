@@ -1,4 +1,5 @@
 <?php
+
 namespace APP\plugins\generic\compilatio\api\Services\Initializer;
 
 use APP\plugins\generic\compilatio\api\Services\Synchronizer\CompilatioUserSynchronizer;
@@ -12,8 +13,7 @@ class CompilatioPrimaryUserInitializer
     public function __construct(
         private Plugin $plugin,
         private CompilatioUserSynchronizer $userSynchronizer,
-    ) {
-    }
+    ) {}
 
     public function initializeIfMissing(
         int $contextId,
@@ -25,15 +25,15 @@ class CompilatioPrimaryUserInitializer
         );
 
         if (
-            $currentCompilatioUserId !== null
-            && $currentCompilatioUserId !== ''
+            null !== $currentCompilatioUserId
+            && '' !== $currentCompilatioUserId
         ) {
             return;
         }
 
         $ojsUserId = $ojsUser->getId();
 
-        if ($ojsUserId === null) {
+        if (null === $ojsUserId) {
             throw new RuntimeException(
                 'Unable to retrieve the OJS user ID.'
             );

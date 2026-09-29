@@ -39,7 +39,7 @@ final class CompilatioDocumentStatusResolver
     public function fromHttpStatus(int $statusCode): string
     {
         if ($statusCode >= 200 && $statusCode < 300) {
-            return $statusCode === 203
+            return 203 === $statusCode
                 ? Document::STATUS_ANALYSING
                 : Document::STATUS_SENT;
         }

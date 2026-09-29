@@ -22,7 +22,7 @@ const updateNumber = (field: 'critical' | 'warning', event: Event) => {
   const value = Number((event.target as HTMLInputElement).value);
   const normalizedValue = Number.isFinite(value) ? value : 0;
 
-  if (field === 'warning') {
+  if ('warning' === field) {
     emit('update:warning', normalizedValue);
     return;
   }
@@ -34,19 +34,19 @@ const updateNumber = (field: 'critical' | 'warning', event: Event) => {
 <template>
   <SettingsField>
     <template #label>
-      <div>
-        <p class="text-sm font-medium text-slate-900">{{ t('settings_thresholds') }}</p>
-        <p class="mt-1 text-sm leading-5 text-slate-500">
+      <div class="text-sm">
+        <p class="font-medium text-neutral-900">{{ t('settings_thresholds') }}</p>
+        <p class="mt-1 text-neutral-500">
           {{ t('settings_thresholds_description') }}
         </p>
       </div>
     </template>
 
-    <div class="grid gap-4 sm:grid-cols-2">
-      <label class="block text-sm text-slate-700">
+    <div class="grid gap-4 text-sm text-neutral-700 sm:grid-cols-2">
+      <label>
         <span class="mb-1 block font-medium">{{ t('settings_threshold_warning') }}</span>
         <input
-          class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          class="compilatio-input"
           :disabled="disabled"
           max="100"
           min="0"
@@ -56,10 +56,10 @@ const updateNumber = (field: 'critical' | 'warning', event: Event) => {
         />
       </label>
 
-      <label class="block text-sm text-slate-700">
+      <label>
         <span class="mb-1 block font-medium">{{ t('settings_threshold_critical') }}</span>
         <input
-          class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          class="compilatio-input"
           :disabled="disabled"
           max="100"
           :min="warning"
@@ -72,7 +72,7 @@ const updateNumber = (field: 'critical' | 'warning', event: Event) => {
 
     <p
       v-if="warningExceedsCritical"
-      class="mt-3 text-sm font-medium text-red-700"
+      class="mt-3 text-sm font-medium text-danger-700"
       role="alert"
     >
       {{ t('settings_error_threshold_order') }}

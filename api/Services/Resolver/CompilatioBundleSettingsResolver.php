@@ -27,7 +27,7 @@ final class CompilatioBundleSettingsResolver
 
         $effectiveSettings = get_object_vars($reviewSettings);
 
-        if ($requestedDetections !== null) {
+        if (null !== $requestedDetections) {
             $effectiveSettings['bundleDetections'] = $requestedDetections;
         }
 

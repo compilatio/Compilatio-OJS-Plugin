@@ -4,9 +4,9 @@ namespace APP\plugins\generic\compilatio\api\Services\Handler;
 
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
 use APP\plugins\generic\compilatio\api\DTO\Document;
-use APP\plugins\generic\compilatio\api\Logger\CompilatioDebugLogger;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentStore;
+use APP\plugins\generic\compilatio\api\Services\Logging\CompilatioOjsLogger;
 use GuzzleHttp\Client;
 use PKP\plugins\Plugin;
 use PKP\submissionFile\SubmissionFile;
@@ -15,9 +15,7 @@ use Throwable;
 
 final class DocumentDeletionHandler
 {
-    public function __construct(private readonly Plugin $plugin)
-    {
-    }
+    public function __construct(private readonly Plugin $plugin) {}
 
     public function handle(SubmissionFile $submissionFile): void
     {
@@ -52,7 +50,7 @@ final class DocumentDeletionHandler
             $compilatioDocumentRepository->delete($externalId);
             $compilatioDocumentStore->deleteForSubmissionFile($submissionFileId);
 
-            CompilatioDebugLogger::log('Document deleted', [
+            CompilatioOjsLogger::log('info', 'Compilatio document deleted', [
                 'submissionFileId' => $submissionFileId,
                 'externalId' => $externalId,
             ]);
@@ -63,7 +61,7 @@ final class DocumentDeletionHandler
                 $exception->getMessage(),
             );
 
-            CompilatioDebugLogger::log('Document deletion error', [
+            CompilatioOjsLogger::log('error', 'Compilatio document deletion failed', [
                 'submissionFileId' => $submissionFileId,
                 'externalId' => $externalId,
                 'httpStatus' => $exception->getCode(),
@@ -76,7 +74,7 @@ final class DocumentDeletionHandler
     private function requireStringSetting(int $contextId, string $name): string
     {
         $value = $this->plugin->getSetting($contextId, $name);
-        if (!is_string($value) || $value === '') {
+        if (!is_string($value) || '' === $value) {
             throw new RuntimeException("The Compilatio setting {$name} is missing.");
         }
 

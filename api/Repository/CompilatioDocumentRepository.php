@@ -92,7 +92,7 @@ final class CompilatioDocumentRepository
 
     public function updateIndexing(string $documentId, bool $indexed): void
     {
-        if ($documentId === '') {
+        if ('' === $documentId) {
             throw new RuntimeException('The Compilatio document ID is missing.');
         }
 
@@ -180,10 +180,10 @@ final class CompilatioDocumentRepository
     ): array {
         $part = ['name' => $name, 'contents' => $contents];
 
-        if ($filename !== null) {
+        if (null !== $filename) {
             $part['filename'] = $filename;
         }
-        if ($contentType !== null) {
+        if (null !== $contentType) {
             $part['headers'] = ['Content-Type' => $contentType];
         }
 

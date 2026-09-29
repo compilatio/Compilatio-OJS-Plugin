@@ -10,8 +10,7 @@ final class CompilatioFolderSynchronizer
 {
     public function __construct(
         private CompilatioFolderRepository $folderRepository,
-    ) {
-    }
+    ) {}
 
     public function synchronize(
         string $reviewName,
@@ -20,7 +19,7 @@ final class CompilatioFolderSynchronizer
         $folder = $this->folderRepository
             ->findFolderByName($reviewName);
 
-        if ($folder === null) {
+        if (null === $folder) {
             $folder = $this->folderRepository->create(
                 $reviewName,
                 $configuration,
@@ -42,7 +41,7 @@ final class CompilatioFolderSynchronizer
     {
         $folderId = $folder->id ?? null;
 
-        if (!is_string($folderId) || $folderId === '') {
+        if (!is_string($folderId) || '' === $folderId) {
             throw new RuntimeException(
                 'Compilatio API returned a folder without a valid ID.'
             );

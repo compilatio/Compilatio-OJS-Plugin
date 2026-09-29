@@ -16,7 +16,7 @@ use Throwable;
 
 final class FetchAnalysisStatus extends ScheduledTask
 {
-    private const FAILED_STATES = ['crashed', 'aborted', 'canceled'];
+    private const FAILED_STATES = ['crashed', 'aborted', 'canceled', 'cancelled'];
 
     /** @var array<int, CompilatioDocumentRepository> */
     private array $repositories = [];
@@ -87,6 +87,17 @@ final class FetchAnalysisStatus extends ScheduledTask
         $remoteDocument = $this->getRepository((int) $document->contextId)
             ->getById($externalId);
 
+        if (
+            $this->containsFailedAnalysisState($remoteDocument->analyses)
+            || $this->containsFailedAnalysisState($remoteDocument->state)
+        ) {
+            $store->updateStatus(
+                (int) $document->submissionFileId,
+                Document::STATUS_ERROR_ANALYSIS_FAILED,
+            );
+            return;
+        }
+
         $lightReports = $remoteDocument->lightReports;
 
         if (null !== $lightReports) {
@@ -102,10 +113,6 @@ final class FetchAnalysisStatus extends ScheduledTask
             ? (new CompilatioDocumentStatusResolver())->tryResolve($remoteDocument->status)
             : null;
 
-        if (in_array($remoteDocument->analyses, self::FAILED_STATES, true)) {
-            $status = Document::STATUS_ERROR_ANALYSIS_FAILED;
-        }
-
         // An upload status may lag behind a manually launched analysis.
         if (null === $status || Document::STATUS_SENT === $status || $document->status === $status) {
             return;
@@ -115,6 +122,29 @@ final class FetchAnalysisStatus extends ScheduledTask
             (int) $document->submissionFileId,
             $status,
         );
+    }
+
+    private function containsFailedAnalysisState(mixed $value): bool
+    {
+        if (is_string($value)) {
+            return in_array($value, self::FAILED_STATES, true);
+        }
+
+        if (is_object($value)) {
+            $value = get_object_vars($value);
+        }
+
+        if (!is_array($value)) {
+            return false;
+        }
+
+        foreach ($value as $nestedValue) {
+            if ($this->containsFailedAnalysisState($nestedValue)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function deleteDocument(Document $document, CompilatioDocumentStore $store): void

@@ -1,4 +1,5 @@
 <?php
+
 namespace APP\plugins\generic\compilatio\api\Repository;
 
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
@@ -10,8 +11,7 @@ class CompilatioFolderRepository
 {
     public function __construct(
         private readonly CompilatioClient $client,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<object>
@@ -43,7 +43,7 @@ class CompilatioFolderRepository
         string $name,
         CompilatioFolderConfiguration $configuration,
     ): object {
-        $response = $this->client->post('private/folders', [
+        $payload = [
             'name' => $name,
             'origin' => 'OJS',
             'thresholds' => [
@@ -53,8 +53,17 @@ class CompilatioFolderRepository
             'default_indexing' => $configuration->defaultIndexing,
             'auto_analysis' => $configuration->autoAnalysis,
             'scheduled_analysis_enabled' =>
-                $configuration->scheduledAnalysisEnabled,
-        ], true);
+            $configuration->scheduledAnalysisEnabled,
+        ];
+
+        if (
+            $configuration->scheduledAnalysisEnabled
+            && null !== $configuration->scheduledAnalysisAt
+        ) {
+            $payload['scheduled_analysis_date'] = $configuration->scheduledAnalysisAt;
+        }
+
+        $response = $this->client->post('private/folders', $payload, true);
 
         return CompilatioResponse::objectAt(
             $response,
@@ -68,19 +77,28 @@ class CompilatioFolderRepository
         string $name,
         CompilatioFolderConfiguration $configuration,
     ): void {
+        $payload = [
+            'name' => $name,
+            'thresholds' => [
+                'warning' => $configuration->warningThreshold,
+                'critical' => $configuration->criticalThreshold,
+            ],
+            'default_indexing' => $configuration->defaultIndexing,
+            'auto_analysis' => $configuration->autoAnalysis,
+            'scheduled_analysis_enabled' =>
+            $configuration->scheduledAnalysisEnabled,
+        ];
+
+        if (
+            $configuration->scheduledAnalysisEnabled
+            && null !== $configuration->scheduledAnalysisAt
+        ) {
+            $payload['scheduled_analysis_date'] = $configuration->scheduledAnalysisAt;
+        }
+
         $this->client->patch(
             'private/folders/' . $folderId,
-            [
-                'name' => $name,
-                'thresholds' => [
-                    'warning' => $configuration->warningThreshold,
-                    'critical' => $configuration->criticalThreshold,
-                ],
-                'default_indexing' => $configuration->defaultIndexing,
-                'auto_analysis' => $configuration->autoAnalysis,
-                'scheduled_analysis_enabled' =>
-                    $configuration->scheduledAnalysisEnabled,
-            ],
+            $payload,
             true
         );
     }
@@ -92,7 +110,7 @@ class CompilatioFolderRepository
     {
         foreach ($this->get() as $folder) {
             if (
-                ($folder->origin ?? null) === 'OJS'
+                'OJS' === ($folder->origin ?? null)
                 && ($folder->name ?? null) === $name
             ) {
                 return $folder;

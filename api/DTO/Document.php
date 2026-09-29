@@ -20,6 +20,22 @@ final readonly class Document
     public const STATUS_ERROR_ANALYSIS_FAILED = 'error_analysis_failed';
     public const STATUS_ERROR_DELETE = 'error_delete';
 
+    public const DOCUMENT_STATUSES = [
+        self::STATUS_SENT,
+        self::STATUS_QUEUE,
+        self::STATUS_ANALYSING,
+        self::STATUS_SCORED,
+        self::STATUS_ERROR_NOT_FOUND,
+        self::STATUS_ERROR_TOO_SHORT,
+        self::STATUS_ERROR_TOO_LARGE,
+        self::STATUS_ERROR_TOO_LONG,
+        self::STATUS_ERROR_UNSUPPORTED,
+        self::STATUS_ERROR_SENDING_FAILED,
+        self::STATUS_ERROR_EXTRACTION_FAILED,
+        self::STATUS_ERROR_ANALYSIS_FAILED,
+        self::STATUS_ERROR_DELETE,
+    ];
+
     public const STATUS_ANALYSING_IN_PROGRESS = [self::STATUS_QUEUE, self::STATUS_ANALYSING];
 
     /** @param list<DocumentAuthor> $authors */

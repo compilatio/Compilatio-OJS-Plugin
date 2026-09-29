@@ -62,3 +62,21 @@ msgstr "Échec de la suppression"
 
 msgid "plugins.generic.compilatio.documents.not_sent"
 msgstr "Non envoyé"
+
+msgid "plugins.generic.compilatio.documents.index"
+msgstr "Indexer le document"
+
+msgid "plugins.generic.compilatio.documents.unindex"
+msgstr "Désindexer le document"
+
+msgid "plugins.generic.compilatio.documents.indexed"
+msgstr "Document indexé"
+
+msgid "plugins.generic.compilatio.documents.notIndexed"
+msgstr "Document non indexé"
+
+msgid "plugins.generic.compilatio.documents.invalidIndexed"
+msgstr "Le statut d’indexation doit être un booléen."
+
+msgid "plugins.generic.compilatio.documents.indexingUnavailable"
+msgstr "L’indexation de ce document ne peut pas être modifiée."

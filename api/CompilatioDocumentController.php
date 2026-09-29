@@ -5,11 +5,12 @@ namespace APP\plugins\generic\compilatio\api;
 use APP\facades\Repo;
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
 use APP\plugins\generic\compilatio\api\DTO\Document;
-use APP\plugins\generic\compilatio\api\Logger\CompilatioDebugLogger;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentStore;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentAnalysisHandler;
 use APP\plugins\generic\compilatio\api\Services\Handler\DocumentSubmissionHandler;
+use APP\plugins\generic\compilatio\api\Services\Logging\CompilatioOjsLogger;
+use APP\plugins\generic\compilatio\api\Services\Synchronizer\CompilatioDocumentIndexingSynchronizer;
 use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -53,6 +54,7 @@ final class CompilatioDocumentController extends PKPBaseController
         Route::post('{submissionFileId}/retry', $this->resendDocument(...));
         Route::post('{submissionFileId}/analyse', $this->analyse(...));
         Route::post('{submissionFileId}/report', $this->report(...));
+        Route::patch('{submissionFileId}/indexing', $this->updateIndexing(...));
     }
 
     public function getSubmissionDocuments(Request $request): JsonResponse
@@ -65,12 +67,10 @@ final class CompilatioDocumentController extends PKPBaseController
                 $contextId,
             );
 
-            return response()->json(array_map(fn(Document $document): array => [
-                'submissionFileId' => (int) $document->submissionFileId,
-                'status' => is_string($document->status ?? null) ? $document->status : '',
-                'statusLabel' => $this->getStatusLabel($document->status ?? null),
-                'score' => $this->getGlobalScore($document->lightReports ?? null),
-            ], $documents));
+            return response()->json(array_map(
+                fn(Document $document): array => $this->formatDocumentResponse($document),
+                $documents,
+            ));
         } catch (Throwable $exception) {
             return $this->errorResponse($exception);
         }
@@ -121,16 +121,12 @@ final class CompilatioDocumentController extends PKPBaseController
                 throw new RuntimeException($message, 502);
             }
 
-            return response()->json([
-                'submissionFileId' => $submissionFileId,
-                'status' => is_string($retriedDocument->status ?? null)
-                    ? $retriedDocument->status
-                    : '',
-                'statusLabel' => $this->getStatusLabel($retriedDocument->status ?? null),
-                'score' => $this->getGlobalScore($retriedDocument->lightReports ?? null),
-            ]);
+            return response()->json($this->formatDocumentResponse($retriedDocument));
         } catch (Throwable $exception) {
-            return $this->errorResponse($exception);
+            return $this->errorResponse($exception, [
+                'action' => 'retry',
+                'submissionFileId' => $submissionFileId ?? null,
+            ]);
         }
     }
 
@@ -145,6 +141,59 @@ final class CompilatioDocumentController extends PKPBaseController
                 'status' => true === ($analysis->running) || 'running' === ($analysis->state)
                     ? 'analysing'
                     : 'queue',
+            ]);
+        } catch (Throwable $exception) {
+            return $this->errorResponse($exception);
+        }
+    }
+
+    public function updateIndexing(Request $request): JsonResponse
+    {
+        try {
+            $submissionFileId = $this->getRouteId($request, 'submissionFileId');
+            $store = new CompilatioDocumentStore();
+            $document = $store->getForSubmissionFile($submissionFileId);
+            if (!$document) {
+                throw new RuntimeException('The Compilatio document can not be found.', 404);
+            }
+
+            $contextId = $this->authorizeSubmission($document->submissionId);
+            if ($document->contextId !== $contextId) {
+                throw new RuntimeException('Access denied.', 403);
+            }
+
+            $indexed = $request->input('indexed');
+            if (!is_bool($indexed)) {
+                $message = __('plugins.generic.compilatio.documents.invalidIndexed');
+                throw new RuntimeException(
+                    is_string($message) ? $message : 'The indexed value must be a boolean.',
+                    422,
+                );
+            }
+
+            if (empty($document->externalId) || Document::STATUS_ERROR_DELETE === $document->status) {
+                $message = __('plugins.generic.compilatio.documents.indexingUnavailable');
+                throw new RuntimeException(
+                    is_string($message) ? $message : 'Indexing is not available for this document.',
+                    409,
+                );
+            }
+
+            $synchronizer = new CompilatioDocumentIndexingSynchronizer(
+                new CompilatioDocumentRepository(
+                    new CompilatioClient(
+                        $this->requireSetting($contextId, 'apiKey'),
+                        new Client(),
+                        $this->requireSetting($contextId, 'compilatioUserId'),
+                    ),
+                ),
+                $store,
+            );
+            $synchronizer->synchronize($submissionFileId, $indexed);
+
+            return response()->json([
+                'submissionFileId' => $submissionFileId,
+                'indexed' => $indexed,
             ]);
         } catch (Throwable $exception) {
             return $this->errorResponse($exception);
@@ -249,26 +298,28 @@ final class CompilatioDocumentController extends PKPBaseController
         return $contextId;
     }
 
-    private function getStatusLabel(mixed $status): string
+    private function getStatusLabel(?string $status): string
     {
-        $key = match ($status) {
-            'sent' => 'sent',
-            'queue' => 'queue',
-            'analysing' => 'analysing',
-            'scored' => 'scored',
-            'error_not_found' => 'error_not_found',
-            'error_too_short' => 'error_too_short',
-            'error_too_large' => 'error_too_large',
-            'error_too_long' => 'error_too_long',
-            'error_unsupported' => 'error_unsupported',
-            'error_extraction_failed' => 'error_extraction_failed',
-            'error_analysis_failed' => 'error_analysis_failed',
-            'error_sending_failed' => 'error_sending_failed',
-            'error_delete' => 'error_delete',
-            default => 'not_sent',
-        };
+        $key = in_array($status, Document::DOCUMENT_STATUSES, true)
+            ? $status
+            : 'not_sent';
 
-        return __('plugins.generic.compilatio.documents.' . $key);
+        $label = __('plugins.generic.compilatio.documents.' . $key);
+
+        return is_string($label) ? $label : $key;
+    }
+
+    /** @return array{submissionFileId: int, status: string, statusLabel: string, score: ?float, indexed: bool, canIndex: bool} */
+    private function formatDocumentResponse(Document $document): array
+    {
+        return [
+            'submissionFileId' => $document->submissionFileId,
+            'status' => $document->status ?? '',
+            'statusLabel' => $this->getStatusLabel($document->status),
+            'score' => $this->getGlobalScore($document->lightReports),
+            'indexed' => $document->indexed,
+            'canIndex' => !empty($document->externalId) && Document::STATUS_ERROR_DELETE !== $document->status,
+        ];
     }
 
     private function getGlobalScore(mixed $lightReports): ?float
@@ -326,14 +377,15 @@ final class CompilatioDocumentController extends PKPBaseController
         return (int) $normalizedId;
     }
 
-    private function errorResponse(Throwable $exception): JsonResponse
+    /** @param array<string, mixed> $context */
+    private function errorResponse(Throwable $exception, array $context = []): JsonResponse
     {
         $statusCode = (int) $exception->getCode();
         if ($statusCode < 400 || $statusCode > 599) {
             $statusCode = 500;
         }
 
-        CompilatioDebugLogger::log('Document API error', [
+        CompilatioOjsLogger::log('error', 'Compilatio document API error', $context + [
             'httpStatus' => $statusCode,
             'error' => $exception->getMessage(),
         ]);
@@ -353,7 +405,7 @@ final class CompilatioDocumentController extends PKPBaseController
             return "Compilatio Auth failed";
         }
 
-        if ($statusCode === 503) {
+        if (503 === $statusCode) {
             return 'Compilatio is currently not avalaible. Please try again later.';
         }
 

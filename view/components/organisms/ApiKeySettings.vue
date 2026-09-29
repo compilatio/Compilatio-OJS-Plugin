@@ -19,11 +19,11 @@ const { t } = useI18n();
 <template>
   <SettingsField>
     <template #label>
-      <div>
-        <label for="compilatio-api-key" class="block text-sm font-medium text-slate-900">
+      <div class="text-sm">
+        <label for="compilatio-api-key" class="block font-medium text-neutral-900">
           {{ t('settings_api_key') }}
         </label>
-        <p class="mt-1 text-sm leading-5 text-slate-500">
+        <p class="mt-1 text-neutral-500">
           {{ t('settings_api_key_description') }}
         </p>
       </div>

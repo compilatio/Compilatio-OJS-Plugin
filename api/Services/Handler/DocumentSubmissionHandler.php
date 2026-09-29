@@ -7,9 +7,9 @@ use APP\plugins\generic\compilatio\api\Client\CompilatioClient;
 use APP\plugins\generic\compilatio\api\DTO\Document;
 use APP\plugins\generic\compilatio\api\DTO\DocumentAuthor;
 use APP\plugins\generic\compilatio\api\Exception\CompilatioDocumentUploadException;
-use APP\plugins\generic\compilatio\api\Logger\CompilatioDebugLogger;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentRepository;
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentStore;
+use APP\plugins\generic\compilatio\api\Services\Logging\CompilatioOjsLogger;
 use APP\submission\Submission;
 use GuzzleHttp\Client;
 use PKP\author\Author;
@@ -82,7 +82,7 @@ final class DocumentSubmissionHandler
 
             $store->markUploaded($document->submissionFileId, $remoteDocument, $status);
 
-            CompilatioDebugLogger::log('Document sent', [
+            CompilatioOjsLogger::log('info', 'Compilatio document sent', [
                 'submissionFileId' => $document->submissionFileId,
                 'externalId' => $remoteDocument->id,
                 'status' => $status,
@@ -93,7 +93,7 @@ final class DocumentSubmissionHandler
                 $exception->status,
                 $exception->getMessage(),
             );
-            CompilatioDebugLogger::log('Document upload error', [
+            CompilatioOjsLogger::log('error', 'Compilatio document upload failed', [
                 'submissionFileId' => $submissionFileId,
                 'httpStatus' => $exception->httpStatus,
                 'status' => $exception->status,
@@ -105,7 +105,7 @@ final class DocumentSubmissionHandler
                 Document::STATUS_ERROR_SENDING_FAILED,
                 $exception->getMessage(),
             );
-            CompilatioDebugLogger::log('Document upload error', [
+            CompilatioOjsLogger::log('error', 'Compilatio document upload failed', [
                 'submissionFileId' => $submissionFileId,
                 'httpStatus' => $exception->getCode(),
                 'status' => Document::STATUS_ERROR_SENDING_FAILED,
@@ -185,7 +185,7 @@ final class DocumentSubmissionHandler
         $description = $publication->getLocalizedData('abstract');
         $filename = $fileService->formatFilename(
             $path,
-            is_string($originalName) && $originalName !== '' ? $originalName : 'document'
+            is_string($originalName) && '' !== $originalName ? $originalName : 'document'
         );
 
         return new Document(
@@ -231,14 +231,14 @@ final class DocumentSubmissionHandler
         /** @var Genre|null $articleTextGenre */
         $articleTextGenre = $genreDao->getByKey('SUBMISSION', $contextId);
 
-        return $articleTextGenre !== null
+        return null !== $articleTextGenre
             && $submissionFile->getData('genreId') === $articleTextGenre->getId();
     }
 
     private function requireStringSetting(int $contextId, string $name): string
     {
         $value = $this->plugin->getSetting($contextId, $name);
-        if (!is_string($value) || $value === '') {
+        if (!is_string($value) || '' === $value) {
             throw new RuntimeException("The Compilatio setting {$name} is missing.");
         }
 

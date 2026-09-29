@@ -14,18 +14,8 @@ if [ "$latest_main" != "$CI_COMMIT_SHA" ]; then
   exit 0
 fi
 
-askpass=$(mktemp)
-trap 'rm -f "$askpass"' EXIT HUP INT TERM
-cat > "$askpass" <<'EOF'
-#!/bin/sh
-case "$1" in
-  *Username*) printf '%s\n' 'x-access-token' ;;
-  *Password*) printf '%s\n' "$GITHUB_PUSH_TOKEN" ;;
-  *) exit 1 ;;
-esac
-EOF
-chmod 700 "$askpass"
-export GIT_ASKPASS="$askpass"
 export GIT_TERMINAL_PROMPT=0
 
-git -c credential.helper= push "$GITHUB_REPOSITORY" "$CI_COMMIT_SHA:refs/heads/main"
+git -c credential.helper= \
+  -c 'credential.helper=!f() { if [ "$1" = get ]; then printf "username=x-access-token\\npassword=%s\\n" "$GITHUB_PUSH_TOKEN"; fi; }; f' \
+  push "$GITHUB_REPOSITORY" "$CI_COMMIT_SHA:refs/heads/main"

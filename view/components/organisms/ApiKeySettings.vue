@@ -14,6 +14,7 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
+const productName = window.pkpCompilatioDocuments.product.name;
 </script>
 
 <template>
@@ -21,10 +22,10 @@ const { t } = useI18n();
     <template #label>
       <div class="text-sm">
         <label for="compilatio-api-key" class="block font-medium text-neutral-900">
-          {{ t('settings_api_key') }}
+          {{ t('settings_api_key', { productName }) }}
         </label>
         <p class="mt-1 text-neutral-500">
-          {{ t('settings_api_key_description') }}
+          {{ t('settings_api_key_description', { productName }) }}
         </p>
       </div>
     </template>

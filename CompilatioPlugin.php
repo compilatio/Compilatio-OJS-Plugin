@@ -33,7 +33,7 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
 {
 
     private const PLUGIN_NAME = 'Compilatio';
-    private const PLUGIN_DESCRIPTION = 'Compilatio OJS Plugin for plagiarism detection';
+    private const PLUGIN_DESCRIPTION = ' OJS Plugin for plagiarism detection';
 
     public function register($category, $path, $mainContextId = null)
     {
@@ -53,12 +53,24 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
 
     public function getDisplayName(): string
     {
-        return self::PLUGIN_NAME;
+        $product = include __DIR__ . '/config/product.php';
+
+        if (!is_array($product) || !isset($product['name']) || !is_string($product['name'])) {
+            return self::PLUGIN_NAME;
+        }
+
+        return $product['name'];
     }
 
     public function getDescription(): string
     {
-        return self::PLUGIN_DESCRIPTION;
+        $product = include __DIR__ . '/config/product.php';
+
+        if (!is_array($product) || !isset($product['name']) || !is_string($product['name'])) {
+            return self::PLUGIN_NAME . self::PLUGIN_DESCRIPTION;
+        }
+
+        return $product['name'] . self::PLUGIN_DESCRIPTION;
     }
 
     public function registerSchedules(PKPScheduler $scheduler): void
@@ -180,29 +192,18 @@ class CompilatioPlugin extends GenericPlugin implements HasTaskScheduler
             'plugins/compilatio/documents',
         );
 
+        $product = include __DIR__ . '/config/product.php';
+
         $templateMgr->addJavaScript(
             'compilatioDocumentsConfig',
             'window.pkpCompilatioDocuments = '
                 . json_encode([
+                    'product' => $product,
                     'apiUrl' => $documentsApiUrl,
                     'locale' => Locale::getLocale(),
                     'thresholds' => (new CompilatioThresholdsResolver())->resolve(
                         $this->getSetting($contextId, 'thresholds'),
                     ),
-                    'messages' => [
-                        'index' => __('plugins.generic.compilatio.documents.index'),
-                        'unindex' => __('plugins.generic.compilatio.documents.unindex'),
-                        'indexed' => __('plugins.generic.compilatio.documents.indexed'),
-                        'notIndexed' => __('plugins.generic.compilatio.documents.notIndexed'),
-                        'retry' => __('plugins.generic.compilatio.documents.retry'),
-                        'launch' => __('plugins.generic.compilatio.documents.launch'),
-                        'report' => __('plugins.generic.compilatio.documents.report'),
-                        'reportMissing' => __('plugins.generic.compilatio.documents.reportMissing'),
-                        'reportBlocked' => __('plugins.generic.compilatio.documents.reportBlocked'),
-                        'apiError' => __('plugins.generic.compilatio.documents.apiError'),
-                        'queue' => __('plugins.generic.compilatio.documents.queue'),
-                        'analysing' => __('plugins.generic.compilatio.documents.analysing'),
-                    ],
                 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)
                 . ';',
             ['contexts' => ['backend'], 'inline' => true]

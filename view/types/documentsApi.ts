@@ -2,10 +2,13 @@ import type { CompilatioDocument } from './document';
 import type { Thresholds } from './settings';
 
 export interface CompilatioDocumentsConfig {
+  product: {
+    id: string;
+    name: string;
+  };
   apiUrl: string;
   locale: string;
   thresholds: Thresholds;
-  messages: Record<string, string>;
 }
 
 export interface CompilatioDocumentsApi {

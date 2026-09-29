@@ -4,3 +4,5 @@ node_modules/
 dist/
 .old/
 vendor/
+/config/product.php
+README.md

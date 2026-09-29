@@ -1,16 +1,17 @@
 import { computed, onBeforeUnmount, ref } from 'vue';
+import type { ComposerTranslation } from 'vue-i18n';
 import type { CompilatioDocument, DocumentAction } from '../types/document';
 import type { CompilatioDocumentsApi } from '../types/documentsApi';
 
 type ActionKind = DocumentAction['kind'] | 'index';
-type Translate = (key: string) => string;
 
 export function useDocumentActions(
   initialDocument: CompilatioDocument,
   api: CompilatioDocumentsApi,
-  t: Translate,
+  t: ComposerTranslation,
   onUpdated: (document: CompilatioDocument) => void,
 ) {
+  const productName = api.getConfig().product.name;
   const data = ref<CompilatioDocument>({ ...initialDocument });
   const pending = ref<ActionKind | ''>('');
   const error = ref(data.value.status.startsWith('error_') ? data.value.statusLabel : '');
@@ -75,7 +76,7 @@ export function useDocumentActions(
     try {
       if ('index' === kind) {
         if (!data.value.indexingUrl) {
-          throw new Error(t('apiError'));
+          throw new Error(t('apiError', { productName }));
         }
         const result = await api.patch(data.value.indexingUrl, { indexed: !data.value.indexed });
         updateDocument(result);
@@ -86,13 +87,13 @@ export function useDocumentActions(
         throw new Error(t('reportBlocked'));
       }
       if (!currentAction || !('url' in currentAction) || !currentAction.url) {
-        throw new Error(t('apiError'));
+        throw new Error(t('apiError', { productName }));
       }
 
       const result = await api.post(currentAction.url);
       if ('report' === kind) {
         if (!result.url || !reportWindow) {
-          throw new Error(t('reportMissing'));
+          throw new Error(t('reportMissing', { productName }));
         }
         reportWindow.location.href = result.url;
       } else {
@@ -103,7 +104,7 @@ export function useDocumentActions(
       if (mounted) {
         error.value = exception instanceof Error && exception.message
           ? exception.message
-          : t('apiError');
+          : t('apiError', { productName });
       }
     } finally {
       if (mounted) {

@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import type { Thresholds } from '../../types/settings';
 
 const props = defineProps({
-  score: { type: [Number, String], default: null },
+  score: { type: [Number, String, null], default: null },
   thresholds: { type: Object as () => Thresholds, required: true },
 });
 const { locale } = useI18n();

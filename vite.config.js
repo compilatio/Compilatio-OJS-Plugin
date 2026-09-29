@@ -1,4 +1,4 @@
-import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
@@ -19,14 +19,14 @@ export default defineConfig({
   build: {
     emptyOutDir: false,
     lib: {
-      entry: resolve(__dirname, 'view/PlagiarismPanel.entry.js'),
+      entry: fileURLToPath(new URL('./view/PlagiarismPanel.entry.ts', import.meta.url)),
       name: 'CompilatioPlagiarismPanelRuntime',
       formats: ['iife'],
       fileName: () => 'PlagiarismPanel.runtime.js',
       cssFileName: 'style',
     },
     minify: false,
-    outDir: resolve(__dirname, 'view/build'),
+    outDir: fileURLToPath(new URL('./view/build', import.meta.url)),
     rollupOptions: {
       external: ['vue'],
       output: {

@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 const props = defineProps({
   documentId: { type: Number, required: true },
   message: { type: String, required: true },
+  productName: { type: String, required: true },
 });
 const { t } = useI18n();
 const tooltipOpen = ref(false);
@@ -41,7 +42,7 @@ function dismissTooltip() {
       @click="showTooltip"
       @keydown.esc="dismissTooltip"
     >
-      {{ t('apiError') }}
+      {{ t('apiError', { productName: props.productName }) }}
     </button>
     <span
       :id="tooltipId"

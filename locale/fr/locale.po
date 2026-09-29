@@ -3,24 +3,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: fr\n"
 
-msgid "plugins.generic.compilatio.documents.retry"
-msgstr "Renvoyer"
-
-msgid "plugins.generic.compilatio.documents.launch"
-msgstr "Lancer l’analyse"
-
-msgid "plugins.generic.compilatio.documents.report"
-msgstr "Voir le rapport"
-
-msgid "plugins.generic.compilatio.documents.reportMissing"
-msgstr "Compilatio n’a pas retourné de lien vers le rapport."
-
-msgid "plugins.generic.compilatio.documents.reportBlocked"
-msgstr "Le navigateur a bloqué l’ouverture du rapport."
-
-msgid "plugins.generic.compilatio.documents.apiError"
-msgstr "Erreur Compilatio"
-
 msgid "plugins.generic.compilatio.documents.sent"
 msgstr "Prêt à analyser"
 
@@ -62,18 +44,6 @@ msgstr "Échec de la suppression"
 
 msgid "plugins.generic.compilatio.documents.not_sent"
 msgstr "Non envoyé"
-
-msgid "plugins.generic.compilatio.documents.index"
-msgstr "Indexer le document"
-
-msgid "plugins.generic.compilatio.documents.unindex"
-msgstr "Désindexer le document"
-
-msgid "plugins.generic.compilatio.documents.indexed"
-msgstr "Document indexé"
-
-msgid "plugins.generic.compilatio.documents.notIndexed"
-msgstr "Document non indexé"
 
 msgid "plugins.generic.compilatio.documents.invalidIndexed"
 msgstr "Le statut d’indexation doit être un booléen."

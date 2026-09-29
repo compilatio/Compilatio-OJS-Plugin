@@ -4,18 +4,17 @@ import './compilatioDocumentsTable';
 import './compilatioDocuments';
 
 import { h } from 'vue';
-import DocumentFrame from './components/DocumentFrame.vue';
+import DocumentFrame from './components/apps/DocumentFrame.vue';
+import SettingsPanel from './components/apps/SettingsPanel.vue';
 import { createI18n } from 'vue-i18n';
-import SettingsPanel from './components/SettingsPanel.vue';
 import en from './locales/en.js';
 import fr from './locales/fr.js';
 
 window.mountCompilatioSettingsApp = (target) => {
-  const documentLocale = document.documentElement.lang || 'fr';
-  const locale = documentLocale.replace('_', '-').split('-')[0];
+  console.log(document.documentElement.lang)
   const i18n = createI18n({
     legacy: false,
-    locale,
+    locale: document.documentElement.lang.toLowerCase().startsWith('en') ? 'en' : 'fr',
     fallbackLocale: 'fr',
     messages: { en, fr },
   });
@@ -29,7 +28,6 @@ window.mountCompilatioSettingsApp = (target) => {
 
 window.mountCompilatioDocumentApp = (target, documentData, onUpdated) => {
   const config = window.pkpCompilatioDocuments;
-  const locale = (config.locale || document.documentElement.lang || 'fr').replace('_', '-');
   const app = window.pkp.pkpCreateVueApp({
     render: () =>
       h(DocumentFrame, {
@@ -39,13 +37,12 @@ window.mountCompilatioDocumentApp = (target, documentData, onUpdated) => {
         onUpdated,
       }),
   });
-  app.use(
-    createI18n({
-      legacy: false,
-      locale,
-      messages: { [locale]: config.messages },
-    }),
-  );
+  app.use(createI18n({
+    legacy: false,
+    locale: config.locale,
+    fallbackLocale: 'en',
+    messages: { en, fr },
+  }));
   app.mount(target);
   return app;
 };

@@ -26,16 +26,23 @@ import type { CompilatioDocument } from "./types/document";
   }
 
   function getFileRow(submissionFileId: number) {
-    const fileLink = document.querySelector('a[href*="submissionFileId=' + submissionFileId + '"]');
-
-    if (!fileLink) {
-      return null;
+    const row = document.querySelector<HTMLTableRowElement>(
+      `tr.gridRow[id$="-row-${submissionFileId}"]`,
+    );
+    if (row?.cells[0]) {
+      return { row, filenameCell: row.cells[0] };
     }
 
-    const row = fileLink.closest('tr');
-    const filenameCell = fileLink.closest('th');
+    const fileLink = Array.from(document.querySelectorAll<HTMLAnchorElement>(
+      'a[href*="submissionFileId="]',
+    )).find((link) => {
+      const url = new URL(link.href, window.location.href);
+      return url.searchParams.get('submissionFileId') === String(submissionFileId);
+    });
+    const filenameCell = fileLink?.closest<HTMLTableCellElement>('th, td');
+    const linkRow = filenameCell?.closest('tr');
 
-    return row && filenameCell ? { row: row, filenameCell: filenameCell } : null;
+    return linkRow && filenameCell ? { row: linkRow, filenameCell } : null;
   }
 
   function getOrCreateCompilatioCell(row: HTMLTableRowElement, filenameCell: HTMLTableCellElement) {

@@ -1,4 +1,5 @@
 # Compilatio Plugin for OJS
+<img width="1305" height="382" alt="image" src="https://github.com/user-attachments/assets/20b32946-1270-4ba4-bf7c-ceec70079e5e" />
 
 The Compilatio plugin connects a journal running on **Open Journal Systems (OJS)** to Compilatio services.
 

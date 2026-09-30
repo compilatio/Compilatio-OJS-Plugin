@@ -1,10 +1,10 @@
-# Compilatio Plugin for OJS
+# Letimio Plugin for OJS
 
-The Compilatio plugin connects a journal running on **Open Journal Systems (OJS)** to Compilatio services.
+The Letimio plugin connects a journal running on **Open Journal Systems (OJS)** to Letimio services.
 
 It helps editorial teams integrate similarity detection into their OJS environment and easily define the analysis rules applied to their journal.
 
-> Compilatio is a commercial service. An active Compilatio subscription and a valid API key are required to use this plugin.
+> Letimio is a commercial service. An active Letimio subscription and a valid API key are required to use this plugin.
 
 ## Who is this plugin for?
 
@@ -12,7 +12,7 @@ This plugin is designed for people who manage an OJS journal, including:
 
 - journal managers;
 - editorial teams;
-- institutions that want to use Compilatio from OJS.
+- institutions that want to use Letimio from OJS.
 
 No development knowledge is required to configure the plugin from the OJS interface.
 
@@ -26,7 +26,7 @@ Available detections may include:
 - unrecognized text language detection;
 - spell checking.
 
-The availability of these options depends on your Compilatio subscription. Features that are not included in your plan remain visible, disabled, and clearly identified in the interface.
+The availability of these options depends on your Letimio subscription. Features that are not included in your plan remain visible, disabled, and clearly identified in the interface.
 
 ## Requirements
 
@@ -34,29 +34,29 @@ Before installing the plugin, make sure you have:
 
 - a compatible OJS installation;
 - an account with permission to manage the journal;
-- an active Compilatio subscription;
-- the API key provided by Compilatio.
+- an active Letimio subscription;
+- the API key provided by Letimio.
 
 This version of the plugin is designed for **OJS 3.5**.
 
 ## Installation from the OJS interface
 
-1. Download the Compilatio plugin installation package.
+1. Download the Letimio plugin installation package.
 2. Sign in to OJS with an administrator account.
 3. Open the plugin management page.
 4. Select the option to upload a new plugin.
-5. Select the Compilatio package and start the installation.
+5. Select the Letimio package and start the installation.
 6. Enable the plugin when the installation is complete.
 
 If OJS requests a database upgrade, follow the instructions displayed in the interface before using the plugin.
 
 ## Configuration
 
-Find **Compilatio** in the list of installed plugins and open its settings.
+Find **Letimio** in the list of installed plugins and open its settings.
 
 ### 1. API key
 
-Enter the API key associated with your Compilatio account and save. This key allows OJS to communicate securely with the service.
+Enter the API key associated with your Letimio account and save. This key allows OJS to communicate securely with the service.
 
 ### 2. Similarity thresholds
 
@@ -85,9 +85,9 @@ Some options may be configurable, enforced by the subscription, or unavailable. 
 
 Select **Save settings**. OJS checks the API key and saves the journal configuration.
 
-## Primary Compilatio account
+## Primary Letimio account
 
-During the initial configuration, the first OJS user to save a valid API key becomes the reference Compilatio account for the journal.
+During the initial configuration, the first OJS user to save a valid API key becomes the reference Letimio account for the journal.
 
 This primary account is retained to ensure a stable configuration. It is not replaced when another journal manager later updates the plugin settings.
 
@@ -98,19 +98,19 @@ For questions about:
 - your subscription;
 - your API key;
 - available features;
-- connecting OJS to Compilatio;
+- connecting OJS to Letimio;
 
-contact Compilatio support at **support@compilatio.net**.
+contact Letimio support at **support@letimio.net**.
 
-Official website: [https://www.compilatio.net](https://www.compilatio.net)
+Official website: [https://www.Letimio.net](https://www.Letimio.net)
 
-To report a security vulnerability, please also contact **support@compilatio.net** and avoid publishing sensitive information in a public issue.
+To report a security vulnerability, please also contact **support@letimio.net** and avoid publishing sensitive information in a public issue.
 
 ## Information
 
 - Plugin version: **1.0.0.6**
 - Platform: **Open Journal Systems 3.5**
-- Publisher: **Compilatio**
+- Publisher: **Letimio**
 - License: **GNU GPL v3 or later**
 
-Copyright © 2026 Compilatio.
+Copyright © 2026 Letimio.

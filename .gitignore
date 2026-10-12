@@ -1,0 +1,11 @@
+.env
+ojs-3.5.0-4/
+node_modules/
+dist/
+.old/
+vendor/
+.phpunit.result.cache
+
+#Files common to Compilatio and Letimio Github repositories
+/config/product.php
+README.md

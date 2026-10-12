@@ -1,0 +1,18 @@
+<?php
+
+namespace APP\plugins\generic\compilatio\api\DTO;
+
+final class CompilatioFolderConfiguration
+{
+    /** @param list<array{process: string, enabled: bool, configurable: bool}>|null $recipeDetections */
+    public function __construct(
+        public int $warningThreshold,
+        public int $criticalThreshold,
+        public bool $defaultIndexing,
+        public bool $autoAnalysis,
+        public bool $scheduledAnalysisEnabled,
+        public ?string $scheduledAnalysisAt = null,
+        public ?array $recipeDetections = null,
+    ) {
+    }
+}

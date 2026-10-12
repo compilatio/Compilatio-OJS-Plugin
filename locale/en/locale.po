@@ -1,0 +1,52 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "plugins.generic.compilatio.documents.sent"
+msgstr "Ready for analysis"
+
+msgid "plugins.generic.compilatio.documents.queue"
+msgstr "Analysis queued"
+
+msgid "plugins.generic.compilatio.documents.analysing"
+msgstr "Analysis in progress"
+
+msgid "plugins.generic.compilatio.documents.scored"
+msgstr "Analysis completed"
+
+msgid "plugins.generic.compilatio.documents.error_not_found"
+msgstr "Document not found"
+
+msgid "plugins.generic.compilatio.documents.error_too_short"
+msgstr "Document too short"
+
+msgid "plugins.generic.compilatio.documents.error_too_large"
+msgstr "Document too large"
+
+msgid "plugins.generic.compilatio.documents.error_too_long"
+msgstr "Document too long"
+
+msgid "plugins.generic.compilatio.documents.error_unsupported"
+msgstr "Unsupported format"
+
+msgid "plugins.generic.compilatio.documents.error_extraction_failed"
+msgstr "Text extraction failed"
+
+msgid "plugins.generic.compilatio.documents.error_analysis_failed"
+msgstr "Analysis failed"
+
+msgid "plugins.generic.compilatio.documents.error_sending_failed"
+msgstr "Upload failed"
+
+msgid "plugins.generic.compilatio.documents.error_delete"
+msgstr "Deletion failed"
+
+msgid "plugins.generic.compilatio.documents.not_sent"
+msgstr "Not sent"
+
+msgid "plugins.generic.compilatio.documents.invalidIndexed"
+msgstr "The indexing status must be a boolean."
+
+msgid "plugins.generic.compilatio.documents.indexingUnavailable"
+msgstr "Indexing cannot be changed for this document."

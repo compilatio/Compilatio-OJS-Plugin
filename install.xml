@@ -1,0 +1,5 @@
+<!-- <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE install SYSTEM "../../../lib/pkp/dtd/install.dtd">
+<install>
+    <migration class="APP\plugins\generic\compilatio\migration\CompilatioSchemaMigration" />
+</install> -->

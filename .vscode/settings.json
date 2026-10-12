@@ -1,0 +1,38 @@
+{
+    "intelephense.files.associations": [
+        "*.php",
+        "*.phtml"
+    ],
+    "intelephense.environment.includePaths": [
+        "/ojs-3.5.0-4",
+    ],
+    "intelephense.files.exclude": [
+    "**/.old/**",
+    "**/node_modules/**"
+    ],
+    "php.validate.enable": true,
+    /* PHP version pour Intelephense */
+    "intelephense.environment.phpVersion": "8.5",
+    /* PHP lint basique */
+    "php.validate.executablePath": "/usr/bin/php",
+    "phpsab.fixerArguments": [],
+    "phpsab.snifferEnable": true,
+    "phpsab.fixerEnable": true,
+    "phpsab.executablePathCS": "/home/sites/.config/composer/vendor/bin/phpcs",
+    "phpsab.executablePathCBF": "/home/sites/.config/composer/vendor/bin/phpcbf",
+    "phpsab.standard": "moodle",
+    "phpsab.snifferMode": "onSave",
+    "[php]": {
+        "editor.defaultFormatter": "bmewburn.vscode-intelephense-client",
+        "editor.formatOnSave": true
+    },
+    "editor.colorDecorators": true,
+    "tailwindCSS.includeLanguages": {
+        "typescript": "javascript",
+        "vue": "html"
+    },
+    "css.customData": ["/home/sites/open_journal_systems/.vscode/tailwind.json"],
+    "[css]": {
+        "editor.colorDecorators": true
+    }
+}

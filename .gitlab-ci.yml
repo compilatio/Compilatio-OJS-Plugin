@@ -1,7 +1,21 @@
 stages:
+  - build
   - phpstan
   - test
   - mirror
+
+build:
+  stage: build
+  image: node:22
+  rules:
+    - if: '"push" == $CI_PIPELINE_SOURCE || "merge_request_event" == $CI_PIPELINE_SOURCE'
+  script:
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - view/build/
+    expire_in: 1 day
 
 phpstan:
   stage: phpstan
@@ -42,6 +56,8 @@ unit_tests:
 .github_mirror:
   stage: mirror
   image: alpine:3.22
+  dependencies:
+    - build
   variables:
     GIT_DEPTH: "0"
   before_script:

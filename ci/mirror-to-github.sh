@@ -2,6 +2,7 @@
 set -eu
 
 : "${CI_COMMIT_SHA:?Missing GitLab commit SHA}"
+: "${PLUGIN_PRODUCT:?Missing plugin product identity}"
 : "${GITHUB_REPOSITORY:?Missing GitHub repository URL}"
 : "${GITHUB_PUSH_TOKEN:?Missing GitHub push token}"
 
@@ -44,6 +45,14 @@ git worktree add --detach --quiet "$variant_dir" "$github_main"
 git -C "$variant_dir" read-tree --reset -u "$CI_COMMIT_SHA"
 git -C "$variant_dir" restore --source="$github_main" --staged --worktree -- \
   README.md config/product.php
+
+# Transform only the temporary checkout, never the shared GitLab sources.
+python3 "$source_dir/ci/prepare-product.py" "$variant_dir" "$PLUGIN_PRODUCT"
+git -C "$variant_dir" add -u
+if [ "$PLUGIN_PRODUCT" = letimio ]; then
+  # This generated entry point is intentionally ignored in the source repo.
+  git -C "$variant_dir" add -f LetimioPlugin.php
+fi
 
 if git -C "$variant_dir" diff --cached --quiet; then
   echo "GitHub already has the current GitLab code and its product files."

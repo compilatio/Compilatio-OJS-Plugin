@@ -17,8 +17,6 @@ use Throwable;
 
 final class CompilatioDocumentRepository
 {
-    private const REPORT_REDIRECT_URL = 'https://app.compilatio.net/api/private/reports/redirect/';
-
     public function __construct(private readonly CompilatioClient $client) {}
 
     public function getById(string $documentId): CompilatioDocument
@@ -136,7 +134,7 @@ final class CompilatioDocumentRepository
             throw new RuntimeException('Compilatio returned a report without a JWT.');
         }
 
-        return self::REPORT_REDIRECT_URL . rawurlencode($jwt);
+        return $this->retreiveProductReportUrl() . rawurlencode($jwt);
     }
 
     public function delete(string $documentId): void
@@ -218,5 +216,16 @@ final class CompilatioDocumentRepository
         }
 
         return $depositor;
+    }
+
+    private function retreiveProductReportUrl(): string
+    {
+        $product = include __DIR__ . '/../../config/product.php';
+
+        if (!is_array($product) || !is_string($product['id']) || '' === $product['id']) {
+            throw new RuntimeException('The product ID is missing.');
+        }
+
+        return 'https://app.' . $product['id'] . '.net/api/private/reports/redirect/';
     }
 }

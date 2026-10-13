@@ -3690,7 +3690,7 @@
 			header.className = currentHeader.className;
 			header.classList.add("compilatio-document-header", "w-52", "min-w-52", "text-start");
 			header.scope = "col";
-			header.textContent = "Compilatio";
+			header.textContent = window.pkpCompilatioDocuments?.product.name ?? "Compilatio";
 			headerRow.insertBefore(header, currentHeader);
 		}
 		function getFileRow(submissionFileId) {
@@ -3849,8 +3849,8 @@
 			const props = __props;
 			const { locale } = useI18n();
 			const formattedScore = (0, vue.computed)(() => {
-				const value = props.score;
-				return null !== value && void 0 !== value && Number.isFinite(Number(value)) ? new Intl.NumberFormat(locale.value.replace("_", "-"), { maximumFractionDigits: 1 }).format(Number(value)) + "%" : "";
+				const value = Number(props.score);
+				return null !== value && void 0 !== value ? String(Math.round(value)) + "%" : "";
 			});
 			const scoreColor = (0, vue.computed)(() => {
 				const value = Number(props.score);
@@ -11028,7 +11028,6 @@
 	//#endregion
 	//#region view/PlagiarismPanel.entry.ts
 	window.mountCompilatioSettingsApp = (target) => {
-		console.log(document.documentElement.lang);
 		const i18n = createI18n({
 			legacy: false,
 			locale: document.documentElement.lang.toLowerCase().startsWith("en") ? "en" : "fr",

@@ -8,14 +8,14 @@ const props = defineProps({
   thresholds: { type: Object as () => Thresholds, required: true },
 });
 const { locale } = useI18n();
+
 const formattedScore = computed(() => {
-  const value = props.score;
-  return null !== value && undefined !== value && Number.isFinite(Number(value))
-    ? new Intl.NumberFormat(locale.value.replace('_', '-'), { maximumFractionDigits: 1 }).format(
-        Number(value),
-      ) + '%'
+  const value = Number(props.score);
+  return null !== value && undefined !== value
+    ? String(Math.round(value)) + '%'
     : '';
 });
+
 const scoreColor = computed(() => {
   const value = Number(props.score);
 

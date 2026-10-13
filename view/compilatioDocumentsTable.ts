@@ -23,7 +23,7 @@ import type { CompilatioDocument } from "./types/document";
     header.className = currentHeader.className;
     header.classList.add('compilatio-document-header', 'w-52', 'min-w-52', 'text-start');
     header.scope = 'col';
-    header.textContent = 'Compilatio';
+    header.textContent = window.pkpCompilatioDocuments?.product.name ?? 'Compilatio';
 
     headerRow.insertBefore(header, currentHeader);
   }

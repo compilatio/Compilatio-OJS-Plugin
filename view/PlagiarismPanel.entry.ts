@@ -11,7 +11,6 @@ import en from './locales/en.js';
 import fr from './locales/fr.js';
 
 window.mountCompilatioSettingsApp = (target) => {
-  console.log(document.documentElement.lang)
   const i18n = createI18n({
     legacy: false,
     locale: document.documentElement.lang.toLowerCase().startsWith('en') ? 'en' : 'fr',

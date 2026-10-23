@@ -44,48 +44,6 @@ final class CompilatioSchemaMigration extends Migration
         });
     }
 
-    private function upgradeExistingDocumentsTable(): void
-    {
-        if (!Schema::hasColumn('compilatio_documents', 'title')) {
-            Schema::table('compilatio_documents', function (Blueprint $table): void {
-                $table->text('title')->nullable();
-            });
-        }
-
-        if (!Schema::hasColumn('compilatio_documents', 'description')) {
-            Schema::table('compilatio_documents', function (Blueprint $table): void {
-                $table->text('description')->nullable();
-            });
-        }
-
-        if (!Schema::hasColumn('compilatio_documents', 'light_reports')) {
-            Schema::table('compilatio_documents', function (Blueprint $table): void {
-                $table->longText('light_reports')->nullable();
-            });
-        }
-
-        $obsoleteColumns = array_values(array_filter(
-            [
-                'global_score',
-                'similarity_score',
-                'similarity_quotation_score',
-                'ai_score',
-                'ignored_scores',
-            ],
-            static fn(string $column): bool =>
-            Schema::hasColumn('compilatio_documents', $column)
-        ));
-
-        if ($obsoleteColumns !== []) {
-            Schema::table(
-                'compilatio_documents',
-                static function (Blueprint $table) use ($obsoleteColumns): void {
-                    $table->dropColumn($obsoleteColumns);
-                }
-            );
-        }
-    }
-
     public function down(): void
     {
         // Intentionally preserve the table and its data.

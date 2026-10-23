@@ -65,7 +65,8 @@ class CompilatioClient
         bool $addUserId = false,
     ): CompilatioResponse {
         $options = [
-            RequestOptions::MULTIPART => $payload
+            RequestOptions::MULTIPART => $payload,
+            RequestOptions::TIMEOUT => 120,
         ];
 
         $response = $this->request('POST', $endpoint, $addUserId, $options);
@@ -115,6 +116,8 @@ class CompilatioClient
     private function sendRequest(string $method, string $endpoint, array $options = []): ResponseInterface
     {
         $options[RequestOptions::HTTP_ERRORS] = false;
+        $options[RequestOptions::CONNECT_TIMEOUT] = 10;
+        $options[RequestOptions::TIMEOUT] ??= 30;
 
         try {
             return $this->httpClient->request($method, self::API_BASE_URL . $endpoint, $options);

@@ -100,7 +100,9 @@ final class FetchAnalysisStatus extends ScheduledTask
 
         $lightReports = $remoteDocument->lightReports;
 
-        if (!empty($lightReports)) {
+        $decodedReports = null !== $lightReports ? json_decode($lightReports, true) : null;
+
+        if (null !== $lightReports && is_array($decodedReports) && [] !== $decodedReports) {
             $store->updateLightReports(
                 (int) $document->submissionFileId,
                 $lightReports,
@@ -112,6 +114,11 @@ final class FetchAnalysisStatus extends ScheduledTask
         $status = null !== $remoteDocument->status
             ? (new CompilatioDocumentStatusResolver())->tryResolve($remoteDocument->status)
             : null;
+
+        // Keep polling until reports arrive, even if the analysis is already complete.
+        if (Document::STATUS_SCORED === $status) {
+            return;
+        }
 
         // An upload status may lag behind a manually launched analysis.
         if (null === $status || Document::STATUS_SENT === $status || $document->status === $status) {

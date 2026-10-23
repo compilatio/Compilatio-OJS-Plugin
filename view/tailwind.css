@@ -4,7 +4,10 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities) important;
 
+@source not "../new_settings_app";
+
 @theme {
+	--color-page: #f4f6fa;
 	--color-primary-50: var(--color-primary-50);
 	--color-primary-100: var(--color-primary-100);
 	--color-primary-200: var(--color-primary-200);
@@ -33,10 +36,6 @@
   @apply focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-primary-500 focus-visible:outline-offset-2;
 }
 
-@utility compilatio-input {
-  @apply block w-full rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm shadow-sm outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20;
-}
-
 @utility compilatio-icon-button {
   @apply relative m-0 inline-flex box-border size-9 items-center justify-center rounded-l border border-solid p-1.75 shadow-none no-underline cursor-pointer;
 }
@@ -45,10 +44,30 @@
   @apply absolute inset-s-0 bottom-full z-100 box-border w-max max-w-64 sm:max-w-80 rounded-md bg-neutral-900 px-2.5 py-2 text-start text-xs leading-snug whitespace-normal text-neutral-50 wrap-anywhere shadow-md;
 }
 
-@utility compilatio-save-button {
-  @apply inline-flex min-w-36 items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-neutral-50 shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+/* Keep the common settings typography and browser reset inside the OJS modal. */
+.compilatio-settings-app {
+  font-family: var(--font-primary, sans-serif);
 }
 
-@utility compilatio-switch-thumb {
-  @apply pointer-events-none absolute left-0 size-5 rounded-full border border-neutral-300 bg-neutral-50 shadow transition-transform duration-200 ease-in-out group-focus:ring-1 group-focus:ring-blue-500 group-focus:ring-offset-2;
+.compilatio-settings-app :where(h1, h2, p, fieldset) {
+  margin: 0;
+}
+
+.compilatio-settings-app :where(fieldset) {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.compilatio-settings-app :where(h1, h2) {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.compilatio-settings-app .primary-text {
+  font-family: var(--font-primary, sans-serif);
+}
+
+.compilatio-settings-app .secondary-text {
+  font-family: var(--font-secondary, sans-serif);
 }

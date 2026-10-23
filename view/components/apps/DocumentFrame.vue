@@ -33,7 +33,7 @@ const { data, pending, error, action, perform } = useDocumentActions(
 );
 
 const product = props.api.getConfig().product;
-const productClassStyle = 'compilatio' === product.id ? 'service-magister' : 'service-letimio';
+const productClassStyle = 'compilatio' === product.id ? 'theme-magister' : 'theme-letimio';
 
 </script>
 

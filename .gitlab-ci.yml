@@ -7,14 +7,24 @@ stages:
 build:
   stage: build
   image: node:22
+  parallel:
+    matrix:
+      - PLUGIN_PRODUCT: [compilatio, letimio]
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends python3
   rules:
     - if: '"push" == $CI_PIPELINE_SOURCE || "merge_request_event" == $CI_PIPELINE_SOURCE'
   script:
+    - python3 -m unittest discover -s ci/test -p 'test_*.py'
+    - python3 ci/prepare-product.py "$CI_PROJECT_DIR" "$PLUGIN_PRODUCT"
     - npm ci
+    - rm -rf view/build
     - npm run build
+    - mkdir -p ".ci-build/$PLUGIN_PRODUCT"
+    - cp -R view/build/. ".ci-build/$PLUGIN_PRODUCT/"
   artifacts:
     paths:
-      - view/build/
+      - .ci-build/
     expire_in: 1 day
 
 phpstan:

@@ -43,7 +43,12 @@ git worktree add --detach --quiet "$variant_dir" "$github_main"
 
 # Start from the exact GitLab tree, then keep the two files owned by this GitHub repo.
 git -C "$variant_dir" read-tree --reset -u "$CI_COMMIT_SHA"
-cp -R "$source_dir/view/build/." "$variant_dir/view/build/"
+# Each artifact was compiled after applying the matching product identity.
+test -s "$source_dir/.ci-build/$PLUGIN_PRODUCT/PlagiarismPanel.runtime.js"
+test -s "$source_dir/.ci-build/$PLUGIN_PRODUCT/style.css"
+rm -rf "$variant_dir/view/build"
+mkdir -p "$variant_dir/view/build"
+cp -R "$source_dir/.ci-build/$PLUGIN_PRODUCT/." "$variant_dir/view/build/"
 git -C "$variant_dir" add -f -- view/build/
 git -C "$variant_dir" restore --source="$github_main" --staged --worktree -- \
   README.md config/product.php

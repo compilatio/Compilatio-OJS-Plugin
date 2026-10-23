@@ -15,7 +15,14 @@ final class CompilatioFolderSynchronizer
     public function synchronize(
         string $reviewName,
         CompilatioFolderConfiguration $configuration,
+        ?string $folderId = null,
     ): string {
+        if (null !== $folderId && '' !== $folderId) {
+            $this->folderRepository->update($folderId, $reviewName, $configuration);
+
+            return $folderId;
+        }
+
         $folder = $this->folderRepository
             ->findFolderByName($reviewName);
 

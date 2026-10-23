@@ -18,9 +18,9 @@ def prepare(directory: Path, product: str) -> None:
     ).decode().split('\0')
     for filename in tracked:
         path = directory / filename
-        if path.suffix not in ('.php', '.json', '.xml', '.neon'):
+        if path.suffix not in ('.php', '.json', '.xml', '.neon', '.ts', '.js', '.vue', '.tpl', '.css', '.po'):
             continue
-        if filename == 'config/product.php':
+        if filename == 'config/product.php' or filename.startswith('view/build/'):
             continue
         original = path.read_text()
         content = original.replace(
@@ -31,6 +31,26 @@ def prepare(directory: Path, product: str) -> None:
             'APP\\\\plugins\\\\generic\\\\letimio',
         )
         content = re.sub(r'\bCompilatioPlugin\b', 'LetimioPlugin', content)
+        # Only technical identifiers: preserve API hosts, logos and product checks.
+        for source, target in (
+            ('compilatio_documents', 'letimio_documents'),
+            ('plugins.generic.compilatio.', 'plugins.generic.letimio.'),
+            ('pkpCompilatio', 'pkpLetimio'),
+            ('mountCompilatio', 'mountLetimio'),
+            ('CompilatioPlagiarismPanelRuntime', 'LetimioPlagiarismPanelRuntime'),
+            ('compilatioSettings', 'letimioSettings'),
+            ('compilatioCsrfToken', 'letimioCsrfToken'),
+            ('compilatioDocumentsConfig', 'letimioDocumentsConfig'),
+            ('compilatioTailwind', 'letimioTailwind'),
+            ('compilatio:', 'letimio:'),
+            ('compilatio-document-', 'letimio-document-'),
+            ('compilatio-settings-app', 'letimio-settings-app'),
+            ('compilatio-error-', 'letimio-error-'),
+            ('compilatio-api-key', 'letimio-api-key'),
+            ('compilatio-scheduled-at', 'letimio-scheduled-at'),
+        ):
+            content = content.replace(source, target)
+
         if path.suffix == '.php':
             content = content.replace('plugins/compilatio/', 'plugins/letimio/')
         if filename == 'version.xml':

@@ -10,9 +10,9 @@ const props = defineProps({
 const { locale } = useI18n();
 
 const formattedScore = computed(() => {
-  const value = Number(props.score);
-  return null !== value && undefined !== value
-    ? String(Math.round(value)) + '%'
+  const score = props.score
+  return null !== score && undefined !== score
+    ? String(Math.round(Number(score))) + '%'
     : '';
 });
 

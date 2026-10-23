@@ -1,4 +1,5 @@
 <?php
+
 namespace APP\plugins\generic\compilatio\api\Services\Synchronizer;
 
 use APP\plugins\generic\compilatio\api\Repository\CompilatioUserRepository;
@@ -16,14 +17,8 @@ final class CompilatioUserSynchronizer
     public function syncUser(User $currentOJSUser): string
     {
         $locale = $this->localeResolver->resolve();
-        $firstName = $currentOJSUser->getGivenName($locale);
-        $lastName = $currentOJSUser->getFamilyName($locale);
-
-        if (!is_string($firstName) || !is_string($lastName)) {
-            throw new RuntimeException(
-                'Unable to retrieve the localized OJS user name.'
-            );
-        }
+        $firstName = $currentOJSUser->getLocalizedGivenName();
+        $lastName = $currentOJSUser->getLocalizedFamilyName();
 
         $compilatioUser = $this->remoteUsers->setUser(
             $firstName,
@@ -39,7 +34,7 @@ final class CompilatioUserSynchronizer
                 'Compilatio API returned a user without a valid ID.'
             );
         }
-        
+
         return $compilatioUserId;
     }
 }

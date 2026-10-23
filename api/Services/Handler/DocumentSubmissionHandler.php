@@ -87,30 +87,25 @@ final class DocumentSubmissionHandler
                 'externalId' => $remoteDocument->id,
                 'status' => $status,
             ]);
-        } catch (CompilatioDocumentUploadException $exception) {
-            $store->markError(
-                $submissionFileId,
-                $exception->status,
-                $exception->getMessage(),
-            );
-            CompilatioOjsLogger::log('error', 'Compilatio document upload failed', [
-                'submissionFileId' => $submissionFileId,
-                'httpStatus' => $exception->httpStatus,
-                'status' => $exception->status,
-                'error' => $exception->getMessage(),
-            ]);
         } catch (Throwable $exception) {
-            $store->markError(
-                $submissionFileId,
-                Document::STATUS_ERROR_SENDING_FAILED,
-                $exception->getMessage(),
-            );
+            $status = $exception instanceof CompilatioDocumentUploadException
+                ? $exception->status
+                : Document::STATUS_ERROR_SENDING_FAILED;
+
             CompilatioOjsLogger::log('error', 'Compilatio document upload failed', [
+                'contextId' => $contextId,
+                'submissionId' => $submissionId,
                 'submissionFileId' => $submissionFileId,
-                'httpStatus' => $exception->getCode(),
-                'status' => Document::STATUS_ERROR_SENDING_FAILED,
+                'httpStatus' => $exception instanceof CompilatioDocumentUploadException
+                    ? $exception->httpStatus
+                    : $exception->getCode(),
+                'status' => $status,
                 'error' => $exception->getMessage(),
+                'exceptionClass' => $exception::class,
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
             ]);
+            $store->markError($submissionFileId, $status, $exception->getMessage());
         }
     }
 

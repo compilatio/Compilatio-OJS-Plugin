@@ -231,9 +231,11 @@ class CompilatioSettingsController extends PluginSettingsController
                 throw new \RuntimeException('The OJS context is unavailable.');
             }
 
+            $savedFolderId = $this->plugin->getSetting($contextId, 'compilatioFolderId');
             $folderId = $folderSynchronizer->synchronize(
                 $context->getLocalizedName(),
                 $folderConfiguration,
+                is_string($savedFolderId) ? $savedFolderId : null,
             );
 
             $this->plugin->updateSetting(

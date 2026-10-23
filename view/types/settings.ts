@@ -1,12 +1,3 @@
-export type AnalysisLaunchMode = 'automatic' | 'manual' | 'scheduled';
-
-export interface Detection {
-  process: string;
-  enabled: boolean;
-  configurable: boolean;
-  availableInSubscription: boolean;
-}
-
 export interface Thresholds {
   warning: number;
   critical: number;

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/api/Services/Synchronizer/CompilatioDocumentIndexingSynchronizer.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class CompilatioDocumentIndexingSynchronizer
+ * @brief Synchronizes document indexing settings.
+ */
+
 namespace APP\plugins\generic\compilatio\api\Services\Synchronizer;
 
 use APP\plugins\generic\compilatio\api\Repository\CompilatioDocumentRepository;

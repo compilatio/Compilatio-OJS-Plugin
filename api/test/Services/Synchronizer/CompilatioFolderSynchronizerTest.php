@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/api/test/Services/Synchronizer/CompilatioFolderSynchronizerTest.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class CompilatioFolderSynchronizerTest
+ * @brief Tests CompilatioFolderSynchronizer behavior.
+ */
+
 declare(strict_types=1);
 
 namespace APP\plugins\generic\compilatio\api\test\Services\Synchronizer;

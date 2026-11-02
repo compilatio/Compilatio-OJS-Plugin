@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/api/DTO/Document.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class Document
+ * @brief Represents an OJS document submitted for analysis.
+ */
+
 namespace APP\plugins\generic\compilatio\api\DTO;
 
 use APP\plugins\generic\compilatio\api\DTO\DocumentAuthor;

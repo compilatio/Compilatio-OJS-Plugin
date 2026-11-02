@@ -53,6 +53,10 @@ def prepare(directory: Path, product: str) -> None:
 
         if path.suffix == '.php':
             content = content.replace('plugins/compilatio/', 'plugins/letimio/')
+            content = content.replace(
+                ' * Copyright (c) 2026 Compilatio\n',
+                ' * Copyright (c) 2026 Letimio\n',
+            )
         if filename == 'version.xml':
             content = content.replace(
                 '<application>compilatio</application>',

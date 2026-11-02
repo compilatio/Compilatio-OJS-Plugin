@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/api/Services/Handler/DocumentAnalysisHandler.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class DocumentAnalysisHandler
+ * @brief Starts document analyses.
+ */
+
 namespace APP\plugins\generic\compilatio\api\Services\Handler;
 
 use APP\plugins\generic\compilatio\api\DTO\Analysis;

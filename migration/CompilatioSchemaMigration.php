@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/migration/CompilatioSchemaMigration.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class CompilatioSchemaMigration
+ * @brief Creates the plugin database schema.
+ */
+
 namespace APP\plugins\generic\compilatio\migration;
 
 use Illuminate\Database\Migrations\Migration;

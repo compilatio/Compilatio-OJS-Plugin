@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/api/Client/CompilatioClient.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class CompilatioClient
+ * @brief Sends authenticated requests to the Compilatio API.
+ */
+
 namespace APP\plugins\generic\compilatio\api\Client;
 
 use APP\plugins\generic\compilatio\api\DTO\CompilatioResponse;

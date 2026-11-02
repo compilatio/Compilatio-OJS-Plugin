@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/api/Factory/CompilatioFolderRepositoryFactory.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class CompilatioFolderRepositoryFactory
+ * @brief Creates Compilatio folder repositories.
+ */
+
 namespace APP\plugins\generic\compilatio\api\Factory;
 
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;

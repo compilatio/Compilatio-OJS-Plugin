@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/api/Repository/CompilatioFolderRepository.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class CompilatioFolderRepository
+ * @brief Manages folders through the Compilatio API.
+ */
+
 namespace APP\plugins\generic\compilatio\api\Repository;
 
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;

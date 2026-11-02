@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/api/Services/Synchronizer/CompilatioFolderSynchronizer.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class CompilatioFolderSynchronizer
+ * @brief Synchronizes journal folder configuration.
+ */
+
 namespace APP\plugins\generic\compilatio\api\Services\Synchronizer;
 
 use APP\plugins\generic\compilatio\api\DTO\CompilatioFolderConfiguration;

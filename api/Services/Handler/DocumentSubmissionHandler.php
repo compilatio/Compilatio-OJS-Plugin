@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/api/Services/Handler/DocumentSubmissionHandler.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class DocumentSubmissionHandler
+ * @brief Submits OJS documents to Compilatio.
+ */
+
 namespace APP\plugins\generic\compilatio\api\Services\Handler;
 
 use APP\facades\Repo;

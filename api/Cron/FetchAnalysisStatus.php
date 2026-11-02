@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/api/Cron/FetchAnalysisStatus.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class FetchAnalysisStatus
+ * @brief Synchronizes document analysis status with Compilatio.
+ */
+
 namespace APP\plugins\generic\compilatio\api\Cron;
 
 use APP\plugins\generic\compilatio\api\Client\CompilatioClient;

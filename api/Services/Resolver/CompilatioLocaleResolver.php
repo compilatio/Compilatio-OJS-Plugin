@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/api/Services/Resolver/CompilatioLocaleResolver.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class CompilatioLocaleResolver
+ * @brief Resolves the locale used for Compilatio users.
+ */
+
 namespace APP\plugins\generic\compilatio\api\Services\Resolver;
 
 use APP\plugins\generic\compilatio\api\Repository\CompilatioConfigRepository;

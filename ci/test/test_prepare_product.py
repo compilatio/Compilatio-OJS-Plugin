@@ -17,6 +17,10 @@ class PrepareProductTest(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.files = {
             'CompilatioPlugin.php': r'''<?php
+/**
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ */
 namespace APP\plugins\generic\compilatio;
 class CompilatioPlugin {}
 $table = 'compilatio_documents';
@@ -51,6 +55,12 @@ $key = 'plugins.generic.compilatio.documents.sent';
         MODULE.prepare(self.root, 'letimio')
         self.assertFalse((self.root / 'CompilatioPlugin.php').exists())
         php = (self.root / 'LetimioPlugin.php').read_text()
+        self.assertIn(' * Copyright (c) 2026 Letimio\n', php)
+        self.assertNotIn(' * Copyright (c) 2026 Compilatio\n', php)
+        self.assertIn(
+            ' * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.',
+            php,
+        )
         for value in ('generic\\letimio', 'class LetimioPlugin', 'letimio_documents',
                       'letimio_documents_status', 'plugins/letimio/documents',
                       'plugins.generic.letimio.documents.sent', 'https://app.compilatio.net/api/'):

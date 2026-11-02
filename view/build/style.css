@@ -498,14 +498,6 @@
 @layer components;
 
 @layer utilities {
-  .visible {
-    visibility: visible;
-  }
-
-  .fixed {
-    position: fixed;
-  }
-
   .sticky {
     position: sticky;
   }
@@ -2053,6 +2045,10 @@
     background-color: var(--color-blue-200);
   }
 
+  .visible {
+    visibility: visible !important;
+  }
+
   .compilatio-tooltip {
     z-index: 100 !important;
     box-sizing: border-box !important;
@@ -2119,6 +2115,10 @@
 
   .absolute {
     position: absolute !important;
+  }
+
+  .fixed {
+    position: fixed !important;
   }
 
   .relative {

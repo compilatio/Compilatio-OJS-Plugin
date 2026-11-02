@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/api/DTO/CompilatioDocument.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @class CompilatioDocument
+ * @brief Represents a document returned by Compilatio.
+ */
+
 namespace APP\plugins\generic\compilatio\api\DTO;
 
 use RuntimeException;

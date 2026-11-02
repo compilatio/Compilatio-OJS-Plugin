@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * @file plugins/generic/compilatio/phpstan-bootstrap.php
+ *
+ * Copyright (c) 2026 Compilatio
+ * Distributed under the GNU GPL v3 or later. For full terms see the file LICENSE.
+ *
+ * @brief Loads the OJS environment for static analysis.
+ */
+
 declare(strict_types=1);
 
 $ojsRoot = realpath(getenv('OJS_ROOT') ?: dirname(__DIR__, 3));

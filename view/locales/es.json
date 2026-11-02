@@ -1,8 +1,10 @@
 {
   "apiError": "Error de {productName}",
+  "api_key_configured": "Ya hay una clave API configurada. Introduzca una nueva clave para actualizarla.",
   "api_key_description": "Esta clave autentica esta revista con el servicio.",
   "api_key_label": "Clave API",
   "api_key_placeholder": "Introduzca la clave API",
+  "api_key_placeholder_update": "Deje vacío para conservar la clave existente, o introduzca una nueva",
   "detection_ai_detection_description": "Detección de textos probablemente generados por una inteligencia artificial.",
   "detection_ai_detection_title": "Detección de IA",
   "detection_always_enabled": "Siempre activada",

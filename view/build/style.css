@@ -1352,11 +1352,6 @@
     font-weight: var(--font-weight-light);
   }
 
-  .font-medium {
-    --tw-font-weight: var(--font-weight-medium);
-    font-weight: var(--font-weight-medium);
-  }
-
   .font-thin {
     --tw-font-weight: var(--font-weight-thin);
     font-weight: var(--font-weight-thin);
@@ -2710,6 +2705,11 @@
     font-weight: var(--font-weight-bold) !important;
   }
 
+  .font-medium {
+    --tw-font-weight: var(--font-weight-medium) !important;
+    font-weight: var(--font-weight-medium) !important;
+  }
+
   .font-normal {
     --tw-font-weight: var(--font-weight-normal) !important;
     font-weight: var(--font-weight-normal) !important;
@@ -2731,6 +2731,10 @@
 
   .text-black {
     color: var(--color-black) !important;
+  }
+
+  .text-blue-600 {
+    color: var(--color-blue-600) !important;
   }
 
   .text-gray-500 {

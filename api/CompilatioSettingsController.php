@@ -34,6 +34,14 @@ class CompilatioSettingsController extends PluginSettingsController
         return 'plugins/compilatio/settings';
     }
 
+    private function maskApiKey(?string $apiKey): ?string
+    {
+        if (null === $apiKey || '' === $apiKey) {
+            return null;
+        }
+        return str_repeat('*', max(strlen($apiKey) - 4, 4)) . substr($apiKey, -4);
+    }
+
     public function get(Request $illuminateRequest): JsonResponse
     {
         $contextId = $this->getContextId();
@@ -44,7 +52,7 @@ class CompilatioSettingsController extends PluginSettingsController
         }
 
         $response = [
-            'apiKey' => $apiKey,
+            'apiKeyMasked' => $this->maskApiKey($apiKey),
             'automaticIndexingEnabled' => (bool) $this->plugin->getSetting(
                 $contextId,
                 'automaticIndexingEnabled'
@@ -108,6 +116,14 @@ class CompilatioSettingsController extends PluginSettingsController
 
         if (null !== $apiKey && !is_string($apiKey)) {
             throw new \RuntimeException('The API key setting is invalid.');
+        }
+
+        // If no API key provided in request but one exists, keep the existing key
+        if ((null === $apiKey || '' === $apiKey)) {
+            $existingApiKey = $this->plugin->getSetting($contextId, 'apiKey');
+            if (is_string($existingApiKey) && '' !== $existingApiKey) {
+                $apiKey = $existingApiKey;
+            }
         }
 
         $scheduledAnalysisAt = null;

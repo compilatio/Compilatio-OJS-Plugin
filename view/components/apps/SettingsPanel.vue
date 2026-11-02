@@ -16,8 +16,8 @@ const { t } = useTranslations();
 const product = window.pkpCompilatioDocuments.product;
 const productStyleClass = product.id === 'compilatio' ? 'theme-magister' : 'theme-letimio';
 const {
-  apiKey, configuration, detections, isLoading, isSaving, loaded,
-  hasError, message, thresholdError, canSave, save, load,
+  apiKey, configuration, detections, isLoading, isSaving, loaded, hasApiKey,
+  hasError, message, thresholdError, canSave, save, load, editApiKey, restoreApiKeyMask,
 } = useOjsSettings(props.apiUrl, props.csrfToken);
 </script>
 
@@ -57,12 +57,17 @@ const {
                 type="text"
                 autocomplete="off"
                 spellcheck="false"
-                required
-                :placeholder="t('api_key_placeholder')"
+                @focus="editApiKey"
+                @blur="restoreApiKeyMask"
+                :required="!hasApiKey"
+                :placeholder="hasApiKey ? t('api_key_placeholder_update') : t('api_key_placeholder')"
                 class="rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-primary-500"
               />
               <p class="text-sm text-gray-500">
                 {{ t('api_key_description') }}
+              </p>
+              <p v-if="hasApiKey" class="text-sm text-blue-600 font-medium">
+                {{ t('api_key_configured') }}
               </p>
             </div>
           </AccordionSection>

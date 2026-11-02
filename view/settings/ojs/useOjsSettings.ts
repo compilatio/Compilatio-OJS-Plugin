@@ -6,6 +6,7 @@ import { errorMessage, initialConfiguration, isRecord, readConfiguration, readDe
 export function useOjsSettings(apiUrl: string, csrfToken: string) {
   const { t } = useTranslations();
   const apiKey = ref('');
+  const maskedApiKey = ref('');
   const configuration = reactive(initialConfiguration());
   const detections = ref<DetectionConfiguration[]>([]);
   const isLoading = ref(true);
@@ -16,41 +17,61 @@ export function useOjsSettings(apiUrl: string, csrfToken: string) {
   const controller = new AbortController();
 
   const thresholdError = computed(() => configuration.warningThreshold > configuration.criticalThreshold);
-  const canSave = computed(() => loaded.value && !isSaving.value && Boolean(apiKey.value.trim())
+  const hasApiKey = ref(false);
+  const canSave = computed(() => loaded.value && !isSaving.value
+    && (hasApiKey.value || Boolean(apiKey.value.trim()))
     && Number.isInteger(configuration.warningThreshold)
     && Number.isInteger(configuration.criticalThreshold)
     && configuration.warningThreshold >= 0 && configuration.criticalThreshold <= 100
     && !thresholdError.value
-    && (configuration.autoAnalysis !== '0' || Number.isFinite(new Date(configuration.timeAnalysis).getTime())));
+    && ( '0' !== configuration.autoAnalysis || Number.isFinite(new Date(configuration.timeAnalysis).getTime())));
 
   function applySettings(settings: Record<string, unknown>) {
-    if (typeof settings.apiKey === 'string') {
-      apiKey.value = settings.apiKey;
+    if ('string' === typeof settings.apiKeyMasked) {
+      hasApiKey.value = true;
+      maskedApiKey.value = settings.apiKeyMasked;
+      apiKey.value = maskedApiKey.value;
     }
     Object.assign(configuration, readConfiguration(settings));
     detections.value = readDetections(settings);
   }
 
+  function editApiKey() {
+    if (hasApiKey.value && apiKey.value === maskedApiKey.value) {
+      apiKey.value = '';
+    }
+  }
+
+  function restoreApiKeyMask() {
+    if (hasApiKey.value && apiKey.value === '') {
+      apiKey.value = maskedApiKey.value;
+    }
+  }
+
   async function request(method: 'GET' | 'PUT') {
-    const fallback = t(method === 'GET' ? 'settings_error_loading' : 'settings_error_saving');
+    const fallback = t('GET' === method ? 'settings_error_loading' : 'settings_error_saving');
     const response = await fetch(apiUrl, {
       method,
       credentials: 'same-origin',
       signal: controller.signal,
-      headers: method === 'GET' ? { Accept: 'application/json' } : {
+      headers: 'GET' === method ? { Accept: 'application/json' } : {
         Accept: 'application/json',
         'Content-Type': 'application/json',
         'X-Csrf-Token': csrfToken,
       },
-      body: method === 'PUT'
-        ? JSON.stringify(settingsPayload(apiKey.value, configuration, detections.value)) : undefined,
+      body: 'PUT' === method
+        ? JSON.stringify(settingsPayload(
+          apiKey.value === maskedApiKey.value ? '' : apiKey.value,
+          configuration,
+          detections.value,
+        )) : undefined,
     });
     const result: unknown = await response.json();
     if (!response.ok) {
       throw new Error(errorMessage(result, fallback));
     }
     // OJS returns [] before the first API key is configured.
-    if (method === 'GET' && Array.isArray(result) && result.length === 0) {
+    if ('GET' === method && Array.isArray(result) && 0 === result.length) {
       return {};
     }
     if (!isRecord(result)) {
@@ -93,7 +114,15 @@ export function useOjsSettings(apiUrl: string, csrfToken: string) {
     hasError.value = false;
     message.value = '';
     try {
+      const submittedApiKey = apiKey.value === maskedApiKey.value ? '' : apiKey.value.trim();
       applySettings(await request('PUT'));
+      if (submittedApiKey) {
+        hasApiKey.value = true;
+        maskedApiKey.value = `${'*'.repeat(Math.max(submittedApiKey.length - 4, 4))}${submittedApiKey.slice(-4)}`;
+        apiKey.value = maskedApiKey.value;
+      } else if (hasApiKey.value) {
+        apiKey.value = maskedApiKey.value;
+      }
       message.value = t('settings_saved');
     } catch (error) {
       if (!controller.signal.aborted) {
@@ -108,7 +137,7 @@ export function useOjsSettings(apiUrl: string, csrfToken: string) {
   onUnmounted(() => controller.abort());
 
   return {
-    apiKey, configuration, detections, isLoading, isSaving, loaded,
-    hasError, message, thresholdError, canSave, save, load,
+    apiKey, configuration, detections, isLoading, isSaving, loaded, hasApiKey,
+    hasError, message, thresholdError, canSave, save, load, editApiKey, restoreApiKeyMask,
   };
 }

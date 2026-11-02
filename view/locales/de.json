@@ -1,8 +1,10 @@
 {
   "apiError": "Fehler bei {productName}",
+  "api_key_configured": "Ein API-Schlüssel ist bereits konfiguriert. Geben Sie einen neuen Schlüssel ein, um ihn zu aktualisieren.",
   "api_key_description": "Dieser Schlüssel authentifiziert diese Zeitschrift beim Dienst.",
   "api_key_label": "API-Schlüssel",
   "api_key_placeholder": "API-Schlüssel eingeben",
+  "api_key_placeholder_update": "Leer lassen, um den vorhandenen Schlüssel zu behalten, oder geben Sie einen neuen ein",
   "detection_ai_detection_description": "Erkennung von Texten, die wahrscheinlich von künstlicher Intelligenz erzeugt wurden.",
   "detection_ai_detection_title": "KI-Erkennung",
   "detection_always_enabled": "Immer aktiviert",

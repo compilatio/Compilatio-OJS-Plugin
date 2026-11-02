@@ -45,7 +45,7 @@ const {
 
       <form v-else class="grid gap-4 p-4" :aria-busy="isSaving" @submit.prevent="save">
         <fieldset class="contents" :disabled="isSaving">
-          <AccordionSection heading-id="compilatio-api-key-heading" :title="t('section_title_api_key')">
+          <AccordionSection heading-id="compilatio-api-key-heading" :title="t('section_title_api_key') + ' ' + product.name">
             <div class="flex flex-col gap-2 mt-6">
               <label for="compilatio-api-key" class="text-sm text-black">
                 {{ t('api_key_label') }}

@@ -9,20 +9,17 @@ import SettingsPanel from './components/apps/SettingsPanel.vue';
 import { createI18n } from 'vue-i18n';
 import { tooltipDirective } from '@elastisafe/components';
 import { translationsKey } from './settings/lib/i18n';
-import settingsEn from './settings/locales/en';
-import settingsFr from './settings/locales/fr';
-import en from './locales/en.js';
-import fr from './locales/fr.js';
+import { messages, resolveLocale } from './locales';
 
 window.mountCompilatioSettingsApp = (target) => {
-  const locale = window.pkpCompilatioDocuments.locale.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+  const locale = resolveLocale(window.pkpCompilatioDocuments.locale);
   const app = window.pkp.pkpCreateVueApp({
     render: () => h(SettingsPanel, {
       apiUrl: target.dataset.apiUrl ?? '',
       csrfToken: target.dataset.csrfToken ?? '',
     }),
   });
-  app.provide(translationsKey, locale === 'en' ? settingsEn : settingsFr);
+  app.provide(translationsKey, messages[locale]);
   app.directive('tooltip', tooltipDirective);
   app.mount(target);
 
@@ -43,9 +40,9 @@ window.mountCompilatioDocumentApp = (target, documentData, onUpdated) => {
   });
   app.use(createI18n({
     legacy: false,
-    locale: config.locale,
+    locale: resolveLocale(config.locale),
     fallbackLocale: 'en',
-    messages: { en, fr },
+    messages,
   }));
   app.mount(target);
   return {

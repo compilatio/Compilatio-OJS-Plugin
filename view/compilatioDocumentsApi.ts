@@ -1,7 +1,6 @@
 import { CompilatioDocument } from "./types/document";
 import { createI18n } from 'vue-i18n';
-import en from './locales/en.js';
-import fr from './locales/fr.js';
+import { messages, resolveLocale } from './locales';
 
 (function () {
   function getConfig() {
@@ -22,9 +21,9 @@ import fr from './locales/fr.js';
   async function getErrorMessage(response: Response) {
     const i18n = createI18n({
       legacy: false,
-      locale: window.pkpCompilatioDocuments.locale,
-      fallbackLocale: 'fr',
-      messages: { en, fr },
+      locale: resolveLocale(window.pkpCompilatioDocuments.locale),
+      fallbackLocale: 'en',
+      messages,
     });
     try {
       const body = await response.json();

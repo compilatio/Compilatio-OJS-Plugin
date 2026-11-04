@@ -2,6 +2,7 @@
   "apiError": "Error de {productName}",
   "api_key_configured": "Ya hay una clave API configurada. Introduzca una nueva clave para actualizarla.",
   "api_key_description": "Esta clave autentica esta revista con el servicio.",
+  "api_key_required_for_settings": "Guarde una clave API del servicio para acceder a la configuración de la aplicación.",
   "api_key_label": "Clave API",
   "api_key_placeholder": "Introduzca la clave API",
   "api_key_placeholder_update": "Deje vacío para conservar la clave existente, o introduzca una nueva",

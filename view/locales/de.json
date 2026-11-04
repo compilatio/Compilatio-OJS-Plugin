@@ -2,6 +2,7 @@
   "apiError": "Fehler bei {productName}",
   "api_key_configured": "Ein API-Schlüssel ist bereits konfiguriert. Geben Sie einen neuen Schlüssel ein, um ihn zu aktualisieren.",
   "api_key_description": "Dieser Schlüssel authentifiziert diese Zeitschrift beim Dienst.",
+  "api_key_required_for_settings": "Speichern Sie einen API-Schlüssel des Dienstes, um auf die Anwendungseinstellungen zuzugreifen.",
   "api_key_label": "API-Schlüssel",
   "api_key_placeholder": "API-Schlüssel eingeben",
   "api_key_placeholder_update": "Leer lassen, um den vorhandenen Schlüssel zu behalten, oder geben Sie einen neuen ein",

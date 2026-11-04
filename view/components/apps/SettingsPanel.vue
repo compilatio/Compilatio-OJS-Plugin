@@ -66,15 +66,20 @@ const {
               <p class="text-sm text-gray-500">
                 {{ t('api_key_description') }}
               </p>
-              <p v-if="hasApiKey" class="text-sm text-blue-600 font-medium">
+              <p v-if="hasApiKey" class="text-sm text-primary-400 font-medium">
                 {{ t('api_key_configured') }}
+              </p>
+              <p v-else class="text-sm text-gray-500">
+                {{ t('api_key_required_for_settings') }}
               </p>
             </div>
           </AccordionSection>
 
-          <DeliverySettings :configuration="configuration" :detections="detections" />
-          <PrivacySettings :configuration="configuration" />
-          <ThresholdSettings :configuration="configuration" :threshold-error="thresholdError" />
+          <template v-if="hasApiKey">
+            <DeliverySettings :configuration="configuration" :detections="detections" />
+            <PrivacySettings :configuration="configuration" />
+            <ThresholdSettings :configuration="configuration" :threshold-error="thresholdError" />
+          </template>
         </fieldset>
 
         <Alert v-if="message" :color="hasError ? 'danger' : 'success'" :description="message" role="status" />

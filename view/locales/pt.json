@@ -2,6 +2,7 @@
   "apiError": "Erro de {productName}",
   "api_key_configured": "Já existe uma chave API configurada. Introduza uma nova chave para a atualizar.",
   "api_key_description": "Esta chave autentica esta revista junto do serviço.",
+  "api_key_required_for_settings": "Guarde uma chave API do serviço para aceder às definições da aplicação.",
   "api_key_label": "Chave API",
   "api_key_placeholder": "Introduza a chave API",
   "detection_ai_detection_description": "Deteção de textos provavelmente gerados por uma inteligência artificial.",

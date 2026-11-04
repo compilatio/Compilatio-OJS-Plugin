@@ -2,6 +2,7 @@
   "apiError": "Erreur {productName}",
   "api_key_configured": "Une clé API est déjà configurée. Saisissez une nouvelle clé pour la mettre à jour.",
   "api_key_description": "Cette clé authentifie cette revue auprès du service.",
+  "api_key_required_for_settings": "Enregistrez une clé API du service pour accéder aux paramètres de l’application.",
   "api_key_label": "Clé API",
   "api_key_placeholder": "Saisissez la clé API",
   "api_key_placeholder_update": "Laissez vide pour conserver la clé existante, ou saisissez-en une nouvelle",

@@ -2,6 +2,7 @@
   "apiError": "{productName} error",
   "api_key_configured": "An API key is already configured. Enter a new key to update it.",
   "api_key_description": "This key authenticates this journal with the service.",
+  "api_key_required_for_settings": "Save a service API key to access the application settings.",
   "api_key_label": "API key",
   "api_key_placeholder": "Enter the API key",
   "api_key_placeholder_update": "Leave empty to keep the existing key, or enter a new one",

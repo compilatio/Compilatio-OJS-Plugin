@@ -1522,10 +1522,6 @@
     color: var(--color-primary-300);
   }
 
-  .text-primary-400 {
-    color: var(--color-primary-400);
-  }
-
   .text-primary-600 {
     color: var(--color-primary-600);
   }
@@ -2733,10 +2729,6 @@
     color: var(--color-black) !important;
   }
 
-  .text-blue-600 {
-    color: var(--color-blue-600) !important;
-  }
-
   .text-gray-500 {
     color: var(--color-gray-500) !important;
   }
@@ -2751,6 +2743,10 @@
 
   .text-neutral-800 {
     color: var(--color-neutral-800) !important;
+  }
+
+  .text-primary-400 {
+    color: var(--color-primary-400) !important;
   }
 
   .text-primary-500 {

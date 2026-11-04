@@ -3491,6 +3491,7 @@
 			apiError: "Fehler bei {productName}",
 			api_key_configured: "Ein API-Schlüssel ist bereits konfiguriert. Geben Sie einen neuen Schlüssel ein, um ihn zu aktualisieren.",
 			api_key_description: "Dieser Schlüssel authentifiziert diese Zeitschrift beim Dienst.",
+			api_key_required_for_settings: "Speichern Sie einen API-Schlüssel des Dienstes, um auf die Anwendungseinstellungen zuzugreifen.",
 			api_key_label: "API-Schlüssel",
 			api_key_placeholder: "API-Schlüssel eingeben",
 			api_key_placeholder_update: "Leer lassen, um den vorhandenen Schlüssel zu behalten, oder geben Sie einen neuen ein",
@@ -3553,6 +3554,7 @@
 			apiError: "{productName} error",
 			api_key_configured: "An API key is already configured. Enter a new key to update it.",
 			api_key_description: "This key authenticates this journal with the service.",
+			api_key_required_for_settings: "Save a service API key to access the application settings.",
 			api_key_label: "API key",
 			api_key_placeholder: "Enter the API key",
 			api_key_placeholder_update: "Leave empty to keep the existing key, or enter a new one",
@@ -3615,6 +3617,7 @@
 			apiError: "Error de {productName}",
 			api_key_configured: "Ya hay una clave API configurada. Introduzca una nueva clave para actualizarla.",
 			api_key_description: "Esta clave autentica esta revista con el servicio.",
+			api_key_required_for_settings: "Guarde una clave API del servicio para acceder a la configuración de la aplicación.",
 			api_key_label: "Clave API",
 			api_key_placeholder: "Introduzca la clave API",
 			api_key_placeholder_update: "Deje vacío para conservar la clave existente, o introduzca una nueva",
@@ -3677,6 +3680,7 @@
 			apiError: "Erreur {productName}",
 			api_key_configured: "Une clé API est déjà configurée. Saisissez une nouvelle clé pour la mettre à jour.",
 			api_key_description: "Cette clé authentifie cette revue auprès du service.",
+			api_key_required_for_settings: "Enregistrez une clé API du service pour accéder aux paramètres de l’application.",
 			api_key_label: "Clé API",
 			api_key_placeholder: "Saisissez la clé API",
 			api_key_placeholder_update: "Laissez vide pour conserver la clé existante, ou saisissez-en une nouvelle",
@@ -3739,6 +3743,7 @@
 			apiError: "Errore di {productName}",
 			api_key_configured: "Una chiave API è già configurata. Inserisci una nuova chiave per aggiornarla.",
 			api_key_description: "Questa chiave autentica questa rivista presso il servizio.",
+			api_key_required_for_settings: "Salva una chiave API del servizio per accedere alle impostazioni dell’applicazione.",
 			api_key_label: "Chiave API",
 			api_key_placeholder: "Inserisci la chiave API",
 			api_key_placeholder_update: "Lascia vuoto per mantenere la chiave esistente, oppure inserisci una nuova",
@@ -3801,6 +3806,7 @@
 			apiError: "Erro de {productName}",
 			api_key_configured: "Já existe uma chave API configurada. Introduza uma nova chave para a atualizar.",
 			api_key_description: "Esta chave autentica esta revista junto do serviço.",
+			api_key_required_for_settings: "Guarde uma chave API do serviço para aceder às definições da aplicação.",
 			api_key_label: "Chave API",
 			api_key_placeholder: "Introduza a chave API",
 			detection_ai_detection_description: "Deteção de textos provavelmente gerados por uma inteligência artificial.",
@@ -12152,14 +12158,18 @@
 	var _hoisted_9 = { class: "text-sm text-gray-500" };
 	var _hoisted_10 = {
 		key: 0,
-		class: "text-sm text-blue-600 font-medium"
+		class: "text-sm text-primary-400 font-medium"
 	};
 	var _hoisted_11 = {
+		key: 1,
+		class: "text-sm text-gray-500"
+	};
+	var _hoisted_12 = {
 		key: 1,
 		role: "status",
 		class: "px-5 text-sm"
 	};
-	var _hoisted_12 = ["disabled"];
+	var _hoisted_13 = ["disabled"];
 	//#endregion
 	//#region view/components/apps/SettingsPanel.vue
 	var SettingsPanel_default = /* @__PURE__ */ (0, vue.defineComponent)({
@@ -12201,31 +12211,30 @@
 					(0, vue.createElementVNode)("fieldset", {
 						class: "contents",
 						disabled: (0, vue.unref)(isSaving)
-					}, [
-						(0, vue.createVNode)(AccordionSection_default, {
-							"heading-id": "compilatio-api-key-heading",
-							title: (0, vue.unref)(t)("section_title_api_key") + " " + (0, vue.unref)(product).name
-						}, {
-							default: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_6, [
-								(0, vue.createElementVNode)("label", _hoisted_7, (0, vue.toDisplayString)((0, vue.unref)(t)("api_key_label")), 1),
-								(0, vue.withDirectives)((0, vue.createElementVNode)("input", {
-									id: "compilatio-api-key",
-									"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => (0, vue.isRef)(apiKey) ? apiKey.value = $event : null),
-									name: "apiKey",
-									type: "text",
-									autocomplete: "off",
-									spellcheck: "false",
-									onFocus: _cache[1] || (_cache[1] = (...args) => (0, vue.unref)(editApiKey) && (0, vue.unref)(editApiKey)(...args)),
-									onBlur: _cache[2] || (_cache[2] = (...args) => (0, vue.unref)(restoreApiKeyMask) && (0, vue.unref)(restoreApiKeyMask)(...args)),
-									required: !(0, vue.unref)(hasApiKey),
-									placeholder: (0, vue.unref)(hasApiKey) ? (0, vue.unref)(t)("api_key_placeholder_update") : (0, vue.unref)(t)("api_key_placeholder"),
-									class: "rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-primary-500"
-								}, null, 40, _hoisted_8), [[vue.vModelText, (0, vue.unref)(apiKey)]]),
-								(0, vue.createElementVNode)("p", _hoisted_9, (0, vue.toDisplayString)((0, vue.unref)(t)("api_key_description")), 1),
-								(0, vue.unref)(hasApiKey) ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("p", _hoisted_10, (0, vue.toDisplayString)((0, vue.unref)(t)("api_key_configured")), 1)) : (0, vue.createCommentVNode)("", true)
-							])]),
-							_: 1
-						}, 8, ["title"]),
+					}, [(0, vue.createVNode)(AccordionSection_default, {
+						"heading-id": "compilatio-api-key-heading",
+						title: (0, vue.unref)(t)("section_title_api_key") + " " + (0, vue.unref)(product).name
+					}, {
+						default: (0, vue.withCtx)(() => [(0, vue.createElementVNode)("div", _hoisted_6, [
+							(0, vue.createElementVNode)("label", _hoisted_7, (0, vue.toDisplayString)((0, vue.unref)(t)("api_key_label")), 1),
+							(0, vue.withDirectives)((0, vue.createElementVNode)("input", {
+								id: "compilatio-api-key",
+								"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => (0, vue.isRef)(apiKey) ? apiKey.value = $event : null),
+								name: "apiKey",
+								type: "text",
+								autocomplete: "off",
+								spellcheck: "false",
+								onFocus: _cache[1] || (_cache[1] = (...args) => (0, vue.unref)(editApiKey) && (0, vue.unref)(editApiKey)(...args)),
+								onBlur: _cache[2] || (_cache[2] = (...args) => (0, vue.unref)(restoreApiKeyMask) && (0, vue.unref)(restoreApiKeyMask)(...args)),
+								required: !(0, vue.unref)(hasApiKey),
+								placeholder: (0, vue.unref)(hasApiKey) ? (0, vue.unref)(t)("api_key_placeholder_update") : (0, vue.unref)(t)("api_key_placeholder"),
+								class: "rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-primary-500"
+							}, null, 40, _hoisted_8), [[vue.vModelText, (0, vue.unref)(apiKey)]]),
+							(0, vue.createElementVNode)("p", _hoisted_9, (0, vue.toDisplayString)((0, vue.unref)(t)("api_key_description")), 1),
+							(0, vue.unref)(hasApiKey) ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("p", _hoisted_10, (0, vue.toDisplayString)((0, vue.unref)(t)("api_key_configured")), 1)) : ((0, vue.openBlock)(), (0, vue.createElementBlock)("p", _hoisted_11, (0, vue.toDisplayString)((0, vue.unref)(t)("api_key_required_for_settings")), 1))
+						])]),
+						_: 1
+					}, 8, ["title"]), (0, vue.unref)(hasApiKey) ? ((0, vue.openBlock)(), (0, vue.createElementBlock)(vue.Fragment, { key: 0 }, [
 						(0, vue.createVNode)(DeliverySettings_default, {
 							configuration: (0, vue.unref)(configuration),
 							detections: (0, vue.unref)(detections)
@@ -12235,18 +12244,18 @@
 							configuration: (0, vue.unref)(configuration),
 							"threshold-error": (0, vue.unref)(thresholdError)
 						}, null, 8, ["configuration", "threshold-error"])
-					], 8, _hoisted_5),
+					], 64)) : (0, vue.createCommentVNode)("", true)], 8, _hoisted_5),
 					(0, vue.unref)(message) ? ((0, vue.openBlock)(), (0, vue.createBlock)((0, vue.unref)(Vs), {
 						key: 0,
 						color: (0, vue.unref)(hasError) ? "danger" : "success",
 						description: (0, vue.unref)(message),
 						role: "status"
 					}, null, 8, ["color", "description"])) : (0, vue.createCommentVNode)("", true),
-					(0, vue.unref)(isSaving) ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("p", _hoisted_11, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_saving")), 1)) : (0, vue.createCommentVNode)("", true),
+					(0, vue.unref)(isSaving) ? ((0, vue.openBlock)(), (0, vue.createElementBlock)("p", _hoisted_12, (0, vue.toDisplayString)((0, vue.unref)(t)("settings_saving")), 1)) : (0, vue.createCommentVNode)("", true),
 					(0, vue.createElementVNode)("fieldset", {
 						class: "contents",
 						disabled: !(0, vue.unref)(canSave)
-					}, [(0, vue.createVNode)(SubmitFooter_default, { "is-modify": true })], 8, _hoisted_12)
+					}, [(0, vue.createVNode)(SubmitFooter_default, { "is-modify": true })], 8, _hoisted_13)
 				], 40, _hoisted_4))])], 2);
 			};
 		}

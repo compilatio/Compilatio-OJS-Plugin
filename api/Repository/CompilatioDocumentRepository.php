@@ -236,6 +236,8 @@ final class CompilatioDocumentRepository
             throw new RuntimeException('The product ID is missing.');
         }
 
-        return 'https://app.' . $product['id'] . '.net/api/private/reports/redirect/';
+        return 'https://app.' . "compilatio"
+            /** TODO: Remplacer "compilatio" par $product['id'] quand Sim aura ajouter le rapport par letimio */
+            . '.net/api/private/reports/redirect/';
     }
 }
